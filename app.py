@@ -9,6 +9,7 @@ from typing import Dict, Optional
 
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 from streamlit_autorefresh import st_autorefresh
 
 APP_DIR = Path(__file__).resolve().parent
@@ -1698,30 +1699,106 @@ def auto_pick_user_if_expired():
 
 def render_pick_clock():
     remaining = remaining_pick_time()
-    mins, secs = divmod(remaining, 60)
-    color = "#E76F51" if remaining <= 15 and st.session_state.clock_running else "#2A9D8F"
     state_label = "RUNNING" if st.session_state.clock_running else "PAUSED"
 
-    st.markdown(
-        f"""
-        <div style="border:1px solid rgba(128,128,128,.28);border-radius:12px;
-                    padding:12px;text-align:center;margin-bottom:10px;">
-          <div style="font-size:.80rem;opacity:.72;">PICK CLOCK · {state_label}</div>
-          <div style="font-size:2.2rem;font-weight:800;color:{color};">
-            {mins}:{secs:02d}
-          </div>
-          <div style="font-size:.78rem;opacity:.68;">
-            Auto-selects best available only while running
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    if st.session_state.clock_running:
+        # The clock counts down in the browser without rerunning Streamlit.
+        # At zero, it reloads once so the server can perform the auto-pick.
+        components.html(
+            f"""
+            <div id="pick-clock-wrap" style="
+                border:1px solid rgba(128,128,128,.28);
+                border-radius:12px;
+                padding:10px;
+                text-align:center;
+                margin-bottom:8px;
+                font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+                color:#F4F7FB;
+                background:rgba(255,255,255,.015);
+            ">
+              <div style="font-size:.76rem;opacity:.72;">
+                PICK CLOCK · {state_label}
+              </div>
+              <div id="pick-clock-value" style="
+                  font-size:2rem;
+                  font-weight:800;
+                  color:#2A9D8F;
+                  line-height:1.05;
+                  margin-top:3px;
+              "></div>
+              <div style="font-size:.70rem;opacity:.64;margin-top:4px;">
+                Best available is selected at 0:00
+              </div>
+            </div>
 
-    c1, c2, c3 = st.columns(3)
+            <script>
+            (() => {{
+                let remaining = {int(remaining)};
+                const value = document.getElementById("pick-clock-value");
+                const wrap = document.getElementById("pick-clock-wrap");
+
+                function draw() {{
+                    const mins = Math.floor(remaining / 60);
+                    const secs = remaining % 60;
+                    value.textContent = `${{mins}}:${{String(secs).padStart(2, "0")}}`;
+
+                    if (remaining <= 15) {{
+                        value.style.color = "#E76F51";
+                    }}
+
+                    if (remaining <= 0) {{
+                        value.textContent = "0:00";
+                        wrap.style.opacity = "0.72";
+                        window.parent.location.reload();
+                        return;
+                    }}
+
+                    remaining -= 1;
+                    window.setTimeout(draw, 1000);
+                }}
+
+                draw();
+            }})();
+            </script>
+            """,
+            height=116,
+        )
+    else:
+        mins, secs = divmod(remaining, 60)
+        st.markdown(
+            f"""
+            <div style="
+                border:1px solid rgba(128,128,128,.28);
+                border-radius:12px;
+                padding:10px;
+                text-align:center;
+                margin-bottom:8px;
+            ">
+              <div style="font-size:.76rem;opacity:.72;">
+                PICK CLOCK · {state_label}
+              </div>
+              <div style="
+                  font-size:2rem;
+                  font-weight:800;
+                  color:#2A9D8F;
+                  line-height:1.05;
+                  margin-top:3px;
+              ">
+                {mins}:{secs:02d}
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    c1, c2 = st.columns(2)
 
     if not st.session_state.clock_running:
-        label = "▶️ Start" if remaining == int(st.session_state.pick_clock_seconds) else "▶️ Resume"
+        label = (
+            "▶️ Start"
+            if remaining == int(st.session_state.pick_clock_seconds)
+            else "▶️ Resume"
+        )
         if c1.button(label, use_container_width=True, type="primary"):
             start_pick_clock()
             st.rerun()
@@ -1730,11 +1807,9 @@ def render_pick_clock():
             pause_pick_clock()
             st.rerun()
 
-    if c2.button("↺ Reset Clock", use_container_width=True):
+    if c2.button("↺ Reset", use_container_width=True):
         reset_pick_clock()
         st.rerun()
-
-    c3.caption("Timer stays paused on each new user turn.")
 
 
 
@@ -2066,19 +2141,29 @@ init_state()
 apply_team_query_selection()
 render_dynamic_dock_css()
 
-# One shared refresh loop drives both CPU animation and the user clock.
-if st.session_state.clock_running:
-    st_autorefresh(interval=1000, limit=None, key="draft_animation_refresh")
-
+# Only CPU turns use full-page refreshes.
+# User turns rely on the browser-side clock, so player clicks stay responsive.
 _current_idx = current_open_index()
+_current_owner = None
 
-if st.session_state.clock_running and _current_idx is not None:
+if _current_idx is not None:
     _current_owner = clean(
         st.session_state.picks.loc[_current_idx, "current_owner"]
     )
 
-    if _current_owner != clean(st.session_state.user_team):
-        run_one_cpu_pick()
+_cpu_turn_active = (
+    st.session_state.clock_running
+    and _current_idx is not None
+    and _current_owner != clean(st.session_state.user_team)
+)
+
+if _cpu_turn_active:
+    st_autorefresh(
+        interval=1000,
+        limit=None,
+        key="cpu_draft_animation_refresh",
+    )
+    run_one_cpu_pick()
 
 # Enforce the user's pick clock only on user-controlled turns.
 if auto_pick_user_if_expired():
