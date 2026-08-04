@@ -846,6 +846,22 @@ st.markdown("""
     margin-bottom: 5px !important;
 }
 
+
+/* Safari-safe action buttons */
+.st-key-war_player_list button,
+.st-key-dock_controls button {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    opacity: 1 !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+}
+.st-key-war_player_list button:disabled,
+.st-key-dock_controls button:disabled {
+    color: rgba(255,255,255,.42) !important;
+    -webkit-text-fill-color: rgba(255,255,255,.42) !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -958,10 +974,73 @@ def init_state(force=False):
         "pick_clock_seconds": 60,
         "clock_running": False,
         "clock_paused_remaining": 60,
+        "dock_level": 1,
     }
     for key, value in defaults.items():
         if force or key not in st.session_state:
             st.session_state[key] = value
+
+
+
+DOCK_LEVELS = {
+    0: {"name": "Compact", "dock_vh": 24, "list_px": 165, "roster_vh": 20},
+    1: {"name": "Standard", "dock_vh": 38, "list_px": 330, "roster_vh": 34},
+    2: {"name": "Expanded", "dock_vh": 64, "list_px": 590, "roster_vh": 59},
+}
+
+
+def dock_settings() -> dict:
+    level = int(st.session_state.get("dock_level", 1))
+    level = max(0, min(2, level))
+    st.session_state.dock_level = level
+    return DOCK_LEVELS[level]
+
+
+def move_dock(direction: int):
+    current = int(st.session_state.get("dock_level", 1))
+    st.session_state.dock_level = max(0, min(2, current + direction))
+
+
+def render_dynamic_dock_css():
+    settings = dock_settings()
+    st.markdown(
+        f"""
+        <style>
+        .st-key-draft_drawer {{
+            height: {settings["dock_vh"]}vh !important;
+            overflow: hidden !important;
+            transition: height .22s ease-in-out !important;
+        }}
+        .st-key-war_roster_panel {{
+            height: {settings["roster_vh"]}vh !important;
+            max-height: {settings["roster_vh"]}vh !important;
+            overflow-y: auto !important;
+        }}
+        .dock-size-label {{
+            font-size: .58rem;
+            opacity: .58;
+            text-align: center;
+            margin: 2px 0;
+            white-space: nowrap;
+        }}
+        .st-key-dock_controls {{
+            border-left: 1px solid rgba(150,170,210,.20);
+            padding-left: 5px;
+            min-width: 38px;
+        }}
+        .st-key-dock_controls button {{
+            min-height: 32px !important;
+            height: 32px !important;
+            padding: 0 !important;
+            font-size: .92rem !important;
+            font-weight: 900 !important;
+            border-radius: 7px !important;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
 
 
 def player_map() -> Dict[str, dict]:
@@ -1677,7 +1756,9 @@ def render_player_picker(current_idx: int, allow_draft: bool = True):
 
     shown = pool.head(60).reset_index(drop=True)
 
-    with st.container(height=330, key="war_player_list"):
+    list_height = dock_settings()["list_px"]
+
+    with st.container(height=list_height, key="war_player_list"):
         for _, row in shown.iterrows():
             player = clean(row["player"])
             pos = clean(row["position"])
@@ -1767,6 +1848,7 @@ def render_recommendation_cards(recs: pd.DataFrame):
 
 init_state()
 apply_team_query_selection()
+render_dynamic_dock_css()
 
 # One shared refresh loop drives both CPU animation and the user clock.
 if st.session_state.clock_running:
@@ -1940,7 +2022,10 @@ with tabs[0]:
             owner = clean(current["current_owner"])
             user_turn = owner == clean(st.session_state.user_team)
 
-            available_col, roster_col = st.columns([4.35, 1.65], gap="small")
+            available_col, roster_col, dock_control_col = st.columns(
+                [4.35, 1.65, 0.22],
+                gap="small",
+            )
 
             with available_col:
                 render_player_picker(idx, allow_draft=user_turn)
@@ -1948,6 +2033,35 @@ with tabs[0]:
             with roster_col:
                 with st.container(key="war_roster_panel"):
                     render_live_user_roster()
+
+            with dock_control_col:
+                with st.container(key="dock_controls"):
+                    level = int(st.session_state.dock_level)
+                    if st.button(
+                        "▲",
+                        key="dock_move_up",
+                        use_container_width=True,
+                        disabled=level >= 2,
+                        help="Expand player selector",
+                    ):
+                        move_dock(1)
+                        st.rerun()
+
+                    st.markdown(
+                        f'<div class="dock-size-label">'
+                        f'{dock_settings()["name"]}</div>',
+                        unsafe_allow_html=True,
+                    )
+
+                    if st.button(
+                        "▼",
+                        key="dock_move_down",
+                        use_container_width=True,
+                        disabled=level <= 0,
+                        help="Collapse player selector",
+                    ):
+                        move_dock(-1)
+                        st.rerun()
 
     st.markdown(
         '<div class="fixed-dock-spacer"></div>',
