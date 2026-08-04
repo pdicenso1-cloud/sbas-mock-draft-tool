@@ -915,23 +915,31 @@ st.markdown("""
 }
 
 
-/* v3.3 align roster header with the top of the filter buttons */
-.st-key-roster_and_controls {
+/* v3.5 structural roster alignment */
+.st-key-roster_header_panel {
     position: relative !important;
-    overflow: visible !important;
+    padding: 0 52px 0 10px !important;
+    margin: 0 !important;
+}
+.st-key-roster_header_panel [data-testid="stVerticalBlock"] {
+    gap: 0 !important;
+}
+.st-key-roster_header_panel .roster-header-row {
+    height: 52px !important;
+    min-height: 52px !important;
+    margin: 0 !important;
+    padding: 0 0 7px 0 !important;
+    display: grid !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+}
+.st-key-roster_and_controls {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
 }
 .st-key-war_roster_panel {
-    position: relative !important;
-    top: -57px !important;
-    margin-bottom: -57px !important;
     padding-top: 0 !important;
-}
-.roster-header-row {
-    min-height: 50px !important;
-    padding-top: 0 !important;
-    padding-bottom: 7px !important;
     margin-top: 0 !important;
-    align-items: center !important;
 }
 
 </style>
@@ -1747,8 +1755,18 @@ def render_compact_recommendations(limit=4):
         )
 
 
-def render_live_user_roster():
+def current_user_roster():
     roster = build_team_roster(st.session_state.user_team)
+    # This league's visible roster excludes kicker and defense.
+    return roster[
+        ~roster["Slot"].astype(str).str.upper().isin(
+            {"K", "DEF", "DST", "D/ST"}
+        )
+    ].reset_index(drop=True)
+
+
+def render_live_roster_header():
+    roster = current_user_roster()
     filled = int((roster["Player"] != "").sum())
 
     st.markdown(
@@ -1762,14 +1780,14 @@ def render_live_user_roster():
         unsafe_allow_html=True,
     )
 
+
+def render_live_roster_rows():
+    roster = current_user_roster()
+
     for row in roster.itertuples():
         player = clean(row.Player)
         slot = clean(row.Slot)
         pos = clean(row.Pos)
-
-        # This league's visible draft roster excludes kicker and defense.
-        if slot.upper() in {"K", "DEF", "DST", "D/ST"}:
-            continue
 
         if slot.startswith("RB"):
             slot_group = "RB"
@@ -1809,7 +1827,12 @@ def render_live_user_roster():
         )
 
 
-def render_player_picker(current_idx: int, allow_draft: bool = True):
+def render_live_user_roster():
+    render_live_roster_header()
+    render_live_roster_rows()
+
+
+def render_player_picker_controls():
     ensure_draft_filters()
 
     top_left, top_right = st.columns([2.3, 3.7])
@@ -1823,13 +1846,25 @@ def render_player_picker(current_idx: int, allow_draft: bool = True):
     with top_right:
         render_position_filter()
 
+
+def render_player_picker_table(
+    current_idx: int,
+    allow_draft: bool = True,
+):
     pool = filtered_draft_pool()
     if pool.empty:
         st.warning("No available players match this filter.")
         return
 
-    headers = ["", "RK", "PLAYER", "POS", "ADP", "TIER", "SCORE", "PROJ", "AVG", "RUSH", "REC", "PASS", "BYE", ""]
-    widths = [0.42, 0.46, 2.1, 0.55, 0.56, 0.56, 0.60, 0.60, 0.60, 0.62, 0.62, 0.62, 0.54, 0.42]
+    headers = [
+        "", "RK", "PLAYER", "POS", "ADP", "TIER", "SCORE",
+        "PROJ", "AVG", "RUSH", "REC", "PASS", "BYE", ""
+    ]
+    widths = [
+        0.42, 0.46, 2.1, 0.55, 0.56, 0.56, 0.60,
+        0.60, 0.60, 0.62, 0.62, 0.62, 0.54, 0.42
+    ]
+
     header_cols = st.columns(widths)
     for col, label in zip(header_cols, headers):
         col.markdown(
@@ -1843,7 +1878,6 @@ def render_player_picker(current_idx: int, allow_draft: bool = True):
     )
 
     shown = pool.head(60).reset_index(drop=True)
-
     list_height = dock_settings()["list_px"]
 
     with st.container(height=list_height, key="war_player_list"):
@@ -1856,7 +1890,6 @@ def render_player_picker(current_idx: int, allow_draft: bool = True):
             tier = clean(row.get("tier", ""))
             score = numeric(row.get("peter_score"), None)
 
-            # Optional stat fields if imported later.
             proj = numeric(row.get("proj_pts"), None)
             avg = numeric(row.get("proj_avg"), None)
             rush = row.get("rush_yds", "")
@@ -1892,17 +1925,27 @@ def render_player_picker(current_idx: int, allow_draft: bool = True):
                 st.session_state.clock_running = True
                 st.rerun()
 
-            cols[1].markdown(f"<div class='rank2'>{rank}</div>", unsafe_allow_html=True)
+            cols[1].markdown(
+                f"<div class='rank2'>{rank}</div>",
+                unsafe_allow_html=True,
+            )
             cols[2].markdown(
                 f"""
                 <div class='player-name2' title='{player}'>{player}</div>
-                <div class='player-sub2'><span class='pos-dot dot-{pos_class}'></span>{pos} · {nfl_team}</div>
+                <div class='player-sub2'>
+                    <span class='pos-dot dot-{pos_class}'></span>
+                    {pos} · {nfl_team}
+                </div>
                 """,
                 unsafe_allow_html=True,
             )
+
             for col, value in zip(
                 cols[3:13],
-                [pos, adp_text, tier or "—", score_text, proj_text, avg_text, rush_text, rec_text, pass_text, bye_text],
+                [
+                    pos, adp_text, tier or "—", score_text, proj_text,
+                    avg_text, rush_text, rec_text, pass_text, bye_text
+                ],
             ):
                 col.markdown(
                     f"<div class='stat2'>{value}</div>",
@@ -1913,6 +1956,14 @@ def render_player_picker(current_idx: int, allow_draft: bool = True):
                 '<div class="player-row-divider"></div>',
                 unsafe_allow_html=True,
             )
+
+
+def render_player_picker(
+    current_idx: int,
+    allow_draft: bool = True,
+):
+    render_player_picker_controls()
+    render_player_picker_table(current_idx, allow_draft)
 
 
 def render_recommendation_cards(recs: pd.DataFrame):
@@ -2110,18 +2161,35 @@ with tabs[0]:
             owner = clean(current["current_owner"])
             user_turn = owner == clean(st.session_state.user_team)
 
-            available_col, right_panel = st.columns(
+            # Shared top row: player controls and roster header align exactly.
+            top_available, top_roster = st.columns(
                 [4.35, 1.87],
                 gap="small",
             )
 
-            with available_col:
-                render_player_picker(idx, allow_draft=user_turn)
+            with top_available:
+                render_player_picker_controls()
 
-            with right_panel:
+            with top_roster:
+                with st.container(key="roster_header_panel"):
+                    render_live_roster_header()
+
+            # Shared content row: player table and roster slots begin together.
+            content_available, content_roster = st.columns(
+                [4.35, 1.87],
+                gap="small",
+            )
+
+            with content_available:
+                render_player_picker_table(
+                    idx,
+                    allow_draft=user_turn,
+                )
+
+            with content_roster:
                 with st.container(key="roster_and_controls"):
                     with st.container(key="war_roster_panel"):
-                        render_live_user_roster()
+                        render_live_roster_rows()
 
             # Overlay controls pinned to the dock's top-right corner.
             with st.container(key="dock_controls"):
