@@ -1016,25 +1016,26 @@ def render_dynamic_dock_css():
             max-height: {settings["roster_vh"]}vh !important;
             overflow-y: auto !important;
         }}
-        .dock-size-label {{
-            font-size: .58rem;
-            opacity: .58;
-            text-align: center;
-            margin: 2px 0;
-            white-space: nowrap;
+        .st-key-roster_and_controls {{
+            height: {settings["roster_vh"]}vh !important;
+            overflow: hidden !important;
         }}
         .st-key-dock_controls {{
             border-left: 1px solid rgba(150,170,210,.20);
-            padding-left: 5px;
-            min-width: 38px;
+            padding: 2px 0 0 7px;
+            min-width: 42px;
+            align-self: flex-start !important;
+        }}
+        .st-key-dock_controls [data-testid="stVerticalBlock"] {{
+            gap: 5px !important;
         }}
         .st-key-dock_controls button {{
-            min-height: 32px !important;
-            height: 32px !important;
+            min-height: 34px !important;
+            height: 34px !important;
             padding: 0 !important;
-            font-size: .92rem !important;
+            font-size: .96rem !important;
             font-weight: 900 !important;
-            border-radius: 7px !important;
+            border-radius: 8px !important;
         }}
         </style>
         """,
@@ -2022,46 +2023,48 @@ with tabs[0]:
             owner = clean(current["current_owner"])
             user_turn = owner == clean(st.session_state.user_team)
 
-            available_col, roster_col, dock_control_col = st.columns(
-                [4.35, 1.65, 0.22],
+            available_col, right_panel = st.columns(
+                [4.35, 1.87],
                 gap="small",
             )
 
             with available_col:
                 render_player_picker(idx, allow_draft=user_turn)
 
-            with roster_col:
-                with st.container(key="war_roster_panel"):
-                    render_live_user_roster()
-
-            with dock_control_col:
-                with st.container(key="dock_controls"):
-                    level = int(st.session_state.dock_level)
-                    if st.button(
-                        "▲",
-                        key="dock_move_up",
-                        use_container_width=True,
-                        disabled=level >= 2,
-                        help="Expand player selector",
-                    ):
-                        move_dock(1)
-                        st.rerun()
-
-                    st.markdown(
-                        f'<div class="dock-size-label">'
-                        f'{dock_settings()["name"]}</div>',
-                        unsafe_allow_html=True,
+            with right_panel:
+                with st.container(key="roster_and_controls"):
+                    roster_col, dock_control_col = st.columns(
+                        [1.0, 0.18],
+                        gap="small",
                     )
 
-                    if st.button(
-                        "▼",
-                        key="dock_move_down",
-                        use_container_width=True,
-                        disabled=level <= 0,
-                        help="Collapse player selector",
-                    ):
-                        move_dock(-1)
-                        st.rerun()
+                    with roster_col:
+                        with st.container(key="war_roster_panel"):
+                            render_live_user_roster()
+
+                    with dock_control_col:
+                        with st.container(key="dock_controls"):
+                            level = int(st.session_state.dock_level)
+
+                            if st.button(
+                                "▲",
+                                key="dock_move_up",
+                                use_container_width=True,
+                                disabled=level >= 2,
+                                help="Expand player selector",
+                            ):
+                                move_dock(1)
+                                st.rerun()
+
+                            if st.button(
+                                "▼",
+                                key="dock_move_down",
+                                use_container_width=True,
+                                disabled=level <= 0,
+                                help="Collapse player selector",
+                            ):
+                                move_dock(-1)
+                                st.rerun()
 
     st.markdown(
         '<div class="fixed-dock-spacer"></div>',
