@@ -975,6 +975,22 @@ st.markdown("""
     margin-top: 0 !important;
 }
 
+
+/* v3.8 responsive draft-button feedback */
+.st-key-war_player_list button {
+    transition:
+        background-color .10s ease,
+        border-color .10s ease,
+        transform .08s ease !important;
+}
+.st-key-war_player_list button:active {
+    transform: scale(.90) !important;
+    background: #2A9D8F !important;
+    border-color: #2A9D8F !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -1215,6 +1231,39 @@ def make_pick(idx: int, player: str, source: str):
         return
     st.session_state.picks.at[idx, "selected_player"] = player
     st.session_state.picks.at[idx, "source"] = source
+
+
+
+
+def handle_user_draft_click(player: str):
+    """Process a draft-button click before Streamlit's next rerun."""
+    idx = current_open_index()
+
+    if idx is None:
+        st.session_state.draft_message = "The draft is already complete."
+        return
+
+    owner = clean(st.session_state.picks.loc[idx, "current_owner"])
+    user_team = clean(st.session_state.user_team)
+
+    if owner != user_team:
+        st.session_state.draft_message = (
+            f"It is currently {owner}'s turn."
+        )
+        return
+
+    if player in unavailable_players():
+        st.session_state.draft_message = (
+            f"{player} is already unavailable."
+        )
+        return
+
+    make_pick(idx, player, "User")
+    st.session_state.draft_message = (
+        f"{player} drafted by {user_team}."
+    )
+    reset_pick_clock()
+    st.session_state.clock_running = True
 
 
 
@@ -1942,21 +1991,16 @@ def render_player_picker_table(
 
             cols = st.columns(widths)
 
-            if cols[0].button(
+            cols[0].button(
                 "+",
                 key=f"draft_plus_{current_idx}_{player}",
                 use_container_width=True,
                 type="secondary",
                 disabled=not allow_draft,
                 help=f"Draft {player}",
-            ):
-                make_pick(current_idx, player, "User")
-                st.session_state.draft_message = (
-                    f"{player} drafted by {st.session_state.user_team}."
-                )
-                reset_pick_clock()
-                st.session_state.clock_running = True
-                st.rerun()
+                on_click=handle_user_draft_click,
+                args=(player,),
+            )
 
             cols[1].markdown(
                 f"<div class='rank2'>{rank}</div>",
@@ -2024,7 +2068,7 @@ render_dynamic_dock_css()
 
 # One shared refresh loop drives both CPU animation and the user clock.
 if st.session_state.clock_running:
-    st_autorefresh(interval=750, limit=None, key="draft_animation_refresh")
+    st_autorefresh(interval=1000, limit=None, key="draft_animation_refresh")
 
 _current_idx = current_open_index()
 
