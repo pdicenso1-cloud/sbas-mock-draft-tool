@@ -1016,26 +1016,39 @@ def render_dynamic_dock_css():
             max-height: {settings["roster_vh"]}vh !important;
             overflow-y: auto !important;
         }}
+        .st-key-draft_drawer {{
+            position: fixed !important;
+        }}
         .st-key-roster_and_controls {{
             height: {settings["roster_vh"]}vh !important;
             overflow: hidden !important;
+            padding-right: 50px !important;
         }}
         .st-key-dock_controls {{
-            border-left: 1px solid rgba(150,170,210,.20);
-            padding: 2px 0 0 7px;
-            min-width: 42px;
-            align-self: flex-start !important;
+            position: absolute !important;
+            top: 8px !important;
+            right: 8px !important;
+            z-index: 1005 !important;
+            width: 40px !important;
+            min-width: 40px !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            background: rgba(18, 27, 43, .96) !important;
+            border: 1px solid rgba(150,170,210,.22) !important;
+            border-radius: 9px !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,.28) !important;
         }}
         .st-key-dock_controls [data-testid="stVerticalBlock"] {{
-            gap: 5px !important;
+            gap: 4px !important;
+            padding: 4px !important;
         }}
         .st-key-dock_controls button {{
-            min-height: 34px !important;
-            height: 34px !important;
+            min-height: 32px !important;
+            height: 32px !important;
             padding: 0 !important;
-            font-size: .96rem !important;
+            font-size: .94rem !important;
             font-weight: 900 !important;
-            border-radius: 8px !important;
+            border-radius: 7px !important;
         }}
         </style>
         """,
@@ -2033,38 +2046,32 @@ with tabs[0]:
 
             with right_panel:
                 with st.container(key="roster_and_controls"):
-                    roster_col, dock_control_col = st.columns(
-                        [1.0, 0.18],
-                        gap="small",
-                    )
+                    with st.container(key="war_roster_panel"):
+                        render_live_user_roster()
 
-                    with roster_col:
-                        with st.container(key="war_roster_panel"):
-                            render_live_user_roster()
+            # Overlay controls pinned to the dock's top-right corner.
+            with st.container(key="dock_controls"):
+                level = int(st.session_state.dock_level)
 
-                    with dock_control_col:
-                        with st.container(key="dock_controls"):
-                            level = int(st.session_state.dock_level)
+                if st.button(
+                    "▲",
+                    key="dock_move_up",
+                    use_container_width=True,
+                    disabled=level >= 2,
+                    help="Expand player selector",
+                ):
+                    move_dock(1)
+                    st.rerun()
 
-                            if st.button(
-                                "▲",
-                                key="dock_move_up",
-                                use_container_width=True,
-                                disabled=level >= 2,
-                                help="Expand player selector",
-                            ):
-                                move_dock(1)
-                                st.rerun()
-
-                            if st.button(
-                                "▼",
-                                key="dock_move_down",
-                                use_container_width=True,
-                                disabled=level <= 0,
-                                help="Collapse player selector",
-                            ):
-                                move_dock(-1)
-                                st.rerun()
+                if st.button(
+                    "▼",
+                    key="dock_move_down",
+                    use_container_width=True,
+                    disabled=level <= 0,
+                    help="Collapse player selector",
+                ):
+                    move_dock(-1)
+                    st.rerun()
 
     st.markdown(
         '<div class="fixed-dock-spacer"></div>',
