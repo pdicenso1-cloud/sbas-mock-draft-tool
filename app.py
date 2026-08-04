@@ -942,6 +942,34 @@ st.markdown("""
     margin-top: 0 !important;
 }
 
+
+/* v3.6 remove dead space between roster header and first slot */
+.st-key-roster_and_controls [data-testid="stVerticalBlock"] {
+    gap: 0 !important;
+}
+.st-key-roster_header_panel {
+    margin: 0 !important;
+    padding: 0 52px 0 10px !important;
+}
+.st-key-roster_header_panel .roster-header-row {
+    margin: 0 !important;
+    padding: 0 0 5px 0 !important;
+    height: 52px !important;
+    min-height: 52px !important;
+}
+.st-key-war_roster_panel {
+    margin: 0 !important;
+    padding: 0 0 0 10px !important;
+    top: auto !important;
+    transform: none !important;
+}
+.st-key-war_roster_panel [data-testid="stVerticalBlock"] {
+    gap: 0 !important;
+}
+.st-key-war_roster_panel .roster-line:first-child {
+    margin-top: 0 !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -2161,33 +2189,26 @@ with tabs[0]:
             owner = clean(current["current_owner"])
             user_turn = owner == clean(st.session_state.user_team)
 
-            # Shared top row: player controls and roster header align exactly.
-            top_available, top_roster = st.columns(
+            # Two independent vertical panels:
+            # left = player controls + player table
+            # right = roster header + roster slots
+            available_panel, roster_panel = st.columns(
                 [4.35, 1.87],
                 gap="small",
             )
 
-            with top_available:
+            with available_panel:
                 render_player_picker_controls()
-
-            with top_roster:
-                with st.container(key="roster_header_panel"):
-                    render_live_roster_header()
-
-            # Shared content row: player table and roster slots begin together.
-            content_available, content_roster = st.columns(
-                [4.35, 1.87],
-                gap="small",
-            )
-
-            with content_available:
                 render_player_picker_table(
                     idx,
                     allow_draft=user_turn,
                 )
 
-            with content_roster:
+            with roster_panel:
                 with st.container(key="roster_and_controls"):
+                    with st.container(key="roster_header_panel"):
+                        render_live_roster_header()
+
                     with st.container(key="war_roster_panel"):
                         render_live_roster_rows()
 
