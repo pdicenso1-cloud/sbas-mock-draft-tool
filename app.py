@@ -862,6 +862,58 @@ st.markdown("""
     -webkit-text-fill-color: rgba(255,255,255,.42) !important;
 }
 
+
+/* v3.2 roster panel alignment */
+.st-key-roster_and_controls {
+    padding-top: 0 !important;
+}
+.st-key-war_roster_panel {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+.st-key-war_roster_panel [data-testid="stVerticalBlock"] {
+    gap: 0 !important;
+}
+.roster-header-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: baseline;
+    column-gap: 14px;
+    min-height: 52px;
+    padding: 3px 52px 8px 0;
+    border-bottom: 1px solid rgba(150,170,210,.18);
+    margin-bottom: 6px;
+}
+.roster-header-label {
+    color: #4F9DFF;
+    font-size: .92rem;
+    font-weight: 850;
+    line-height: 1.1;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    white-space: nowrap;
+}
+.roster-header-team {
+    color: #FFFFFF;
+    font-size: .92rem;
+    font-weight: 850;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.roster-header-count {
+    color: rgba(255,255,255,.62);
+    font-size: .72rem;
+    font-weight: 600;
+    line-height: 1.1;
+    white-space: nowrap;
+}
+.roster-line {
+    min-height: 44px !important;
+    padding: 4px 0 !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -1680,15 +1732,13 @@ def render_live_user_roster():
     filled = int((roster["Player"] != "").sum())
 
     st.markdown(
-        '<div class="roster-panel-label">ROSTER</div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        f'<div class="roster-panel-team">{st.session_state.user_team}</div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        f'<div class="roster-panel-count">{filled} / 16 players</div>',
+        f"""
+        <div class="roster-header-row">
+            <div class="roster-header-label">ROSTER</div>
+            <div class="roster-header-team">{st.session_state.user_team}</div>
+            <div class="roster-header-count">{filled} / 16 players</div>
+        </div>
+        """,
         unsafe_allow_html=True,
     )
 
@@ -1696,6 +1746,10 @@ def render_live_user_roster():
         player = clean(row.Player)
         slot = clean(row.Slot)
         pos = clean(row.Pos)
+
+        # This league's visible draft roster excludes kicker and defense.
+        if slot.upper() in {"K", "DEF", "DST", "D/ST"}:
+            continue
 
         if slot.startswith("RB"):
             slot_group = "RB"
