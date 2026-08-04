@@ -943,28 +943,33 @@ st.markdown("""
 }
 
 
-/* v3.6 remove dead space between roster header and first slot */
-.st-key-roster_and_controls [data-testid="stVerticalBlock"] {
+/* v3.7 keep header fixed and pull only roster slots upward */
+.st-key-roster_header_anchor {
+    position: relative !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+.st-key-roster_header_anchor [data-testid="stVerticalBlock"] {
     gap: 0 !important;
 }
-.st-key-roster_header_panel {
+.st-key-roster_rows_overlay {
+    position: absolute !important;
+    top: 52px !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 4 !important;
     margin: 0 !important;
     padding: 0 52px 0 10px !important;
 }
-.st-key-roster_header_panel .roster-header-row {
-    margin: 0 !important;
-    padding: 0 0 5px 0 !important;
-    height: 52px !important;
-    min-height: 52px !important;
+.st-key-roster_rows_overlay [data-testid="stVerticalBlock"] {
+    gap: 0 !important;
 }
 .st-key-war_roster_panel {
     margin: 0 !important;
-    padding: 0 0 0 10px !important;
-    top: auto !important;
+    padding: 0 !important;
     transform: none !important;
-}
-.st-key-war_roster_panel [data-testid="stVerticalBlock"] {
-    gap: 0 !important;
+    top: auto !important;
 }
 .st-key-war_roster_panel .roster-line:first-child {
     margin-top: 0 !important;
@@ -1120,8 +1125,8 @@ def render_dynamic_dock_css():
             transition: height .22s ease-in-out !important;
         }}
         .st-key-war_roster_panel {{
-            height: {settings["roster_vh"]}vh !important;
-            max-height: {settings["roster_vh"]}vh !important;
+            height: calc({settings["roster_vh"]}vh - 52px) !important;
+            max-height: calc({settings["roster_vh"]}vh - 52px) !important;
             overflow-y: auto !important;
         }}
         .st-key-draft_drawer {{
@@ -2189,28 +2194,40 @@ with tabs[0]:
             owner = clean(current["current_owner"])
             user_turn = owner == clean(st.session_state.user_team)
 
-            # Two independent vertical panels:
-            # left = player controls + player table
-            # right = roster header + roster slots
-            available_panel, roster_panel = st.columns(
+            # Shared top row: keep the roster header aligned with the filters.
+            top_available, top_roster = st.columns(
                 [4.35, 1.87],
                 gap="small",
             )
 
-            with available_panel:
+            with top_available:
                 render_player_picker_controls()
+
+            with top_roster:
+                with st.container(key="roster_header_anchor"):
+                    with st.container(key="roster_header_panel"):
+                        render_live_roster_header()
+
+                    # Roster slots are positioned directly beneath the header,
+                    # independent of the player-table header height on the left.
+                    with st.container(key="roster_rows_overlay"):
+                        with st.container(key="war_roster_panel"):
+                            render_live_roster_rows()
+
+            # Player table remains in its own left-side content row.
+            content_available, content_spacer = st.columns(
+                [4.35, 1.87],
+                gap="small",
+            )
+
+            with content_available:
                 render_player_picker_table(
                     idx,
                     allow_draft=user_turn,
                 )
 
-            with roster_panel:
-                with st.container(key="roster_and_controls"):
-                    with st.container(key="roster_header_panel"):
-                        render_live_roster_header()
-
-                    with st.container(key="war_roster_panel"):
-                        render_live_roster_rows()
+            with content_spacer:
+                st.empty()
 
             # Overlay controls pinned to the dock's top-right corner.
             with st.container(key="dock_controls"):
