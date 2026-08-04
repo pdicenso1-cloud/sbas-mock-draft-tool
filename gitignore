@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Streamlit secrets and local state
+.streamlit/secrets.toml
+data/saved_state.json
+*_state.json
+
+# macOS / editors
+.DS_Store
+.vscode/
+.idea/
+
+# Logs
+*.log
