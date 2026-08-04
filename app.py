@@ -914,6 +914,26 @@ st.markdown("""
     padding: 4px 0 !important;
 }
 
+
+/* v3.3 align roster header with the top of the filter buttons */
+.st-key-roster_and_controls {
+    position: relative !important;
+    overflow: visible !important;
+}
+.st-key-war_roster_panel {
+    position: relative !important;
+    top: -57px !important;
+    margin-bottom: -57px !important;
+    padding-top: 0 !important;
+}
+.roster-header-row {
+    min-height: 50px !important;
+    padding-top: 0 !important;
+    padding-bottom: 7px !important;
+    margin-top: 0 !important;
+    align-items: center !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
