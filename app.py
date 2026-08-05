@@ -1617,6 +1617,146 @@ button[kind="primary"] span {
     -webkit-text-fill-color: #FFFFFF !important;
 }
 
+
+/* ============================================================
+   v5.0 Player Queue and Live Value
+   ============================================================ */
+
+.st-key-queue_panel {
+    height: 100% !important;
+    overflow-y: auto !important;
+    border-left: 1px solid rgba(150,170,210,.22) !important;
+    padding: 0 6px 0 10px !important;
+}
+
+.st-key-queue_panel [data-testid="stVerticalBlock"] {
+    gap: 5px !important;
+}
+
+.queue-title-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 28px;
+    border-bottom: 1px solid rgba(150,170,210,.18);
+    margin-bottom: 4px;
+}
+
+.queue-title {
+    color: #F8FAFC !important;
+    -webkit-text-fill-color: #F8FAFC !important;
+    font-size: .70rem;
+    font-weight: 900;
+    letter-spacing: .04em;
+}
+
+.queue-count {
+    min-width: 20px;
+    height: 19px;
+    padding: 0 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: #2563EB;
+    color: #FFFFFF;
+    font-size: .58rem;
+    font-weight: 900;
+}
+
+.queue-empty {
+    color: #94A3B8 !important;
+    -webkit-text-fill-color: #94A3B8 !important;
+    font-size: .62rem;
+    text-align: center;
+    border: 1px dashed rgba(150,170,210,.22);
+    border-radius: 8px;
+    padding: 12px 6px;
+    margin-bottom: 4px;
+}
+
+.queue-rank {
+    width: 27px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    background: #2563EB;
+    color: #FFFFFF;
+    font-size: .64rem;
+    font-weight: 900;
+}
+
+.queue-player {
+    color: #F8FAFC !important;
+    -webkit-text-fill-color: #F8FAFC !important;
+    font-size: .66rem;
+    font-weight: 800;
+    line-height: 1.05;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.queue-player-sub {
+    color: #94A3B8 !important;
+    -webkit-text-fill-color: #94A3B8 !important;
+    font-size: .52rem;
+    line-height: 1.05;
+    margin-top: 2px;
+}
+
+.st-key-queue_panel button {
+    min-height: 27px !important;
+    height: 27px !important;
+    padding: 0 4px !important;
+    font-size: .60rem !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+
+.st-key-queue_panel button p,
+.st-key-queue_panel button span {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+
+.st-key-queue_panel [data-testid="stToggle"] label p {
+    color: #CBD5E1 !important;
+    -webkit-text-fill-color: #CBD5E1 !important;
+    font-size: .56rem !important;
+}
+
+.value-badge {
+    min-width: 29px;
+    height: 23px;
+    padding: 0 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    font-size: .57rem;
+    font-weight: 900;
+}
+
+.value-steal {
+    background: #166534;
+    border: 1px solid #22C55E;
+}
+
+.value-fair {
+    background: #334155;
+    border: 1px solid #64748B;
+}
+
+.value-reach {
+    background: #7F1D1D;
+    border: 1px solid #EF4444;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -1732,6 +1872,8 @@ def init_state(force=False):
         "dock_level": 1,
         "cpu_variance_enabled": None,
         "cpu_variance_seed": None,
+        "player_queue": [],
+        "queue_auto_draft": False,
     }
     for key, value in defaults.items():
         if force or key not in st.session_state:
@@ -1910,7 +2052,114 @@ def make_pick(idx: int, player: str, source: str):
         return
     st.session_state.picks.at[idx, "selected_player"] = player
     st.session_state.picks.at[idx, "source"] = source
+    remove_from_queue(player)
 
+
+
+
+
+def clean_player_queue():
+    """Remove drafted, unavailable, missing, and duplicate players."""
+    available = set(available_players()["player"].map(clean))
+    cleaned_queue = []
+    seen = set()
+
+    for player in st.session_state.get("player_queue", []):
+        player = clean(player)
+        if player and player in available and player not in seen:
+            cleaned_queue.append(player)
+            seen.add(player)
+
+    st.session_state.player_queue = cleaned_queue
+
+
+def add_to_queue(player: str):
+    clean_player_queue()
+    player = clean(player)
+    if player and player not in st.session_state.player_queue:
+        st.session_state.player_queue.append(player)
+
+
+def remove_from_queue(player: str):
+    player = clean(player)
+    st.session_state.player_queue = [
+        queued
+        for queued in st.session_state.get("player_queue", [])
+        if clean(queued) != player
+    ]
+
+
+def move_queue_player(player: str, direction: int):
+    clean_player_queue()
+    player = clean(player)
+    queue = list(st.session_state.player_queue)
+
+    if player not in queue:
+        return
+
+    current_index = queue.index(player)
+    target_index = max(
+        0,
+        min(len(queue) - 1, current_index + direction),
+    )
+
+    if current_index == target_index:
+        return
+
+    queue[current_index], queue[target_index] = (
+        queue[target_index],
+        queue[current_index],
+    )
+    st.session_state.player_queue = queue
+
+
+def clear_player_queue():
+    st.session_state.player_queue = []
+
+
+def top_queue_player() -> Optional[str]:
+    clean_player_queue()
+    if not st.session_state.player_queue:
+        return None
+    return clean(st.session_state.player_queue[0])
+
+
+def draft_top_queue_player():
+    player = top_queue_player()
+    if not player:
+        st.session_state.draft_message = "Your queue is empty."
+        return
+    handle_user_draft_click(player)
+
+
+def player_value_number(
+    row: pd.Series,
+    current_idx: int,
+) -> Optional[int]:
+    """Positive value means the player has fallen beyond ADP."""
+    adp = numeric(row.get("consensus_adp"), None)
+    if adp is None:
+        return None
+
+    current_pick = int(
+        st.session_state.picks.loc[current_idx, "overall"]
+    )
+    return int(round(current_pick - adp))
+
+
+def player_value_badge(
+    row: pd.Series,
+    current_idx: int,
+) -> tuple[str, str]:
+    value = player_value_number(row, current_idx)
+
+    if value is None:
+        return "—", "value-fair"
+    if value >= 5:
+        return f"+{value}", "value-steal"
+    if value <= -5:
+        return str(value), "value-reach"
+    return "0", "value-fair"
 
 
 
@@ -2151,6 +2400,8 @@ def serializable_state():
         "teams": st.session_state.teams.to_dict(orient="records"),
         "keepers": st.session_state.keepers.fillna("").to_dict(orient="records"),
         "picks": st.session_state.picks.fillna("").to_dict(orient="records"),
+        "player_queue": list(st.session_state.player_queue),
+        "queue_auto_draft": bool(st.session_state.queue_auto_draft),
     }
 
 
@@ -2164,6 +2415,14 @@ def load_state_data(data):
     st.session_state.teams = pd.DataFrame(data["teams"])
     st.session_state.keepers = pd.DataFrame(data["keepers"])
     st.session_state.picks = pd.DataFrame(data["picks"])
+    st.session_state.player_queue = [
+        clean(player)
+        for player in data.get("player_queue", [])
+    ]
+    st.session_state.queue_auto_draft = bool(
+        data.get("queue_auto_draft", False)
+    )
+    clean_player_queue()
     reset_pick_clock()
 
 
@@ -2363,12 +2622,24 @@ def auto_pick_user_if_expired():
     if remaining_pick_time() > 0:
         return False
 
-    player = best_available()
+    player = None
+    source = "User Auto"
+
+    if st.session_state.queue_auto_draft:
+        player = top_queue_player()
+        if player:
+            source = "Queue Auto"
+
     if not player:
-        st.session_state.draft_message = "Pick clock expired, but no available player remained."
+        player = best_available()
+
+    if not player:
+        st.session_state.draft_message = (
+            "Pick clock expired, but no available player remained."
+        )
         return False
 
-    make_pick(idx, player, "User Auto")
+    make_pick(idx, player, source)
     st.session_state.draft_message = (
         f"Pick clock expired. {player} was auto-selected for "
         f"{st.session_state.user_team}."
@@ -2714,18 +2985,46 @@ def render_player_picker_table(
     current_idx: int,
     allow_draft: bool = True,
 ):
+    clean_player_queue()
     pool = filtered_draft_pool()
+
     if pool.empty:
         st.warning("No available players match this filter.")
         return
 
     headers = [
-        "", "RK", "PLAYER", "POS", "ADP", "TIER", "SCORE",
-        "PROJ", "AVG", "RUSH", "REC", "PASS", "BYE", ""
+        "",
+        "",
+        "RK",
+        "PLAYER",
+        "POS",
+        "ADP",
+        "TIER",
+        "SCORE",
+        "PROJ",
+        "AVG",
+        "RUSH",
+        "REC",
+        "PASS",
+        "BYE",
+        "VAL",
     ]
     widths = [
-        0.42, 0.46, 2.1, 0.55, 0.56, 0.56, 0.60,
-        0.60, 0.60, 0.62, 0.62, 0.62, 0.54, 0.42
+        0.38,
+        0.36,
+        0.40,
+        1.65,
+        0.46,
+        0.50,
+        0.48,
+        0.54,
+        0.56,
+        0.54,
+        0.54,
+        0.54,
+        0.54,
+        0.46,
+        0.48,
     ]
 
     header_cols = st.columns(widths)
@@ -2752,23 +3051,27 @@ def render_player_picker_table(
             adp = numeric(row.get("consensus_adp"), None)
             tier = clean(row.get("tier", ""))
             score = numeric(row.get("peter_score"), None)
-
             proj = numeric(row.get("proj_pts"), None)
             avg = numeric(row.get("proj_avg"), None)
-            rush = row.get("rush_yds", "")
-            rec = row.get("rec_yds", "")
-            pas = row.get("pass_yds", "")
-            bye = row.get("bye", "")
 
             adp_text = "—" if adp is None else f"{adp:.1f}"
             score_text = "—" if score is None else f"{score:.0f}"
             proj_text = "—" if proj is None else f"{proj:.1f}"
             avg_text = "—" if avg is None else f"{avg:.1f}"
-            rush_text = clean(rush) or "—"
-            rec_text = clean(rec) or "—"
-            pass_text = clean(pas) or "—"
-            bye_text = clean(bye) or "—"
-            pos_class = pos if pos in {"QB", "RB", "WR", "TE"} else "OTHER"
+            rush_text = clean(row.get("rush_yds", "")) or "—"
+            rec_text = clean(row.get("rec_yds", "")) or "—"
+            pass_text = clean(row.get("pass_yds", "")) or "—"
+            bye_text = clean(row.get("bye", "")) or "—"
+            value_text, value_class = player_value_badge(
+                row,
+                current_idx,
+            )
+            pos_class = (
+                pos
+                if pos in {"QB", "RB", "WR", "TE"}
+                else "OTHER"
+            )
+            in_queue = player in st.session_state.player_queue
 
             cols = st.columns(widths)
 
@@ -2783,11 +3086,27 @@ def render_player_picker_table(
                 args=(player,),
             )
 
-            cols[1].markdown(
+            if cols[1].button(
+                "★" if in_queue else "☆",
+                key=f"queue_star_{current_idx}_{player}",
+                use_container_width=True,
+                help=(
+                    f"Remove {player} from queue"
+                    if in_queue
+                    else f"Add {player} to queue"
+                ),
+            ):
+                if in_queue:
+                    remove_from_queue(player)
+                else:
+                    add_to_queue(player)
+                st.rerun()
+
+            cols[2].markdown(
                 f"<div class='rank2'>{rank}</div>",
                 unsafe_allow_html=True,
             )
-            cols[2].markdown(
+            cols[3].markdown(
                 f"""
                 <div class='player-name2' title='{player}'>{player}</div>
                 <div class='player-sub2'>
@@ -2798,22 +3117,154 @@ def render_player_picker_table(
                 unsafe_allow_html=True,
             )
 
-            for col, value in zip(
-                cols[3:13],
-                [
-                    pos, adp_text, tier or "—", score_text, proj_text,
-                    avg_text, rush_text, rec_text, pass_text, bye_text
-                ],
-            ):
+            values = [
+                pos,
+                adp_text,
+                tier or "—",
+                score_text,
+                proj_text,
+                avg_text,
+                rush_text,
+                rec_text,
+                pass_text,
+                bye_text,
+            ]
+
+            for col, value in zip(cols[4:14], values):
                 col.markdown(
                     f"<div class='stat2'>{value}</div>",
                     unsafe_allow_html=True,
                 )
 
+            cols[14].markdown(
+                f"""
+                <div class="value-badge {value_class}">
+                    {value_text}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
             st.markdown(
                 '<div class="player-row-divider"></div>',
                 unsafe_allow_html=True,
             )
+
+
+
+
+def render_queue_panel(
+    current_idx: int,
+    allow_draft: bool,
+):
+    clean_player_queue()
+    queue = list(st.session_state.player_queue)
+
+    st.markdown(
+        f"""
+        <div class="queue-title-row">
+            <div class="queue-title">MY QUEUE</div>
+            <div class="queue-count">{len(queue)}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if not queue:
+        st.markdown(
+            """
+            <div class="queue-empty">
+                Add players with the ☆ button.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    else:
+        pmap = player_map()
+
+        for queue_index, player in enumerate(queue):
+            info = pmap.get(player, {})
+            pos = clean(info.get("position", ""))
+            nfl_team = clean(info.get("nfl_team", ""))
+
+            row_cols = st.columns(
+                [0.42, 2.0, 0.34, 0.34, 0.34]
+            )
+
+            row_cols[0].markdown(
+                f'<div class="queue-rank">{queue_index + 1}</div>',
+                unsafe_allow_html=True,
+            )
+            row_cols[1].markdown(
+                f"""
+                <div class="queue-player">{player}</div>
+                <div class="queue-player-sub">
+                    {pos} · {nfl_team}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            if row_cols[2].button(
+                "↑",
+                key=f"queue_up_{queue_index}_{player}",
+                disabled=queue_index == 0,
+                help="Move up",
+            ):
+                move_queue_player(player, -1)
+                st.rerun()
+
+            if row_cols[3].button(
+                "↓",
+                key=f"queue_down_{queue_index}_{player}",
+                disabled=queue_index == len(queue) - 1,
+                help="Move down",
+            ):
+                move_queue_player(player, 1)
+                st.rerun()
+
+            if row_cols[4].button(
+                "×",
+                key=f"queue_remove_{queue_index}_{player}",
+                help="Remove from queue",
+            ):
+                remove_from_queue(player)
+                st.rerun()
+
+    if st.button(
+        "➤ Draft Top Queue Player",
+        use_container_width=True,
+        type="primary",
+        disabled=not allow_draft or not queue,
+        key=f"draft_top_queue_{current_idx}",
+    ):
+        draft_top_queue_player()
+        st.rerun()
+
+    utility_left, utility_right = st.columns(
+        [0.90, 1.25]
+    )
+
+    with utility_left:
+        if st.button(
+            "Clear Queue",
+            use_container_width=True,
+            disabled=not queue,
+            key="clear_queue_button",
+        ):
+            clear_player_queue()
+            st.rerun()
+
+    with utility_right:
+        st.toggle(
+            "Auto-draft from Queue",
+            key="queue_auto_draft",
+            help=(
+                "At 0:00, draft your top queued player. "
+                "If the queue is empty, use best available."
+            ),
+        )
+
 
 
 def render_player_picker(
@@ -3044,7 +3495,7 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync Public Beta · v4.6</div>',
+        '<div class="sidebar-version">FantasySync Public Beta · v5.0</div>',
         unsafe_allow_html=True,
     )
 
@@ -3141,8 +3592,8 @@ if selected_page == "Draft Room":
             owner = clean(current["current_owner"])
             user_turn = owner == clean(st.session_state.user_team)
 
-            filter_col, player_table_col = st.columns(
-                [1.05, 5.95],
+            filter_col, player_table_col, queue_col = st.columns(
+                [1.05, 4.70, 1.62],
                 gap="small",
             )
 
@@ -3155,6 +3606,13 @@ if selected_page == "Draft Room":
                     idx,
                     allow_draft=user_turn,
                 )
+
+            with queue_col:
+                with st.container(key="queue_panel"):
+                    render_queue_panel(
+                        idx,
+                        allow_draft=user_turn,
+                    )
 
             # Overlay controls pinned to the dock's top-right corner.
             with st.container(key="dock_controls"):
