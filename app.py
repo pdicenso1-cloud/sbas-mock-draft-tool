@@ -1757,6 +1757,548 @@ button[kind="primary"] span {
     border: 1px solid #EF4444;
 }
 
+
+/* ============================================================
+   FantasySync v5.1 — Sleeper-inspired professional UI
+   This final layer intentionally overrides the accumulated
+   historical CSS without changing draft behavior.
+   ============================================================ */
+
+:root {
+    --fs-bg-0: #07101C;
+    --fs-bg-1: #0A1422;
+    --fs-bg-2: #101B2B;
+    --fs-card: #111D2E;
+    --fs-card-hover: #16243A;
+    --fs-border-soft: rgba(148, 163, 184, .15);
+    --fs-border: rgba(148, 163, 184, .24);
+    --fs-text: #F8FAFC;
+    --fs-subtle: #AEB9C9;
+    --fs-muted: #74839A;
+    --fs-blue: #3B82F6;
+    --fs-blue-soft: rgba(59, 130, 246, .18);
+    --fs-green: #22C55E;
+    --fs-coral: #F15B52;
+}
+
+[data-testid="stAppViewContainer"] {
+    background:
+        radial-gradient(circle at 40% -20%, rgba(37, 99, 235, .10), transparent 34%),
+        linear-gradient(180deg, var(--fs-bg-0), var(--fs-bg-1)) !important;
+}
+
+[data-testid="stHeader"] {
+    background: transparent !important;
+}
+
+.main .block-container {
+    max-width: none !important;
+    padding: .72rem 1.05rem 2rem 1.05rem !important;
+}
+
+/* Slim product header */
+.app-header-copy {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.app-header-title {
+    font-size: clamp(1.35rem, 1.75vw, 1.82rem) !important;
+    line-height: 1.1 !important;
+    letter-spacing: -.026em !important;
+    white-space: nowrap !important;
+}
+
+.app-header-subtitle {
+    font-size: .64rem !important;
+    margin-top: 3px !important;
+    color: var(--fs-muted) !important;
+    -webkit-text-fill-color: var(--fs-muted) !important;
+}
+
+.st-key-compact_header_actions button {
+    min-height: 36px !important;
+    height: 36px !important;
+    border-radius: 8px !important;
+    font-size: .70rem !important;
+    border: 1px solid var(--fs-border) !important;
+}
+
+.st-key-compact_header_actions button[kind="primary"] {
+    background: var(--fs-coral) !important;
+    border-color: transparent !important;
+}
+
+/* Sidebar */
+section[data-testid="stSidebar"] {
+    background:
+        linear-gradient(180deg, #07111E 0%, #0A1524 100%) !important;
+    border-right: 1px solid var(--fs-border-soft) !important;
+}
+
+section[data-testid="stSidebar"] > div {
+    padding: .65rem .65rem 1rem .65rem !important;
+}
+
+.sidebar-brand {
+    min-height: 48px;
+    border-bottom: 1px solid var(--fs-border-soft) !important;
+    margin-bottom: 10px !important;
+    padding: 5px 7px 12px 7px !important;
+}
+
+.sidebar-brand-icon {
+    font-size: 1.45rem !important;
+}
+
+.sidebar-brand-name {
+    font-size: 1.02rem !important;
+    letter-spacing: -.02em !important;
+}
+
+.sidebar-section-label {
+    color: #65758C !important;
+    font-size: .54rem !important;
+    margin: 8px 8px 5px 8px !important;
+}
+
+section[data-testid="stSidebar"] [data-testid="stRadio"] label {
+    min-height: 39px !important;
+    border-radius: 7px !important;
+    padding: 7px 9px !important;
+}
+
+section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {
+    background: linear-gradient(90deg, #173C73, #12315D) !important;
+    border-color: rgba(96, 165, 250, .26) !important;
+    box-shadow: inset 3px 0 0 #60A5FA !important;
+}
+
+section[data-testid="stSidebar"] [data-testid="stRadio"] label p {
+    font-size: .72rem !important;
+    font-weight: 700 !important;
+}
+
+.sidebar-league-card {
+    background: rgba(255,255,255,.025) !important;
+    border-color: var(--fs-border-soft) !important;
+    border-radius: 8px !important;
+    padding: 9px 10px !important;
+}
+
+.sidebar-league-name {
+    font-size: .66rem !important;
+}
+
+.sidebar-league-meta {
+    font-size: .58rem !important;
+}
+
+/* Draft summary bar */
+.fs-draft-summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 28px;
+    margin: 1px 0 8px 0;
+}
+
+.fs-summary-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 25px;
+    padding: 0 10px;
+    border: 1px solid var(--fs-border-soft);
+    background: rgba(255,255,255,.025);
+    border-radius: 6px;
+    color: var(--fs-subtle);
+    font-size: .61rem;
+    font-weight: 700;
+}
+
+.fs-summary-chip.cpu {
+    color: #74E597;
+    background: rgba(34,197,94,.08);
+    border-color: rgba(34,197,94,.28);
+}
+
+/* Draft heading */
+.draft-room-heading {
+    min-height: 39px !important;
+    margin: 0 0 5px 0 !important;
+}
+
+.draft-room-title {
+    font-size: 1.26rem !important;
+    letter-spacing: -.026em !important;
+}
+
+.draft-clock-block {
+    min-width: 215px !important;
+    text-align: right !important;
+    padding-right: 4px;
+}
+
+.draft-clock-label {
+    font-size: .57rem !important;
+    color: var(--fs-muted) !important;
+}
+
+.draft-clock-value {
+    font-size: 1rem !important;
+    margin-top: 3px !important;
+}
+
+/* Workspace */
+.st-key-draft_workspace {
+    border-top: 1px solid var(--fs-border-soft);
+    padding-top: 7px !important;
+}
+
+.st-key-board_workspace_panel {
+    padding-right: 8px !important;
+}
+
+.st-key-board_roster_panel {
+    height: calc(100vh - 205px) !important;
+    min-height: 475px !important;
+    background: linear-gradient(180deg, rgba(17,29,46,.96), rgba(13,23,38,.96)) !important;
+    border: 1px solid var(--fs-border-soft) !important;
+    border-radius: 9px !important;
+    padding: 0 9px 10px 9px !important;
+    overflow-y: auto !important;
+}
+
+.st-key-board_roster_panel .roster-header-row {
+    background: #111D2E !important;
+    height: 46px !important;
+    min-height: 46px !important;
+    border-bottom: 1px solid var(--fs-border-soft) !important;
+    padding: 0 2px 5px 2px !important;
+}
+
+.roster-header-label {
+    color: #72A7FF !important;
+    font-size: .73rem !important;
+    text-decoration: none !important;
+}
+
+.roster-header-team {
+    font-size: .75rem !important;
+}
+
+.roster-header-count {
+    font-size: .56rem !important;
+}
+
+.st-key-board_roster_panel .roster-line {
+    min-height: 36px !important;
+    padding: 2px 1px !important;
+    border-bottom-color: rgba(148,163,184,.10) !important;
+}
+
+.roster-slot-pill {
+    width: 35px !important;
+    height: 25px !important;
+    border-radius: 5px !important;
+    font-size: .55rem !important;
+}
+
+.roster-line {
+    grid-template-columns: 38px minmax(0,1fr) !important;
+    column-gap: 7px !important;
+}
+
+.roster-line-player {
+    font-size: .64rem !important;
+}
+
+.roster-inline-pos {
+    font-size: .52rem !important;
+}
+
+/* Snake board */
+.snake-board-wrap,
+.snake-board-shell {
+    width: 100%;
+}
+
+.snake-team-select {
+    min-height: 42px !important;
+    border-radius: 7px !important;
+    background: rgba(17,29,46,.82) !important;
+    border-color: var(--fs-border-soft) !important;
+    transition: .12s ease !important;
+}
+
+.snake-team-select:hover {
+    background: var(--fs-card-hover) !important;
+    border-color: rgba(96,165,250,.28) !important;
+}
+
+.snake-team-select.active {
+    background: linear-gradient(180deg, #245C65, #1D4F59) !important;
+    border-color: #54D3C3 !important;
+}
+
+.snake-team-select .slot-num {
+    font-size: .52rem !important;
+}
+
+.snake-team-select .team-label {
+    font-size: .57rem !important;
+}
+
+.snake-cell {
+    min-height: 57px !important;
+    border-radius: 6px !important;
+    padding: 5px 6px !important;
+    background: rgba(14,24,39,.86);
+    border-color: var(--fs-border-soft) !important;
+    transition: transform .10s ease, border-color .10s ease, filter .10s ease !important;
+}
+
+.snake-cell:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.10);
+}
+
+.snake-cell.empty-pick {
+    background: rgba(13,22,36,.72) !important;
+}
+
+.snake-cell.pos-qb {
+    background: linear-gradient(150deg, rgba(58,112,185,.58), rgba(22,51,88,.96)) !important;
+    border-color: rgba(96,165,250,.38) !important;
+}
+.snake-cell.pos-rb {
+    background: linear-gradient(150deg, rgba(31,133,82,.60), rgba(17,72,53,.96)) !important;
+    border-color: rgba(74,222,128,.38) !important;
+}
+.snake-cell.pos-wr {
+    background: linear-gradient(150deg, rgba(30,96,195,.64), rgba(22,52,105,.96)) !important;
+    border-color: rgba(96,165,250,.42) !important;
+}
+.snake-cell.pos-te {
+    background: linear-gradient(150deg, rgba(174,103,24,.72), rgba(91,52,15,.97)) !important;
+    border-color: rgba(251,191,36,.38) !important;
+}
+
+.snake-pick {
+    font-size: .52rem !important;
+}
+
+.snake-player {
+    font-size: .65rem !important;
+    margin-top: 3px !important;
+}
+
+.player-tile-badge {
+    font-size: .49rem !important;
+    padding: 1px 6px !important;
+}
+
+.tile-nfl,
+.tile-owner {
+    font-size: .49rem !important;
+}
+
+.snake-cell.current-pick {
+    border-color: #60A5FA !important;
+    box-shadow: 0 0 0 1px #60A5FA, inset 0 0 22px rgba(59,130,246,.15) !important;
+    animation: none !important;
+}
+
+/* Embedded recommendation panel */
+.fs-rec-card {
+    margin-top: 11px;
+    border: 1px solid rgba(96,165,250,.24);
+    border-radius: 8px;
+    background: linear-gradient(180deg, rgba(17,31,51,.98), rgba(12,23,39,.98));
+    padding: 10px;
+}
+
+.fs-rec-eyebrow {
+    color: #69A0FF;
+    font-size: .57rem;
+    font-weight: 900;
+    letter-spacing: .05em;
+}
+
+.fs-rec-name {
+    color: var(--fs-text);
+    font-size: .82rem;
+    font-weight: 850;
+    margin-top: 5px;
+}
+
+.fs-rec-meta {
+    color: var(--fs-subtle);
+    font-size: .55rem;
+    margin-top: 2px;
+}
+
+.fs-rec-reason {
+    color: #C6D2E2;
+    font-size: .54rem;
+    margin-top: 6px;
+    line-height: 1.35;
+}
+
+.fs-confidence {
+    float: right;
+    color: #75E59A;
+    font-size: .65rem;
+    font-weight: 850;
+}
+
+/* Bottom player tray */
+.st-key-draft_drawer {
+    background: rgba(14,25,42,.985) !important;
+    border-top: 1px solid rgba(96,165,250,.23) !important;
+    box-shadow: 0 -10px 24px rgba(0,0,0,.28) !important;
+    padding: .42rem .62rem !important;
+}
+
+.st-key-player_filter_rail {
+    background: rgba(8,17,29,.22);
+    border-right: 1px solid var(--fs-border-soft) !important;
+    padding-right: 8px !important;
+}
+
+.st-key-player_filter_rail [data-testid="stTextInputRootElement"] {
+    background: #0A1422 !important;
+    border: 1px solid var(--fs-border-soft) !important;
+    border-radius: 8px !important;
+}
+
+.st-key-player_filter_rail button {
+    border-radius: 7px !important;
+    background: #101B2B !important;
+    border-color: var(--fs-border-soft) !important;
+}
+
+.st-key-player_filter_rail button[kind="primary"] {
+    background: #2E69D1 !important;
+    border-color: #5790F2 !important;
+}
+
+.player-table-header2 {
+    color: #7F8DA3 !important;
+    -webkit-text-fill-color: #7F8DA3 !important;
+    font-size: .53rem !important;
+    letter-spacing: .03em;
+}
+
+.player-header-divider {
+    background: rgba(148,163,184,.18) !important;
+    margin: 5px 0 2px 0 !important;
+}
+
+.st-key-war_player_list {
+    background: transparent !important;
+}
+
+.st-key-war_player_list [data-testid="stHorizontalBlock"] {
+    min-height: 38px !important;
+    padding: 1px 0 2px 0 !important;
+}
+
+.player-row-divider {
+    background: rgba(148,163,184,.11) !important;
+    margin: 1px 0 !important;
+}
+
+.player-name2 {
+    font-size: .64rem !important;
+}
+
+.player-sub2 {
+    font-size: .50rem !important;
+    color: #8796AB !important;
+    -webkit-text-fill-color: #8796AB !important;
+}
+
+.stat2,
+.rank2 {
+    font-size: .56rem !important;
+}
+
+.st-key-war_player_list button {
+    width: 25px !important;
+    min-width: 25px !important;
+    height: 25px !important;
+    min-height: 25px !important;
+    background: #0A1422 !important;
+    border-color: rgba(148,163,184,.25) !important;
+}
+
+.st-key-war_player_list button:hover {
+    background: #1C8C4D !important;
+    border-color: #32C96B !important;
+}
+
+.value-badge {
+    height: 20px !important;
+    min-width: 27px !important;
+    border-radius: 4px !important;
+    font-size: .50rem !important;
+}
+
+/* Queue */
+.st-key-queue_panel {
+    background: rgba(7,16,28,.26);
+    border-left-color: var(--fs-border-soft) !important;
+}
+
+.queue-title {
+    font-size: .62rem !important;
+}
+
+.queue-rank {
+    width: 23px !important;
+    height: 24px !important;
+    background: #255EC1 !important;
+}
+
+.queue-player {
+    font-size: .59rem !important;
+}
+
+.queue-player-sub {
+    font-size: .47rem !important;
+}
+
+.st-key-queue_panel button {
+    height: 24px !important;
+    min-height: 24px !important;
+}
+
+.st-key-dock_controls {
+    background: #091321 !important;
+    border-color: var(--fs-border) !important;
+}
+
+/* Suppress Streamlit visual noise */
+[data-testid="stStatusWidget"],
+[data-testid="stDecoration"] {
+    display: none !important;
+}
+
+div[data-testid="stExpander"] {
+    border-color: var(--fs-border-soft) !important;
+    background: rgba(10,20,34,.38) !important;
+}
+
+@media (max-width: 1050px) {
+    .app-header-subtitle {
+        display: none;
+    }
+    .draft-clock-block {
+        min-width: 165px !important;
+    }
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -2961,6 +3503,49 @@ def render_live_roster_rows():
         )
 
 
+
+def render_sleeper_recommendation_card():
+    """Compact recommendation card used inside the live draft workspace."""
+    idx = current_open_index()
+    if idx is None:
+        return
+
+    recs = recommendations(limit=1)
+    if recs.empty:
+        return
+
+    row = recs.iloc[0]
+    player = clean(row.get("player", ""))
+    pos = clean(row.get("position", ""))
+    team = clean(row.get("nfl_team", ""))
+    adp = numeric(row.get("consensus_adp"), None)
+    score = numeric(row.get("recommendation_score"), None)
+
+    adp_text = "—" if adp is None else f"{adp:.1f}"
+    confidence = 88
+    if score is not None:
+        confidence = max(70, min(98, int(round(76 + score * 2))))
+
+    st.markdown(
+        f"""
+        <div class="fs-rec-card">
+            <div class="fs-rec-eyebrow">
+                ★ FANTASYSYNC RECOMMENDATION
+                <span class="fs-confidence">{confidence}%</span>
+            </div>
+            <div class="fs-rec-name">{player}</div>
+            <div class="fs-rec-meta">{pos} · {team} &nbsp; ADP {adp_text}</div>
+            <div class="fs-rec-reason">
+                Best blend of available value, roster fit, and upcoming
+                positional scarcity.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+
 def render_live_user_roster():
     render_live_roster_header()
     render_live_roster_rows()
@@ -3337,11 +3922,10 @@ with header_copy_col:
         """
         <div class="app-header-copy">
             <div class="app-header-title">
-                🏈 Susan Boyles Ass Sweat — Mock Draft Tool
+                🏈 FantasySync — Susan Boyles Ass Sweat
             </div>
             <div class="app-header-subtitle">
-                Live 10-team mock draft room with keepers, animated CPU picks,
-                and team-aware recommendations.
+                Professional mock draft room · live queue · team-aware recommendations.
             </div>
         </div>
         """,
@@ -3495,12 +4079,39 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync Public Beta · v5.0</div>',
+        '<div class="sidebar-version">FantasySync · Sleeper UI v5.1</div>',
         unsafe_allow_html=True,
     )
 
 if selected_page == "Draft Room":
     idx = current_open_index()
+
+    if idx is None:
+        summary_round = int(st.session_state.rounds)
+        summary_pick = len(st.session_state.picks)
+    else:
+        summary_round = int(st.session_state.picks.loc[idx, "round"])
+        summary_pick = int(st.session_state.picks.loc[idx, "overall"])
+
+    variance_label = (
+        "VARIANCE ON"
+        if st.session_state.cpu_variance_enabled
+        else "CPU CHALK"
+    )
+
+    st.markdown(
+        f"""
+        <div class="fs-draft-summary">
+            <div class="fs-summary-chip">
+                Round {summary_round} · Pick {summary_pick}
+            </div>
+            <div class="fs-summary-chip">10-Team · Half PPR</div>
+            <div class="fs-summary-chip">Snake Draft</div>
+            <div class="fs-summary-chip cpu">● {variance_label}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     if idx is None:
         draft_clock_label = "Draft Status"
@@ -3582,6 +4193,7 @@ if selected_page == "Draft Room":
             with st.container(key="board_roster_panel"):
                 render_live_roster_header()
                 render_live_roster_rows()
+                render_sleeper_recommendation_card()
 
     # Movable full-width player selector at the bottom.
     with st.container(key="draft_drawer"):
