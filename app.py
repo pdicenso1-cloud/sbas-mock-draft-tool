@@ -1,6 +1,8 @@
 
 from __future__ import annotations
 
+import random
+
 import json
 import math
 import time
@@ -1728,6 +1730,8 @@ def init_state(force=False):
         "clock_running": False,
         "clock_paused_remaining": 60,
         "dock_level": 1,
+        "cpu_variance_enabled": None,
+        "cpu_variance_seed": None,
     }
     for key, value in defaults.items():
         if force or key not in st.session_state:
@@ -1832,6 +1836,67 @@ def current_open_index() -> Optional[int]:
     return None
 
 
+
+def initialize_cpu_variance():
+    """
+    Choose one CPU behavior mode for the entire mock draft.
+
+    Roughly 25% of drafts use mild top-five variance.
+    The remaining drafts use strict best available.
+    """
+    if st.session_state.cpu_variance_enabled is None:
+        seed = random.SystemRandom().randint(1, 2_147_483_647)
+        st.session_state.cpu_variance_seed = seed
+        rng = random.Random(seed)
+        st.session_state.cpu_variance_enabled = rng.random() < 0.25
+
+
+def reset_cpu_variance():
+    """Choose a fresh CPU behavior mode for a newly reset draft."""
+    st.session_state.cpu_variance_enabled = None
+    st.session_state.cpu_variance_seed = None
+    initialize_cpu_variance()
+
+
+def cpu_best_available() -> Optional[str]:
+    """
+    Select the CPU player.
+
+    Normal drafts take the best available player.
+    Variance drafts choose among the top five with a strong top-heavy bias.
+    """
+    df = available_players()
+    if df.empty:
+        return None
+
+    initialize_cpu_variance()
+
+    if not st.session_state.cpu_variance_enabled:
+        return clean(df.iloc[0]["player"])
+
+    candidates = df.head(5).reset_index(drop=True)
+    weights = [45, 25, 15, 10, 5][: len(candidates)]
+
+    idx = current_open_index()
+    overall_pick = 0
+    if idx is not None:
+        overall_pick = int(
+            st.session_state.picks.loc[idx, "overall"]
+        )
+
+    seed = int(st.session_state.cpu_variance_seed or 0)
+    rng = random.Random(seed + overall_pick * 10_007)
+
+    selected_index = rng.choices(
+        range(len(candidates)),
+        weights=weights,
+        k=1,
+    )[0]
+
+    return clean(candidates.iloc[selected_index]["player"])
+
+
+
 def best_available() -> Optional[str]:
     df = available_players()
     return None if df.empty else clean(df.iloc[0]["player"])
@@ -1894,7 +1959,7 @@ def run_one_cpu_pick() -> bool:
     if owner == clean(st.session_state.user_team):
         return False
 
-    player = best_available()
+    player = cpu_best_available()
     if not player:
         st.session_state.draft_message = "No available players remain."
         return False
@@ -1922,7 +1987,7 @@ def run_cpu_until_user():
                 f"CPU completed {made} pick(s)."
             )
             break
-        player = best_available()
+        player = cpu_best_available()
         if not player:
             st.session_state.draft_message = "No available players remain."
             break
@@ -2072,7 +2137,10 @@ def rebuild_draft():
         st.session_state.keepers,
         st.session_state.teams,
     )
-    st.session_state.draft_message = "Draft reset with current teams, keepers, and draft order."
+    reset_cpu_variance()
+    st.session_state.draft_message = (
+        "Draft reset with current teams, keepers, and draft order."
+    )
     reset_pick_clock()
 
 
@@ -2776,6 +2844,7 @@ def render_recommendation_cards(recs: pd.DataFrame):
 
 
 init_state()
+initialize_cpu_variance()
 apply_team_query_selection()
 render_dynamic_dock_css()
 
@@ -2975,7 +3044,7 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync Public Beta · v4.5</div>',
+        '<div class="sidebar-version">FantasySync Public Beta · v4.6</div>',
         unsafe_allow_html=True,
     )
 
@@ -3404,6 +3473,18 @@ elif selected_page == "Settings":
                     st.error(
                         f"Could not load draft state: {exc}"
                     )
+
+        st.markdown("#### CPU Draft Behavior")
+        variance_status = (
+            "Mild top-five variance"
+            if st.session_state.cpu_variance_enabled
+            else "Strict best available"
+        )
+        st.info(
+            f"Current draft mode: **{variance_status}**. "
+            "A fresh mode is chosen whenever the draft is reset. "
+            "About one out of every four drafts uses mild variance."
+        )
 
         st.markdown("#### Display")
         st.info(
