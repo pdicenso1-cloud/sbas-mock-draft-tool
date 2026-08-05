@@ -1186,6 +1186,21 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] label p {
     }
 }
 
+
+/* v4.2 prevent compact header from clipping under Streamlit toolbar */
+.main .block-container {
+    padding-top: 1.15rem !important;
+}
+.app-header-copy {
+    padding-top: 2px !important;
+    overflow: visible !important;
+}
+.app-header-title {
+    line-height: 1.08 !important;
+    padding-top: 1px !important;
+    overflow: visible !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -2531,7 +2546,7 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync Public Beta · v4.1</div>',
+        '<div class="sidebar-version">FantasySync Public Beta · v4.2</div>',
         unsafe_allow_html=True,
     )
 
