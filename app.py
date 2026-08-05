@@ -1201,6 +1201,121 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] label p {
     overflow: visible !important;
 }
 
+
+/* v4.3 approved professional workspace */
+
+/* Keep the title fully visible while making it slightly smaller. */
+.main .block-container {
+    padding-top: 1.35rem !important;
+}
+.app-header-copy {
+    padding-top: 5px !important;
+    overflow: visible !important;
+}
+.app-header-title {
+    font-size: clamp(1.48rem, 2.05vw, 2.05rem) !important;
+    line-height: 1.16 !important;
+    padding-top: 2px !important;
+    overflow: visible !important;
+}
+.app-header-subtitle {
+    margin-top: 5px !important;
+    font-size: .68rem !important;
+}
+
+/* Main draft workspace: snake board left, roster right. */
+.st-key-draft_workspace {
+    margin-top: 2px !important;
+    padding-bottom: 4px !important;
+}
+.st-key-draft_workspace > div > div > [data-testid="stHorizontalBlock"] {
+    align-items: flex-start !important;
+}
+.st-key-board_workspace_panel {
+    padding-right: 4px !important;
+}
+.st-key-board_roster_panel {
+    height: calc(100vh - 235px) !important;
+    min-height: 455px !important;
+    overflow-y: auto !important;
+    border-left: 1px solid rgba(150,170,210,.20) !important;
+    padding: 0 50px 8px 14px !important;
+    margin: 0 !important;
+}
+.st-key-board_roster_panel [data-testid="stVerticalBlock"] {
+    gap: 0 !important;
+}
+.st-key-board_roster_panel .roster-header-row {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    background: #0E1726;
+    height: 48px !important;
+    min-height: 48px !important;
+    margin: 0 0 5px 0 !important;
+    padding: 0 0 6px 0 !important;
+}
+.st-key-board_roster_panel .roster-line {
+    min-height: 42px !important;
+    padding: 3px 0 !important;
+}
+
+/* Bottom dock now contains only the available-player experience. */
+.st-key-draft_drawer {
+    padding: .35rem .65rem .42rem .65rem !important;
+}
+.st-key-player_filter_rail {
+    border-right: 1px solid rgba(150,170,210,.18) !important;
+    padding-right: 10px !important;
+}
+.st-key-player_filter_rail [data-testid="stVerticalBlock"] {
+    gap: 6px !important;
+}
+.st-key-player_filter_rail [data-testid="stTextInputRootElement"] {
+    min-height: 36px !important;
+}
+.st-key-player_filter_rail button {
+    min-height: 31px !important;
+    height: 31px !important;
+    padding: 0 8px !important;
+    font-size: .67rem !important;
+    font-weight: 800 !important;
+}
+
+/* Tighter available-player rows so more names fit on screen. */
+.st-key-war_player_list [data-testid="stHorizontalBlock"] {
+    min-height: 40px !important;
+    padding: 1px 0 3px 0 !important;
+}
+.st-key-war_player_list [data-testid="stButton"] button {
+    width: 27px !important;
+    min-width: 27px !important;
+    height: 27px !important;
+    min-height: 27px !important;
+}
+.player-name2 {
+    font-size: .70rem !important;
+    line-height: 1.02 !important;
+    padding-top: 1px !important;
+}
+.player-sub2 {
+    font-size: .55rem !important;
+    margin-top: 1px !important;
+    margin-bottom: 2px !important;
+}
+.stat2,
+.rank2 {
+    font-size: .61rem !important;
+}
+.player-row-divider {
+    margin: 2px 0 1px 0 !important;
+}
+
+/* Board should use the extra vertical space reclaimed from the header. */
+.snake-board-wrap {
+    margin-top: 2px !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -1322,9 +1437,9 @@ def init_state(force=False):
 
 
 DOCK_LEVELS = {
-    0: {"name": "Compact", "dock_vh": 24, "list_px": 165, "roster_vh": 20},
-    1: {"name": "Standard", "dock_vh": 38, "list_px": 330, "roster_vh": 34},
-    2: {"name": "Expanded", "dock_vh": 64, "list_px": 590, "roster_vh": 59},
+    0: {"name": "Compact", "dock_vh": 24, "list_px": 178, "roster_vh": 20},
+    1: {"name": "Standard", "dock_vh": 38, "list_px": 350, "roster_vh": 34},
+    2: {"name": "Expanded", "dock_vh": 64, "list_px": 620, "roster_vh": 59},
 }
 
 
@@ -1350,18 +1465,8 @@ def render_dynamic_dock_css():
             overflow: hidden !important;
             transition: height .22s ease-in-out !important;
         }}
-        .st-key-war_roster_panel {{
-            height: calc({settings["roster_vh"]}vh - 52px) !important;
-            max-height: calc({settings["roster_vh"]}vh - 52px) !important;
-            overflow-y: auto !important;
-        }}
         .st-key-draft_drawer {{
             position: fixed !important;
-        }}
-        .st-key-roster_and_controls {{
-            height: {settings["roster_vh"]}vh !important;
-            overflow: hidden !important;
-            padding-right: 50px !important;
         }}
         .st-key-dock_controls {{
             position: absolute !important;
@@ -2047,6 +2152,31 @@ def render_position_filter():
             st.rerun()
 
 
+
+def render_player_filter_rail():
+    ensure_draft_filters()
+
+    st.text_input(
+        "Search available players",
+        key="draft_search",
+        placeholder="🔍 Find player",
+        label_visibility="collapsed",
+    )
+
+    positions = ["ALL", "QB", "RB", "WR", "TE"]
+    for pos in positions:
+        active = st.session_state.draft_position_filter == pos
+        if st.button(
+            pos,
+            key=f"draft_rail_pos_{pos}",
+            use_container_width=True,
+            type="primary" if active else "secondary",
+        ):
+            st.session_state.draft_position_filter = pos
+            st.rerun()
+
+
+
 def filtered_draft_pool() -> pd.DataFrame:
     pool = available_players().copy()
     selected_pos = st.session_state.draft_position_filter
@@ -2546,7 +2676,7 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync Public Beta · v4.2</div>',
+        '<div class="sidebar-version">FantasySync Public Beta · v4.3</div>',
         unsafe_allow_html=True,
     )
 
@@ -2586,25 +2716,55 @@ if selected_page == "Draft Room":
     if st.session_state.draft_message:
         st.info(st.session_state.draft_message)
 
-    st.markdown(snake_board_html(), unsafe_allow_html=True)
-
-    with st.expander("View Draft Log", expanded=False):
-        display = st.session_state.picks[[
-            "overall", "round", "slot", "current_owner",
-            "keeper_player", "selected_player", "source"
-        ]].copy()
-        display.columns = [
-            "Overall", "Round", "Slot", "Current Owner",
-            "Keeper", "Player Selected", "Source"
-        ]
-        st.dataframe(
-            display,
-            use_container_width=True,
-            hide_index=True,
-            height=460,
+    # Approved workspace: board on the left, live roster on the right.
+    with st.container(key="draft_workspace"):
+        board_col, roster_col = st.columns(
+            [5.15, 1.65],
+            gap="small",
         )
 
-    # Persistent draft panel with player list flush to the top.
+        with board_col:
+            with st.container(key="board_workspace_panel"):
+                st.markdown(
+                    snake_board_html(),
+                    unsafe_allow_html=True,
+                )
+
+                with st.expander(
+                    "View Draft Log",
+                    expanded=False,
+                ):
+                    display = st.session_state.picks[[
+                        "overall",
+                        "round",
+                        "slot",
+                        "current_owner",
+                        "keeper_player",
+                        "selected_player",
+                        "source",
+                    ]].copy()
+                    display.columns = [
+                        "Overall",
+                        "Round",
+                        "Slot",
+                        "Current Owner",
+                        "Keeper",
+                        "Player Selected",
+                        "Source",
+                    ]
+                    st.dataframe(
+                        display,
+                        use_container_width=True,
+                        hide_index=True,
+                        height=460,
+                    )
+
+        with roster_col:
+            with st.container(key="board_roster_panel"):
+                render_live_roster_header()
+                render_live_roster_rows()
+
+    # Movable full-width player selector at the bottom.
     with st.container(key="draft_drawer"):
         if idx is None:
             st.success("Draft complete")
@@ -2613,40 +2773,20 @@ if selected_page == "Draft Room":
             owner = clean(current["current_owner"])
             user_turn = owner == clean(st.session_state.user_team)
 
-            # Shared top row: keep the roster header aligned with the filters.
-            top_available, top_roster = st.columns(
-                [4.35, 1.87],
+            filter_col, player_table_col = st.columns(
+                [1.05, 5.95],
                 gap="small",
             )
 
-            with top_available:
-                render_player_picker_controls()
+            with filter_col:
+                with st.container(key="player_filter_rail"):
+                    render_player_filter_rail()
 
-            with top_roster:
-                with st.container(key="roster_header_anchor"):
-                    with st.container(key="roster_header_panel"):
-                        render_live_roster_header()
-
-                    # Roster slots are positioned directly beneath the header,
-                    # independent of the player-table header height on the left.
-                    with st.container(key="roster_rows_overlay"):
-                        with st.container(key="war_roster_panel"):
-                            render_live_roster_rows()
-
-            # Player table remains in its own left-side content row.
-            content_available, content_spacer = st.columns(
-                [4.35, 1.87],
-                gap="small",
-            )
-
-            with content_available:
+            with player_table_col:
                 render_player_picker_table(
                     idx,
                     allow_draft=user_turn,
                 )
-
-            with content_spacer:
-                st.empty()
 
             # Overlay controls pinned to the dock's top-right corner.
             with st.container(key="dock_controls"):
