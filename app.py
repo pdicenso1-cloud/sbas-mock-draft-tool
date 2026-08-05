@@ -1316,6 +1316,49 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] label p {
     margin-top: 2px !important;
 }
 
+
+/* v4.4 make the fixed player dock follow the Streamlit sidebar */
+.st-key-draft_drawer {
+    left: 0 !important;
+    width: auto !important;
+    transition:
+        left .22s ease-in-out,
+        height .22s ease-in-out !important;
+}
+
+/* Streamlit's desktop sidebar is approximately 21rem wide. */
+body:has(section[data-testid="stSidebar"][aria-expanded="true"])
+    .st-key-draft_drawer {
+    left: 21rem !important;
+}
+
+/* Some Streamlit builds expose the open state without aria-expanded. */
+body:has(
+    section[data-testid="stSidebar"]:not([aria-expanded="false"])
+)
+    .st-key-draft_drawer {
+    left: 21rem !important;
+}
+
+/* When the sidebar is explicitly collapsed, return to full width. */
+body:has(section[data-testid="stSidebar"][aria-expanded="false"])
+    .st-key-draft_drawer {
+    left: 0 !important;
+}
+
+/* On narrower displays the sidebar overlays the page, so keep the dock full width. */
+@media (max-width: 900px) {
+    .st-key-draft_drawer,
+    body:has(section[data-testid="stSidebar"][aria-expanded="true"])
+        .st-key-draft_drawer,
+    body:has(
+        section[data-testid="stSidebar"]:not([aria-expanded="false"])
+    )
+        .st-key-draft_drawer {
+        left: 0 !important;
+    }
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -2676,7 +2719,7 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync Public Beta · v4.3</div>',
+        '<div class="sidebar-version">FantasySync Public Beta · v4.4</div>',
         unsafe_allow_html=True,
     )
 
