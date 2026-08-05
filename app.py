@@ -1759,32 +1759,28 @@ button[kind="primary"] span {
 
 
 /* ============================================================
-   FantasySync v5.1 — Sleeper-inspired professional UI
-   This final layer intentionally overrides the accumulated
-   historical CSS without changing draft behavior.
+   FantasySync v5.2 — Render Match
+   Structural dashboard layout matching the approved concept.
    ============================================================ */
 
 :root {
-    --fs-bg-0: #07101C;
-    --fs-bg-1: #0A1422;
-    --fs-bg-2: #101B2B;
-    --fs-card: #111D2E;
-    --fs-card-hover: #16243A;
-    --fs-border-soft: rgba(148, 163, 184, .15);
-    --fs-border: rgba(148, 163, 184, .24);
-    --fs-text: #F8FAFC;
-    --fs-subtle: #AEB9C9;
-    --fs-muted: #74839A;
-    --fs-blue: #3B82F6;
-    --fs-blue-soft: rgba(59, 130, 246, .18);
-    --fs-green: #22C55E;
-    --fs-coral: #F15B52;
+    --rm-bg: #07111d;
+    --rm-panel: #0d1827;
+    --rm-panel-2: #111e30;
+    --rm-border: rgba(142, 159, 184, .19);
+    --rm-border-strong: rgba(142, 159, 184, .30);
+    --rm-text: #f7f9fc;
+    --rm-muted: #8998ad;
+    --rm-subtle: #b7c2d1;
+    --rm-blue: #3b82f6;
+    --rm-green: #22c55e;
+    --rm-red: #ef5350;
 }
 
 [data-testid="stAppViewContainer"] {
     background:
-        radial-gradient(circle at 40% -20%, rgba(37, 99, 235, .10), transparent 34%),
-        linear-gradient(180deg, var(--fs-bg-0), var(--fs-bg-1)) !important;
+        radial-gradient(circle at 36% -25%, rgba(36,99,180,.13), transparent 34%),
+        linear-gradient(180deg, #06101c 0%, #081421 100%) !important;
 }
 
 [data-testid="stHeader"] {
@@ -1793,252 +1789,207 @@ button[kind="primary"] span {
 
 .main .block-container {
     max-width: none !important;
-    padding: .72rem 1.05rem 2rem 1.05rem !important;
+    padding: .72rem .85rem 2rem .85rem !important;
 }
 
-/* Slim product header */
-.app-header-copy {
-    padding: 0 !important;
-    margin: 0 !important;
+/* Hide the old app-level title on the Draft Room only. */
+.fs-draft-page ~ .app-header-copy,
+.fs-draft-page ~ div .app-header-copy {
+    display: none !important;
 }
 
-.app-header-title {
-    font-size: clamp(1.35rem, 1.75vw, 1.82rem) !important;
-    line-height: 1.1 !important;
-    letter-spacing: -.026em !important;
-    white-space: nowrap !important;
-}
-
-.app-header-subtitle {
-    font-size: .64rem !important;
-    margin-top: 3px !important;
-    color: var(--fs-muted) !important;
-    -webkit-text-fill-color: var(--fs-muted) !important;
-}
-
-.st-key-compact_header_actions button {
-    min-height: 36px !important;
-    height: 36px !important;
-    border-radius: 8px !important;
-    font-size: .70rem !important;
-    border: 1px solid var(--fs-border) !important;
-}
-
-.st-key-compact_header_actions button[kind="primary"] {
-    background: var(--fs-coral) !important;
-    border-color: transparent !important;
-}
-
-/* Sidebar */
+/* Sidebar proportions and product branding. */
 section[data-testid="stSidebar"] {
-    background:
-        linear-gradient(180deg, #07111E 0%, #0A1524 100%) !important;
-    border-right: 1px solid var(--fs-border-soft) !important;
+    width: 13.6rem !important;
+    min-width: 13.6rem !important;
+    background: linear-gradient(180deg, #07111e, #091522) !important;
+    border-right: 1px solid var(--rm-border) !important;
 }
 
 section[data-testid="stSidebar"] > div {
-    padding: .65rem .65rem 1rem .65rem !important;
+    padding: .65rem .65rem .85rem .65rem !important;
 }
 
 .sidebar-brand {
-    min-height: 48px;
-    border-bottom: 1px solid var(--fs-border-soft) !important;
-    margin-bottom: 10px !important;
-    padding: 5px 7px 12px 7px !important;
+    min-height: 48px !important;
+    padding: 5px 6px 12px 6px !important;
+    margin-bottom: 8px !important;
+    border-bottom-color: var(--rm-border) !important;
 }
 
 .sidebar-brand-icon {
-    font-size: 1.45rem !important;
+    font-size: 1.25rem !important;
 }
 
 .sidebar-brand-name {
-    font-size: 1.02rem !important;
-    letter-spacing: -.02em !important;
+    font-size: 1rem !important;
 }
 
 .sidebar-section-label {
-    color: #65758C !important;
-    font-size: .54rem !important;
-    margin: 8px 8px 5px 8px !important;
+    color: #64758d !important;
+    font-size: .53rem !important;
+    margin: 8px 7px 5px !important;
 }
 
 section[data-testid="stSidebar"] [data-testid="stRadio"] label {
-    min-height: 39px !important;
+    min-height: 38px !important;
     border-radius: 7px !important;
     padding: 7px 9px !important;
 }
 
-section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {
-    background: linear-gradient(90deg, #173C73, #12315D) !important;
-    border-color: rgba(96, 165, 250, .26) !important;
-    box-shadow: inset 3px 0 0 #60A5FA !important;
+section[data-testid="stSidebar"] [data-testid="stRadio"] label p {
+    font-size: .70rem !important;
+    font-weight: 690 !important;
 }
 
-section[data-testid="stSidebar"] [data-testid="stRadio"] label p {
-    font-size: .72rem !important;
-    font-weight: 700 !important;
+section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {
+    background: linear-gradient(90deg, #173e76, #12325d) !important;
+    border-color: rgba(96,165,250,.30) !important;
+    box-shadow: inset 3px 0 0 #60a5fa !important;
 }
 
 .sidebar-league-card {
-    background: rgba(255,255,255,.025) !important;
-    border-color: var(--fs-border-soft) !important;
+    border-radius: 8px !important;
+    background: rgba(255,255,255,.018) !important;
+    border-color: var(--rm-border) !important;
+}
+
+.sidebar-version {
+    color: #59697f !important;
+}
+
+/* Remove the original large header from the visual flow. */
+.st-key-compact_header_actions,
+.app-header-copy {
+    display: none !important;
+}
+
+/* Main top bar. */
+.rm-topbar {
+    display: grid;
+    grid-template-columns: minmax(0,1fr) auto auto;
+    align-items: start;
+    gap: 18px;
+    min-height: 68px;
+    padding: 0 2px 9px;
+    border-bottom: 1px solid var(--rm-border);
+}
+
+.rm-page-title {
+    color: var(--rm-text);
+    font-size: 1.38rem;
+    font-weight: 850;
+    line-height: 1;
+    letter-spacing: -.025em;
+}
+
+.rm-meta-row {
+    display: flex;
+    gap: 9px;
+    align-items: center;
+    margin-top: 12px;
+}
+
+.rm-meta-chip {
+    color: var(--rm-subtle);
+    font-size: .61rem;
+    font-weight: 700;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--rm-border);
+    background: rgba(255,255,255,.018);
+}
+
+.rm-cpu-chip {
+    align-self: center;
+    color: #73e694;
+    font-size: .61rem;
+    font-weight: 850;
+    padding: 7px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(34,197,94,.32);
+    background: rgba(34,197,94,.08);
+    white-space: nowrap;
+}
+
+.rm-clock {
+    width: 67px;
+    height: 67px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #347ef1;
+    border-radius: 50%;
+    box-shadow: inset 0 0 18px rgba(59,130,246,.10);
+}
+
+.rm-clock-time {
+    color: var(--rm-text);
+    font-size: 1.1rem;
+    line-height: 1;
+    font-weight: 850;
+}
+
+.rm-clock-label {
+    color: #72a8ff;
+    font-size: .45rem;
+    font-weight: 800;
+    margin-top: 4px;
+}
+
+/* Main two-row dashboard grid. */
+.st-key-rm_top_workspace > div > div > [data-testid="stHorizontalBlock"],
+.st-key-rm_bottom_workspace > div > div > [data-testid="stHorizontalBlock"] {
+    align-items: stretch !important;
+    gap: .72rem !important;
+}
+
+.st-key-rm_top_workspace {
+    padding-top: 10px !important;
+}
+
+.st-key-rm_board_panel {
+    min-width: 0 !important;
+}
+
+.st-key-rm_roster_panel,
+.st-key-rm_recommendation_panel {
+    background: linear-gradient(180deg, #111e30, #0c1726) !important;
+    border: 1px solid var(--rm-border) !important;
     border-radius: 8px !important;
     padding: 9px 10px !important;
 }
 
-.sidebar-league-name {
-    font-size: .66rem !important;
-}
-
-.sidebar-league-meta {
-    font-size: .58rem !important;
-}
-
-/* Draft summary bar */
-.fs-draft-summary {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 28px;
-    margin: 1px 0 8px 0;
-}
-
-.fs-summary-chip {
-    display: inline-flex;
-    align-items: center;
-    min-height: 25px;
-    padding: 0 10px;
-    border: 1px solid var(--fs-border-soft);
-    background: rgba(255,255,255,.025);
-    border-radius: 6px;
-    color: var(--fs-subtle);
-    font-size: .61rem;
-    font-weight: 700;
-}
-
-.fs-summary-chip.cpu {
-    color: #74E597;
-    background: rgba(34,197,94,.08);
-    border-color: rgba(34,197,94,.28);
-}
-
-/* Draft heading */
-.draft-room-heading {
-    min-height: 39px !important;
-    margin: 0 0 5px 0 !important;
-}
-
-.draft-room-title {
-    font-size: 1.26rem !important;
-    letter-spacing: -.026em !important;
-}
-
-.draft-clock-block {
-    min-width: 215px !important;
-    text-align: right !important;
-    padding-right: 4px;
-}
-
-.draft-clock-label {
-    font-size: .57rem !important;
-    color: var(--fs-muted) !important;
-}
-
-.draft-clock-value {
-    font-size: 1rem !important;
-    margin-top: 3px !important;
-}
-
-/* Workspace */
-.st-key-draft_workspace {
-    border-top: 1px solid var(--fs-border-soft);
-    padding-top: 7px !important;
-}
-
-.st-key-board_workspace_panel {
-    padding-right: 8px !important;
-}
-
-.st-key-board_roster_panel {
-    height: calc(100vh - 205px) !important;
-    min-height: 475px !important;
-    background: linear-gradient(180deg, rgba(17,29,46,.96), rgba(13,23,38,.96)) !important;
-    border: 1px solid var(--fs-border-soft) !important;
-    border-radius: 9px !important;
-    padding: 0 9px 10px 9px !important;
+.st-key-rm_roster_panel {
+    height: 438px !important;
     overflow-y: auto !important;
 }
 
-.st-key-board_roster_panel .roster-header-row {
-    background: #111D2E !important;
-    height: 46px !important;
-    min-height: 46px !important;
-    border-bottom: 1px solid var(--fs-border-soft) !important;
-    padding: 0 2px 5px 2px !important;
+.st-key-rm_bottom_workspace {
+    padding-top: 8px !important;
+    border-top: 1px solid var(--rm-border);
+    margin-top: 8px !important;
 }
 
-.roster-header-label {
-    color: #72A7FF !important;
-    font-size: .73rem !important;
-    text-decoration: none !important;
-}
-
-.roster-header-team {
-    font-size: .75rem !important;
-}
-
-.roster-header-count {
-    font-size: .56rem !important;
-}
-
-.st-key-board_roster_panel .roster-line {
-    min-height: 36px !important;
-    padding: 2px 1px !important;
-    border-bottom-color: rgba(148,163,184,.10) !important;
-}
-
-.roster-slot-pill {
-    width: 35px !important;
-    height: 25px !important;
-    border-radius: 5px !important;
-    font-size: .55rem !important;
-}
-
-.roster-line {
-    grid-template-columns: 38px minmax(0,1fr) !important;
-    column-gap: 7px !important;
-}
-
-.roster-line-player {
-    font-size: .64rem !important;
-}
-
-.roster-inline-pos {
-    font-size: .52rem !important;
-}
-
-/* Snake board */
-.snake-board-wrap,
-.snake-board-shell {
-    width: 100%;
+/* Board is compact and fixed to the same visual height as the concept. */
+.rm-board-scroll {
+    height: 430px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 3px;
 }
 
 .snake-team-select {
-    min-height: 42px !important;
-    border-radius: 7px !important;
-    background: rgba(17,29,46,.82) !important;
-    border-color: var(--fs-border-soft) !important;
-    transition: .12s ease !important;
-}
-
-.snake-team-select:hover {
-    background: var(--fs-card-hover) !important;
-    border-color: rgba(96,165,250,.28) !important;
+    min-height: 44px !important;
+    border-radius: 6px !important;
+    background: #0d1827 !important;
+    border-color: var(--rm-border) !important;
 }
 
 .snake-team-select.active {
-    background: linear-gradient(180deg, #245C65, #1D4F59) !important;
-    border-color: #54D3C3 !important;
+    background: linear-gradient(180deg, #215b64, #194b53) !important;
+    border-color: #5fd5c5 !important;
 }
 
 .snake-team-select .slot-num {
@@ -2046,182 +1997,214 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] label p {
 }
 
 .snake-team-select .team-label {
-    font-size: .57rem !important;
+    font-size: .56rem !important;
 }
 
 .snake-cell {
-    min-height: 57px !important;
-    border-radius: 6px !important;
+    min-height: 61px !important;
     padding: 5px 6px !important;
-    background: rgba(14,24,39,.86);
-    border-color: var(--fs-border-soft) !important;
-    transition: transform .10s ease, border-color .10s ease, filter .10s ease !important;
-}
-
-.snake-cell:hover {
-    transform: translateY(-1px);
-    filter: brightness(1.10);
+    border-radius: 6px !important;
+    border-color: rgba(148,163,184,.17) !important;
 }
 
 .snake-cell.empty-pick {
-    background: rgba(13,22,36,.72) !important;
+    background: #0b1523 !important;
 }
 
 .snake-cell.pos-qb {
-    background: linear-gradient(150deg, rgba(58,112,185,.58), rgba(22,51,88,.96)) !important;
-    border-color: rgba(96,165,250,.38) !important;
+    background: linear-gradient(145deg,#23598b,#193d66) !important;
 }
 .snake-cell.pos-rb {
-    background: linear-gradient(150deg, rgba(31,133,82,.60), rgba(17,72,53,.96)) !important;
-    border-color: rgba(74,222,128,.38) !important;
+    background: linear-gradient(145deg,#147347,#0f5238) !important;
 }
 .snake-cell.pos-wr {
-    background: linear-gradient(150deg, rgba(30,96,195,.64), rgba(22,52,105,.96)) !important;
-    border-color: rgba(96,165,250,.42) !important;
+    background: linear-gradient(145deg,#2369c6,#194681) !important;
 }
 .snake-cell.pos-te {
-    background: linear-gradient(150deg, rgba(174,103,24,.72), rgba(91,52,15,.97)) !important;
-    border-color: rgba(251,191,36,.38) !important;
+    background: linear-gradient(145deg,#a86515,#73430f) !important;
+}
+
+.snake-cell.current-pick {
+    border-color: #4b91ff !important;
+    box-shadow: 0 0 0 1px #4b91ff !important;
+    animation: none !important;
 }
 
 .snake-pick {
-    font-size: .52rem !important;
+    font-size: .50rem !important;
 }
 
 .snake-player {
-    font-size: .65rem !important;
-    margin-top: 3px !important;
+    font-size: .63rem !important;
 }
 
 .player-tile-badge {
-    font-size: .49rem !important;
-    padding: 1px 6px !important;
+    font-size: .48rem !important;
+    padding: 1px 5px !important;
 }
 
 .tile-nfl,
 .tile-owner {
+    font-size: .47rem !important;
+}
+
+/* Roster matches the compact render. */
+.roster-header-row {
+    grid-template-columns: minmax(0,1fr) auto !important;
+    height: auto !important;
+    min-height: 43px !important;
+    padding: 0 0 7px !important;
+    margin: 0 0 5px !important;
+    border-bottom: 1px solid var(--rm-border) !important;
+}
+
+.roster-header-label {
+    display: none !important;
+}
+
+.roster-header-team {
+    color: var(--rm-text) !important;
+    font-size: .84rem !important;
+}
+
+.roster-header-count {
+    font-size: .55rem !important;
+}
+
+.roster-line {
+    min-height: 34px !important;
+    grid-template-columns: 35px minmax(0,1fr) !important;
+    gap: 7px !important;
+    padding: 2px 0 !important;
+    border-bottom-color: rgba(148,163,184,.09) !important;
+}
+
+.roster-slot-pill {
+    width: 32px !important;
+    height: 24px !important;
+    border-radius: 5px !important;
+    font-size: .52rem !important;
+}
+
+.roster-line-player {
+    font-size: .61rem !important;
+}
+
+.roster-inline-pos {
     font-size: .49rem !important;
 }
 
-.snake-cell.current-pick {
-    border-color: #60A5FA !important;
-    box-shadow: 0 0 0 1px #60A5FA, inset 0 0 22px rgba(59,130,246,.15) !important;
-    animation: none !important;
+.roster-empty {
+    font-size: .58rem !important;
 }
 
-/* Embedded recommendation panel */
-.fs-rec-card {
-    margin-top: 11px;
-    border: 1px solid rgba(96,165,250,.24);
-    border-radius: 8px;
-    background: linear-gradient(180deg, rgba(17,31,51,.98), rgba(12,23,39,.98));
-    padding: 10px;
+/* Static player browser instead of the old fixed drawer. */
+.st-key-rm_player_panel {
+    min-width: 0 !important;
 }
 
-.fs-rec-eyebrow {
-    color: #69A0FF;
-    font-size: .57rem;
-    font-weight: 900;
-    letter-spacing: .05em;
-}
-
-.fs-rec-name {
-    color: var(--fs-text);
-    font-size: .82rem;
-    font-weight: 850;
-    margin-top: 5px;
-}
-
-.fs-rec-meta {
-    color: var(--fs-subtle);
-    font-size: .55rem;
-    margin-top: 2px;
-}
-
-.fs-rec-reason {
-    color: #C6D2E2;
-    font-size: .54rem;
-    margin-top: 6px;
-    line-height: 1.35;
-}
-
-.fs-confidence {
-    float: right;
-    color: #75E59A;
-    font-size: .65rem;
-    font-weight: 850;
-}
-
-/* Bottom player tray */
 .st-key-draft_drawer {
-    background: rgba(14,25,42,.985) !important;
-    border-top: 1px solid rgba(96,165,250,.23) !important;
-    box-shadow: 0 -10px 24px rgba(0,0,0,.28) !important;
-    padding: .42rem .62rem !important;
+    position: static !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    backdrop-filter: none !important;
 }
 
-.st-key-player_filter_rail {
-    background: rgba(8,17,29,.22);
-    border-right: 1px solid var(--fs-border-soft) !important;
-    padding-right: 8px !important;
+.st-key-dock_controls,
+.fixed-dock-spacer {
+    display: none !important;
 }
 
-.st-key-player_filter_rail [data-testid="stTextInputRootElement"] {
-    background: #0A1422 !important;
-    border: 1px solid var(--fs-border-soft) !important;
-    border-radius: 8px !important;
+.rm-player-tabs {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    min-height: 34px;
+    border-bottom: 1px solid var(--rm-border);
+    margin-bottom: 8px;
 }
 
-.st-key-player_filter_rail button {
+.rm-player-tab {
+    color: var(--rm-muted);
+    font-size: .63rem;
+    font-weight: 800;
+    padding: 0 2px 9px;
+}
+
+.rm-player-tab.active {
+    color: #68a4ff;
+    border-bottom: 2px solid #4f8ff5;
+}
+
+.st-key-rm_filter_row [data-testid="stHorizontalBlock"] {
+    gap: .45rem !important;
+    align-items: center !important;
+}
+
+.st-key-rm_filter_row [data-testid="stTextInputRootElement"] {
+    min-height: 35px !important;
     border-radius: 7px !important;
-    background: #101B2B !important;
-    border-color: var(--fs-border-soft) !important;
+    background: #0a1523 !important;
+    border-color: var(--rm-border) !important;
 }
 
-.st-key-player_filter_rail button[kind="primary"] {
-    background: #2E69D1 !important;
-    border-color: #5790F2 !important;
+.st-key-rm_filter_row button {
+    min-height: 34px !important;
+    height: 34px !important;
+    border-radius: 999px !important;
+    font-size: .61rem !important;
+    padding: 0 10px !important;
+    background: #101b2b !important;
+    border-color: var(--rm-border) !important;
 }
 
-.player-table-header2 {
-    color: #7F8DA3 !important;
-    -webkit-text-fill-color: #7F8DA3 !important;
-    font-size: .53rem !important;
-    letter-spacing: .03em;
-}
-
-.player-header-divider {
-    background: rgba(148,163,184,.18) !important;
-    margin: 5px 0 2px 0 !important;
+.st-key-rm_filter_row button[kind="primary"] {
+    background: #326ed5 !important;
+    border-color: #4c87ef !important;
 }
 
 .st-key-war_player_list {
+    height: 265px !important;
+    max-height: 265px !important;
     background: transparent !important;
+    overflow-y: auto !important;
+}
+
+.player-table-header2 {
+    color: #7e8ca1 !important;
+    -webkit-text-fill-color: #7e8ca1 !important;
+    font-size: .51rem !important;
 }
 
 .st-key-war_player_list [data-testid="stHorizontalBlock"] {
-    min-height: 38px !important;
-    padding: 1px 0 2px 0 !important;
-}
-
-.player-row-divider {
-    background: rgba(148,163,184,.11) !important;
-    margin: 1px 0 !important;
+    min-height: 40px !important;
+    padding: 1px 0 2px !important;
 }
 
 .player-name2 {
-    font-size: .64rem !important;
+    font-size: .63rem !important;
 }
 
 .player-sub2 {
-    font-size: .50rem !important;
-    color: #8796AB !important;
-    -webkit-text-fill-color: #8796AB !important;
+    font-size: .49rem !important;
 }
 
 .stat2,
 .rank2 {
-    font-size: .56rem !important;
+    font-size: .55rem !important;
+}
+
+.player-row-divider {
+    background: rgba(148,163,184,.10) !important;
+    margin: 1px 0 !important;
 }
 
 .st-key-war_player_list button {
@@ -2229,73 +2212,129 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] label p {
     min-width: 25px !important;
     height: 25px !important;
     min-height: 25px !important;
-    background: #0A1422 !important;
-    border-color: rgba(148,163,184,.25) !important;
-}
-
-.st-key-war_player_list button:hover {
-    background: #1C8C4D !important;
-    border-color: #32C96B !important;
 }
 
 .value-badge {
-    height: 20px !important;
+    height: 21px !important;
     min-width: 27px !important;
-    border-radius: 4px !important;
-    font-size: .50rem !important;
+    font-size: .49rem !important;
 }
 
-/* Queue */
-.st-key-queue_panel {
-    background: rgba(7,16,28,.26);
-    border-left-color: var(--fs-border-soft) !important;
+/* Queue is retained as a compact tab-like panel under the player table. */
+.st-key-rm_queue_expander {
+    margin-top: 5px !important;
 }
 
-.queue-title {
-    font-size: .62rem !important;
+.st-key-rm_queue_expander [data-testid="stExpander"] {
+    background: #0b1625 !important;
+    border-color: var(--rm-border) !important;
 }
 
-.queue-rank {
-    width: 23px !important;
-    height: 24px !important;
-    background: #255EC1 !important;
+/* Recommendation card */
+.rm-rec-eyebrow {
+    color: #61a0ff;
+    font-size: .58rem;
+    font-weight: 900;
+    margin-bottom: 13px;
 }
 
-.queue-player {
-    font-size: .59rem !important;
+.rm-rec-person {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
-.queue-player-sub {
-    font-size: .47rem !important;
+.rm-avatar {
+    width: 51px;
+    height: 51px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: linear-gradient(145deg,#24364d,#101a29);
+    border: 1px solid var(--rm-border-strong);
+    color: #dce6f4;
+    font-size: .78rem;
+    font-weight: 900;
 }
 
-.st-key-queue_panel button {
-    height: 24px !important;
-    min-height: 24px !important;
+.rm-rec-name {
+    color: var(--rm-text);
+    font-size: .93rem;
+    font-weight: 850;
 }
 
-.st-key-dock_controls {
-    background: #091321 !important;
-    border-color: var(--fs-border) !important;
+.rm-rec-meta {
+    color: var(--rm-muted);
+    font-size: .56rem;
+    margin-top: 3px;
 }
 
-/* Suppress Streamlit visual noise */
-[data-testid="stStatusWidget"],
-[data-testid="stDecoration"] {
-    display: none !important;
+.rm-confidence-ring {
+    margin-left: auto;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 5px solid #31c873;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
-div[data-testid="stExpander"] {
-    border-color: var(--fs-border-soft) !important;
-    background: rgba(10,20,34,.38) !important;
+.rm-confidence-number {
+    color: var(--rm-text);
+    font-size: 1rem;
+    font-weight: 900;
 }
 
-@media (max-width: 1050px) {
-    .app-header-subtitle {
-        display: none;
+.rm-confidence-label {
+    color: var(--rm-muted);
+    font-size: .40rem;
+}
+
+.rm-rec-divider {
+    height: 1px;
+    background: var(--rm-border);
+    margin: 14px 0 10px;
+}
+
+.rm-rec-copy-title {
+    color: var(--rm-subtle);
+    font-size: .58rem;
+    margin-bottom: 8px;
+}
+
+.rm-rec-reason {
+    color: #d0d9e6;
+    font-size: .55rem;
+    line-height: 1.5;
+    margin: 5px 0;
+}
+
+.rm-rec-check {
+    color: #3dd77b;
+    margin-right: 6px;
+}
+
+.st-key-rm_rec_button button {
+    margin-top: 11px !important;
+    min-height: 39px !important;
+    border-radius: 5px !important;
+    background: #15953e !important;
+    border-color: #26b952 !important;
+    font-size: .67rem !important;
+    font-weight: 850 !important;
+}
+
+@media (max-width: 1150px) {
+    section[data-testid="stSidebar"] {
+        width: 12.2rem !important;
+        min-width: 12.2rem !important;
     }
-    .draft-clock-block {
-        min-width: 165px !important;
+    .rm-clock {
+        width: 58px;
+        height: 58px;
     }
 }
 
@@ -3504,45 +3543,134 @@ def render_live_roster_rows():
 
 
 
-def render_sleeper_recommendation_card():
-    """Compact recommendation card used inside the live draft workspace."""
-    idx = current_open_index()
-    if idx is None:
-        return
+def render_render_match_header(current_idx: Optional[int]):
+    if current_idx is None:
+        round_number = int(st.session_state.rounds)
+        overall_pick = len(st.session_state.picks)
+        clock_time = "DONE"
+        clock_label = "COMPLETE"
+    else:
+        current = st.session_state.picks.loc[current_idx]
+        round_number = int(current["round"])
+        overall_pick = int(current["overall"])
+        remaining = remaining_pick_time()
+        clock_time = f"{remaining // 60}:{remaining % 60:02d}"
+        clock_label = (
+            "YOUR PICK"
+            if clean(current["current_owner"]) == clean(st.session_state.user_team)
+            else "CPU PICK"
+        )
 
-    recs = recommendations(limit=1)
-    if recs.empty:
-        return
-
-    row = recs.iloc[0]
-    player = clean(row.get("player", ""))
-    pos = clean(row.get("position", ""))
-    team = clean(row.get("nfl_team", ""))
-    adp = numeric(row.get("consensus_adp"), None)
-    score = numeric(row.get("recommendation_score"), None)
-
-    adp_text = "—" if adp is None else f"{adp:.1f}"
-    confidence = 88
-    if score is not None:
-        confidence = max(70, min(98, int(round(76 + score * 2))))
+    cpu_status = "CPU ON" if st.session_state.clock_running else "CPU PAUSED"
 
     st.markdown(
         f"""
-        <div class="fs-rec-card">
-            <div class="fs-rec-eyebrow">
-                ★ FANTASYSYNC RECOMMENDATION
-                <span class="fs-confidence">{confidence}%</span>
+        <div class="fs-draft-page"></div>
+        <div class="rm-topbar">
+            <div>
+                <div class="rm-page-title">Mock Draft</div>
+                <div class="rm-meta-row">
+                    <div class="rm-meta-chip">Round {round_number} · Pick {overall_pick}</div>
+                    <div class="rm-meta-chip">10-Team PPR</div>
+                    <div class="rm-meta-chip">Snake Draft</div>
+                </div>
             </div>
-            <div class="fs-rec-name">{player}</div>
-            <div class="fs-rec-meta">{pos} · {team} &nbsp; ADP {adp_text}</div>
-            <div class="fs-rec-reason">
-                Best blend of available value, roster fit, and upcoming
-                positional scarcity.
+            <div class="rm-cpu-chip">● {cpu_status}</div>
+            <div class="rm-clock">
+                <div class="rm-clock-time">{clock_time}</div>
+                <div class="rm-clock-label">{clock_label}</div>
             </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+
+def render_render_match_filters():
+    ensure_draft_filters()
+
+    search_col, positions_col = st.columns([2.7, 4.7], gap="small")
+
+    with search_col:
+        st.text_input(
+            "Search players",
+            key="draft_search",
+            placeholder="⌕  Search players...",
+            label_visibility="collapsed",
+        )
+
+    with positions_col:
+        render_position_filter()
+
+
+def recommendation_record():
+    recs = recommendations(limit=1)
+    if recs.empty:
+        return None
+    return recs.iloc[0]
+
+
+def render_render_match_recommendation(current_idx: int, allow_draft: bool):
+    row = recommendation_record()
+
+    if row is None:
+        st.markdown(
+            """
+            <div class="rm-rec-eyebrow">★ FANTASYSYNC RECOMMENDATION</div>
+            <div class="queue-empty">No recommendation available.</div>
+            """,
+            unsafe_allow_html=True,
+        )
+        return
+
+    player = clean(row.get("Player", row.get("player", "")))
+    pos = clean(row.get("Pos", row.get("position", "")))
+    nfl_team = clean(row.get("Team", row.get("nfl_team", "")))
+    rank = row.get("Rank", row.get("custom_rank", "—"))
+    adp = row.get("ADP", row.get("consensus_adp", "—"))
+    confidence = 94
+
+    initials = "".join(
+        part[0]
+        for part in player.replace("-", " ").split()
+        if part
+    )[:2].upper() or "FS"
+
+    st.markdown(
+        f"""
+        <div class="rm-rec-eyebrow">★ FANTASYSYNC RECOMMENDATION</div>
+        <div class="rm-rec-person">
+            <div class="rm-avatar">{initials}</div>
+            <div>
+                <div class="rm-rec-name">{player}</div>
+                <div class="rm-rec-meta">{pos} · {nfl_team}</div>
+                <div class="rm-rec-meta">Rank {rank} &nbsp;&nbsp; ADP {adp}</div>
+            </div>
+            <div class="rm-confidence-ring">
+                <div class="rm-confidence-number">{confidence}%</div>
+                <div class="rm-confidence-label">CONFIDENCE</div>
+            </div>
+        </div>
+        <div class="rm-rec-divider"></div>
+        <div class="rm-rec-copy-title">Why we love this pick</div>
+        <div class="rm-rec-reason"><span class="rm-rec-check">✓</span>Best player available at a premium position</div>
+        <div class="rm-rec-reason"><span class="rm-rec-check">✓</span>Strong value relative to current ADP</div>
+        <div class="rm-rec-reason"><span class="rm-rec-check">✓</span>Fits the selected roster's current needs</div>
+        <div class="rm-rec-reason"><span class="rm-rec-check">✓</span>Limits exposure to the next tier drop</div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    with st.container(key="rm_rec_button"):
+        if st.button(
+            f"DRAFT {player.upper()}  ›",
+            use_container_width=True,
+            type="primary",
+            disabled=not allow_draft,
+            key=f"rm_draft_recommendation_{current_idx}_{player}",
+        ):
+            handle_user_draft_click(player)
+            st.rerun()
 
 
 
@@ -3912,74 +4040,8 @@ if _cpu_turn_active:
 if auto_pick_user_if_expired():
     st.rerun()
 
-header_copy_col, header_actions_col = st.columns(
-    [5.7, 2.3],
-    gap="large",
-)
-
-with header_copy_col:
-    st.markdown(
-        """
-        <div class="app-header-copy">
-            <div class="app-header-title">
-                🏈 FantasySync — Susan Boyles Ass Sweat
-            </div>
-            <div class="app-header-subtitle">
-                Professional mock draft room · live queue · team-aware recommendations.
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-with header_actions_col:
-    with st.container(key="compact_header_actions"):
-        top_action_col, top_reset_col = st.columns(2, gap="small")
-
-        with top_action_col:
-            if st.session_state.clock_running:
-                if st.button(
-                    "⏸ Pause Draft",
-                    use_container_width=True,
-                    type="primary",
-                    key="page_top_pause",
-                ):
-                    pause_pick_clock()
-                    st.rerun()
-            else:
-                if st.button(
-                    "▶ Start Draft",
-                    use_container_width=True,
-                    type="primary",
-                    key="page_top_start",
-                ):
-                    st.session_state.clock_running = True
-                    current_idx = current_open_index()
-                    if current_idx is not None:
-                        current_owner = clean(
-                            st.session_state.picks.loc[
-                                current_idx,
-                                "current_owner",
-                            ]
-                        )
-                        if current_owner == clean(
-                            st.session_state.user_team
-                        ):
-                            start_pick_clock()
-                    st.rerun()
-
-        with top_reset_col:
-            if st.button(
-                "↺ Reset Draft",
-                use_container_width=True,
-                key="page_top_reset",
-            ):
-                rebuild_draft()
-                st.session_state.clock_running = False
-                st.session_state.draft_message = (
-                    "Draft reset. Select a team and press Start Draft."
-                )
-                st.rerun()
+# Draft Room supplies its own compact product header.
+# Other pages retain a simple page heading below the sidebar navigation.
 
 with st.sidebar:
     st.markdown(
@@ -3998,15 +4060,15 @@ with st.sidebar:
     )
 
     page_options = [
-        "🏠  Draft Room",
-        "⭐  Recommendations",
-        "📊  Rankings & ADP",
-        "👥  Available Players",
-        "🛡️  Team Rosters",
-        "⚙️  League Setup",
-        "🔖  Keepers & Picks",
-        "🕘  League History",
-        "🔧  Settings",
+        "▣  Draft Room",
+        "▥  Rankings",
+        "★  Recommendations",
+        "♜  Draft Grades",
+        "▥  Data Status",
+        "◴  League History",
+        "⚙  Settings",
+        "⇩  Import / Export",
+        "?  Help & Docs",
     ]
 
     selected_nav = st.radio(
@@ -4017,15 +4079,15 @@ with st.sidebar:
     )
 
     selected_page = {
-        "🏠  Draft Room": "Draft Room",
-        "⭐  Recommendations": "Recommendations",
-        "📊  Rankings & ADP": "Rankings & ADP",
-        "👥  Available Players": "Available Players",
-        "🛡️  Team Rosters": "Team Rosters",
-        "⚙️  League Setup": "League Setup",
-        "🔖  Keepers & Picks": "Keepers & Picks",
-        "🕘  League History": "League History",
-        "🔧  Settings": "Settings",
+        "▣  Draft Room": "Draft Room",
+        "▥  Rankings": "Rankings & ADP",
+        "★  Recommendations": "Recommendations",
+        "♜  Draft Grades": "League History",
+        "▥  Data Status": "Available Players",
+        "◴  League History": "League History",
+        "⚙  Settings": "Settings",
+        "⇩  Import / Export": "Keepers & Picks",
+        "?  Help & Docs": "League Setup",
     }[selected_nav]
 
     team_count = len(st.session_state.teams)
@@ -4079,181 +4141,108 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · Sleeper UI v5.1</div>',
+        '<div class="sidebar-version">FantasySync · v5.2</div>',
         unsafe_allow_html=True,
     )
 
 if selected_page == "Draft Room":
     idx = current_open_index()
-
-    if idx is None:
-        summary_round = int(st.session_state.rounds)
-        summary_pick = len(st.session_state.picks)
-    else:
-        summary_round = int(st.session_state.picks.loc[idx, "round"])
-        summary_pick = int(st.session_state.picks.loc[idx, "overall"])
-
-    variance_label = (
-        "VARIANCE ON"
-        if st.session_state.cpu_variance_enabled
-        else "CPU CHALK"
-    )
-
-    st.markdown(
-        f"""
-        <div class="fs-draft-summary">
-            <div class="fs-summary-chip">
-                Round {summary_round} · Pick {summary_pick}
-            </div>
-            <div class="fs-summary-chip">10-Team · Half PPR</div>
-            <div class="fs-summary-chip">Snake Draft</div>
-            <div class="fs-summary-chip cpu">● {variance_label}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    if idx is None:
-        draft_clock_label = "Draft Status"
-        draft_clock_value = "Complete"
-    else:
-        current = st.session_state.picks.loc[idx]
-        draft_clock_label = "On the Clock"
-        draft_clock_value = (
-            f"#{int(current['overall'])} · "
-            f"{clean(current['current_owner'])}"
-        )
-
-    st.markdown(
-        f"""
-        <div class="draft-room-heading">
-            <div class="draft-room-title">
-                Live Snake Draft Board
-            </div>
-            <div class="draft-clock-block">
-                <div class="draft-clock-label">
-                    {draft_clock_label}
-                </div>
-                <div class="draft-clock-value">
-                    {draft_clock_value}
-                </div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    render_render_match_header(idx)
 
     if st.session_state.draft_message:
-        st.info(st.session_state.draft_message)
+        st.caption(st.session_state.draft_message)
 
-    # Approved workspace: board on the left, live roster on the right.
-    with st.container(key="draft_workspace"):
+    if idx is None:
+        user_turn = False
+    else:
+        current_owner = clean(
+            st.session_state.picks.loc[idx, "current_owner"]
+        )
+        user_turn = current_owner == clean(st.session_state.user_team)
+
+    # Upper dashboard: draft board and roster.
+    with st.container(key="rm_top_workspace"):
         board_col, roster_col = st.columns(
-            [5.15, 1.65],
+            [5.45, 1.70],
             gap="small",
         )
 
         with board_col:
-            with st.container(key="board_workspace_panel"):
+            with st.container(key="rm_board_panel"):
+                st.markdown(
+                    '<div class="rm-board-scroll">',
+                    unsafe_allow_html=True,
+                )
                 st.markdown(
                     snake_board_html(),
                     unsafe_allow_html=True,
                 )
-
-                with st.expander(
-                    "View Draft Log",
-                    expanded=False,
-                ):
-                    display = st.session_state.picks[[
-                        "overall",
-                        "round",
-                        "slot",
-                        "current_owner",
-                        "keeper_player",
-                        "selected_player",
-                        "source",
-                    ]].copy()
-                    display.columns = [
-                        "Overall",
-                        "Round",
-                        "Slot",
-                        "Current Owner",
-                        "Keeper",
-                        "Player Selected",
-                        "Source",
-                    ]
-                    st.dataframe(
-                        display,
-                        use_container_width=True,
-                        hide_index=True,
-                        height=460,
-                    )
+                st.markdown("</div>", unsafe_allow_html=True)
 
         with roster_col:
-            with st.container(key="board_roster_panel"):
+            with st.container(key="rm_roster_panel"):
                 render_live_roster_header()
                 render_live_roster_rows()
-                render_sleeper_recommendation_card()
 
-    # Movable full-width player selector at the bottom.
-    with st.container(key="draft_drawer"):
-        if idx is None:
-            st.success("Draft complete")
-        else:
-            current = st.session_state.picks.loc[idx]
-            owner = clean(current["current_owner"])
-            user_turn = owner == clean(st.session_state.user_team)
+    # Lower dashboard: player browser and recommendation card.
+    with st.container(key="rm_bottom_workspace"):
+        player_col, recommendation_col = st.columns(
+            [5.45, 1.70],
+            gap="small",
+        )
 
-            filter_col, player_table_col, queue_col = st.columns(
-                [1.05, 4.70, 1.62],
-                gap="small",
-            )
-
-            with filter_col:
-                with st.container(key="player_filter_rail"):
-                    render_player_filter_rail()
-
-            with player_table_col:
-                render_player_picker_table(
-                    idx,
-                    allow_draft=user_turn,
+        with player_col:
+            with st.container(key="rm_player_panel"):
+                st.markdown(
+                    """
+                    <div class="rm-player-tabs">
+                        <div class="rm-player-tab active">PLAYERS</div>
+                        <div class="rm-player-tab">QUEUE</div>
+                        <div class="rm-player-tab">WATCHLIST</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
                 )
 
-            with queue_col:
-                with st.container(key="queue_panel"):
-                    render_queue_panel(
+                with st.container(key="rm_filter_row"):
+                    render_render_match_filters()
+
+                if idx is None:
+                    st.success("Draft complete.")
+                else:
+                    render_player_picker_table(
                         idx,
                         allow_draft=user_turn,
                     )
 
-            # Overlay controls pinned to the dock's top-right corner.
-            with st.container(key="dock_controls"):
-                level = int(st.session_state.dock_level)
+                with st.container(key="rm_queue_expander"):
+                    with st.expander(
+                        f"Queue ({len(st.session_state.player_queue)})",
+                        expanded=False,
+                    ):
+                        if idx is not None:
+                            render_queue_panel(
+                                idx,
+                                allow_draft=user_turn,
+                            )
 
-                if st.button(
-                    "▲",
-                    key="dock_move_up",
-                    use_container_width=True,
-                    disabled=level >= 2,
-                    help="Expand player selector",
-                ):
-                    move_dock(1)
-                    st.rerun()
-
-                if st.button(
-                    "▼",
-                    key="dock_move_down",
-                    use_container_width=True,
-                    disabled=level <= 0,
-                    help="Collapse player selector",
-                ):
-                    move_dock(-1)
-                    st.rerun()
-
-    st.markdown(
-        '<div class="fixed-dock-spacer"></div>',
-        unsafe_allow_html=True,
-    )
+        with recommendation_col:
+            with st.container(key="rm_recommendation_panel"):
+                if idx is None:
+                    st.markdown(
+                        """
+                        <div class="rm-rec-eyebrow">★ DRAFT COMPLETE</div>
+                        <div class="queue-empty">
+                            Open League History to review the completed draft.
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+                else:
+                    render_render_match_recommendation(
+                        idx,
+                        allow_draft=user_turn,
+                    )
 
 
 elif selected_page == "Recommendations":
