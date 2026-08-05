@@ -1087,6 +1087,105 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] label p {
     padding-top: 1.15rem !important;
 }
 
+
+/* v4.1 compact application header */
+.app-header-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    column-gap: 22px;
+    margin: 0 0 8px 0;
+}
+.app-header-copy {
+    min-width: 0;
+}
+.app-header-title {
+    color: #F8FAFC;
+    font-size: clamp(1.70rem, 2.55vw, 2.55rem);
+    font-weight: 900;
+    letter-spacing: -.035em;
+    line-height: 1.02;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.app-header-subtitle {
+    color: #9CA8B8;
+    font-size: .72rem;
+    font-weight: 520;
+    line-height: 1.25;
+    margin-top: 7px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.st-key-compact_header_actions {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+.st-key-compact_header_actions [data-testid="stHorizontalBlock"] {
+    gap: .55rem !important;
+    align-items: flex-start !important;
+}
+.st-key-compact_header_actions button {
+    min-height: 42px !important;
+    height: 42px !important;
+    padding: 0 16px !important;
+    border-radius: 9px !important;
+    font-size: .78rem !important;
+    font-weight: 780 !important;
+}
+.draft-room-heading {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 24px;
+    margin: 4px 0 8px 0;
+}
+.draft-room-title {
+    color: #F8FAFC;
+    font-size: clamp(1.25rem, 1.8vw, 1.72rem);
+    font-weight: 850;
+    letter-spacing: -.025em;
+    line-height: 1.05;
+    margin: 0;
+}
+.draft-clock-block {
+    min-width: 235px;
+    text-align: left;
+}
+.draft-clock-label {
+    color: #CBD5E1;
+    font-size: .68rem;
+    font-weight: 650;
+    line-height: 1;
+    margin-bottom: 5px;
+}
+.draft-clock-value {
+    color: #F8FAFC;
+    font-size: clamp(1rem, 1.45vw, 1.32rem);
+    font-weight: 720;
+    line-height: 1.05;
+    white-space: nowrap;
+}
+.main .block-container {
+    padding-top: .65rem !important;
+}
+@media (max-width: 1000px) {
+    .app-header-title,
+    .app-header-subtitle {
+        white-space: normal;
+    }
+    .draft-room-heading {
+        grid-template-columns: 1fr;
+        row-gap: 8px;
+    }
+    .draft-clock-block {
+        min-width: 0;
+    }
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -2264,55 +2363,75 @@ if _cpu_turn_active:
 if auto_pick_user_if_expired():
     st.rerun()
 
-title_col, top_action_col, top_reset_col = st.columns([5.8, 1.25, 1.25])
+header_copy_col, header_actions_col = st.columns(
+    [5.7, 2.3],
+    gap="large",
+)
 
-with title_col:
-    st.title("🏈 Susan Boyles Ass Sweat — Mock Draft Tool")
-    st.caption(
-        "Live 10-team mock draft room with keepers, animated CPU picks, and team-aware recommendations."
+with header_copy_col:
+    st.markdown(
+        """
+        <div class="app-header-copy">
+            <div class="app-header-title">
+                🏈 Susan Boyles Ass Sweat — Mock Draft Tool
+            </div>
+            <div class="app-header-subtitle">
+                Live 10-team mock draft room with keepers, animated CPU picks,
+                and team-aware recommendations.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
-with top_action_col:
-    st.write("")
-    st.write("")
-    if st.session_state.clock_running:
-        if st.button(
-            "⏸️ Pause Draft",
-            use_container_width=True,
-            type="primary",
-            key="page_top_pause",
-        ):
-            pause_pick_clock()
-            st.rerun()
-    else:
-        if st.button(
-            "▶️ Start Draft",
-            use_container_width=True,
-            type="primary",
-            key="page_top_start",
-        ):
-            st.session_state.clock_running = True
-            current_idx = current_open_index()
-            if current_idx is not None:
-                current_owner = clean(
-                    st.session_state.picks.loc[current_idx, "current_owner"]
-                )
-                if current_owner == clean(st.session_state.user_team):
-                    start_pick_clock()
-            st.rerun()
+with header_actions_col:
+    with st.container(key="compact_header_actions"):
+        top_action_col, top_reset_col = st.columns(2, gap="small")
 
-with top_reset_col:
-    st.write("")
-    st.write("")
-    if st.button(
-        "↺ Reset Draft",
-        use_container_width=True,
-        key="page_top_reset",
-    ):
-        rebuild_draft()
-        st.session_state.clock_running = False
-        st.session_state.draft_message = "Draft reset. Select a team and press Start Draft."
-        st.rerun()
+        with top_action_col:
+            if st.session_state.clock_running:
+                if st.button(
+                    "⏸ Pause Draft",
+                    use_container_width=True,
+                    type="primary",
+                    key="page_top_pause",
+                ):
+                    pause_pick_clock()
+                    st.rerun()
+            else:
+                if st.button(
+                    "▶ Start Draft",
+                    use_container_width=True,
+                    type="primary",
+                    key="page_top_start",
+                ):
+                    st.session_state.clock_running = True
+                    current_idx = current_open_index()
+                    if current_idx is not None:
+                        current_owner = clean(
+                            st.session_state.picks.loc[
+                                current_idx,
+                                "current_owner",
+                            ]
+                        )
+                        if current_owner == clean(
+                            st.session_state.user_team
+                        ):
+                            start_pick_clock()
+                    st.rerun()
+
+        with top_reset_col:
+            if st.button(
+                "↺ Reset Draft",
+                use_container_width=True,
+                key="page_top_reset",
+            ):
+                rebuild_draft()
+                st.session_state.clock_running = False
+                st.session_state.draft_message = (
+                    "Draft reset. Select a team and press Start Draft."
+                )
+                st.rerun()
 
 with st.sidebar:
     st.markdown(
@@ -2412,30 +2531,42 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync Public Beta · v4.0</div>',
+        '<div class="sidebar-version">FantasySync Public Beta · v4.1</div>',
         unsafe_allow_html=True,
     )
 
 if selected_page == "Draft Room":
     idx = current_open_index()
 
-    status_left, status_right = st.columns([5.5, 2.5])
-
-    with status_left:
-        st.subheader("Live Snake Draft Board")
-        st.caption(
-            "Click any team name in the header row to select that team."
+    if idx is None:
+        draft_clock_label = "Draft Status"
+        draft_clock_value = "Complete"
+    else:
+        current = st.session_state.picks.loc[idx]
+        draft_clock_label = "On the Clock"
+        draft_clock_value = (
+            f"#{int(current['overall'])} · "
+            f"{clean(current['current_owner'])}"
         )
 
-    with status_right:
-        if idx is None:
-            st.metric("Draft Status", "Complete")
-        else:
-            current = st.session_state.picks.loc[idx]
-            st.metric(
-                "On the Clock",
-                f"#{int(current['overall'])} · {clean(current['current_owner'])}"
-            )
+    st.markdown(
+        f"""
+        <div class="draft-room-heading">
+            <div class="draft-room-title">
+                Live Snake Draft Board
+            </div>
+            <div class="draft-clock-block">
+                <div class="draft-clock-label">
+                    {draft_clock_label}
+                </div>
+                <div class="draft-clock-value">
+                    {draft_clock_value}
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     if st.session_state.draft_message:
         st.info(st.session_state.draft_message)
