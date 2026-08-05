@@ -992,6 +992,101 @@ st.markdown("""
     -webkit-text-fill-color: #FFFFFF !important;
 }
 
+
+/* v4.0 permanent sidebar navigation */
+section[data-testid="stSidebar"] {
+    background:
+        linear-gradient(180deg, #0C1523 0%, #101B2D 100%) !important;
+    border-right: 1px solid rgba(145,165,195,.18) !important;
+}
+section[data-testid="stSidebar"] > div {
+    padding-top: .65rem !important;
+}
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 5px 5px 14px 5px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid rgba(145,165,195,.16);
+}
+.sidebar-brand-icon {
+    font-size: 1.55rem;
+    line-height: 1;
+}
+.sidebar-brand-name {
+    color: #F8FAFC;
+    font-size: 1.04rem;
+    font-weight: 850;
+    letter-spacing: -.01em;
+}
+.sidebar-section-label {
+    color: #8292AA;
+    font-size: .61rem;
+    font-weight: 850;
+    letter-spacing: .09em;
+    margin: 8px 5px 5px 5px;
+}
+section[data-testid="stSidebar"] [data-testid="stRadio"] > div {
+    gap: 4px !important;
+}
+section[data-testid="stSidebar"] [data-testid="stRadio"] label {
+    min-height: 42px !important;
+    padding: 8px 10px !important;
+    border-radius: 8px !important;
+    border: 1px solid transparent !important;
+    transition: background .12s ease, border-color .12s ease !important;
+}
+section[data-testid="stSidebar"] [data-testid="stRadio"] label:hover {
+    background: rgba(63, 112, 190, .14) !important;
+    border-color: rgba(95, 145, 225, .18) !important;
+}
+section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {
+    background: linear-gradient(
+        90deg,
+        rgba(41, 94, 172, .68),
+        rgba(30, 68, 122, .50)
+    ) !important;
+    border-color: rgba(83, 148, 246, .34) !important;
+    box-shadow: inset 3px 0 0 #4F9DFF !important;
+}
+section[data-testid="stSidebar"] [data-testid="stRadio"] label p {
+    color: #F1F5F9 !important;
+    font-size: .80rem !important;
+    font-weight: 720 !important;
+}
+.sidebar-league-card {
+    border: 1px solid rgba(145,165,195,.18);
+    background: rgba(255,255,255,.025);
+    border-radius: 10px;
+    padding: 10px 11px;
+    margin-top: 12px;
+    color: #CBD5E1;
+}
+.sidebar-league-name {
+    color: #F8FAFC;
+    font-size: .72rem;
+    font-weight: 780;
+    margin-bottom: 7px;
+}
+.sidebar-league-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+    font-size: .64rem;
+    color: #94A3B8;
+    margin-top: 4px;
+}
+.sidebar-version {
+    color: #64748B;
+    font-size: .56rem;
+    text-align: center;
+    margin-top: 10px;
+}
+.main .block-container {
+    padding-top: 1.15rem !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -2220,59 +2315,108 @@ with top_reset_col:
         st.rerun()
 
 with st.sidebar:
-    st.header("Draft Settings")
-    st.session_state.rounds = st.number_input(
-        "Rounds",
-        min_value=1,
-        max_value=20,
-        value=int(st.session_state.rounds),
+    st.markdown(
+        """
+        <div class="sidebar-brand">
+            <div class="sidebar-brand-icon">🏈</div>
+            <div class="sidebar-brand-name">FantasySync</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-    st.session_state.pick_clock_seconds = st.number_input(
-        "Pick clock length (seconds)",
-        min_value=15,
-        max_value=300,
-        value=int(st.session_state.pick_clock_seconds),
-        step=15,
+
+    st.markdown(
+        '<div class="sidebar-section-label">NAVIGATION</div>',
+        unsafe_allow_html=True,
     )
-    if st.button("🔄 Reset draft", use_container_width=True):
+
+    page_options = [
+        "🏠  Draft Room",
+        "⭐  Recommendations",
+        "📊  Rankings & ADP",
+        "👥  Available Players",
+        "🛡️  Team Rosters",
+        "⚙️  League Setup",
+        "🔖  Keepers & Picks",
+        "🕘  League History",
+        "🔧  Settings",
+    ]
+
+    selected_nav = st.radio(
+        "Navigation",
+        page_options,
+        key="sidebar_navigation",
+        label_visibility="collapsed",
+    )
+
+    selected_page = {
+        "🏠  Draft Room": "Draft Room",
+        "⭐  Recommendations": "Recommendations",
+        "📊  Rankings & ADP": "Rankings & ADP",
+        "👥  Available Players": "Available Players",
+        "🛡️  Team Rosters": "Team Rosters",
+        "⚙️  League Setup": "League Setup",
+        "🔖  Keepers & Picks": "Keepers & Picks",
+        "🕘  League History": "League History",
+        "🔧  Settings": "Settings",
+    }[selected_nav]
+
+    team_count = len(st.session_state.teams)
+    st.markdown(
+        f"""
+        <div class="sidebar-league-card">
+            <div class="sidebar-league-name">
+                Susan Boyles Ass Sweat
+            </div>
+            <div class="sidebar-league-meta">
+                <span>Teams</span>
+                <strong>{team_count}</strong>
+            </div>
+            <div class="sidebar-league-meta">
+                <span>Rounds</span>
+                <strong>{int(st.session_state.rounds)}</strong>
+            </div>
+            <div class="sidebar-league-meta">
+                <span>Pick Clock</span>
+                <strong>{int(st.session_state.pick_clock_seconds)}s</strong>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        '<div class="sidebar-section-label">DRAFT UTILITIES</div>',
+        unsafe_allow_html=True,
+    )
+
+    if st.button(
+        "↺ Reset Draft",
+        use_container_width=True,
+        key="sidebar_reset_draft",
+    ):
         rebuild_draft()
+        st.session_state.clock_running = False
+        st.session_state.draft_message = (
+            "Draft reset. Select a team and press Start Draft."
+        )
         st.rerun()
 
     state_json = json.dumps(serializable_state(), indent=2)
     st.download_button(
-        "💾 Download draft state",
+        "⬇ Download Draft State",
         data=state_json,
         file_name="sbas_mock_draft_state.json",
         mime="application/json",
         use_container_width=True,
     )
 
-    uploaded_state = st.file_uploader(
-        "Load draft state",
-        type=["json"],
-        key="draft_state_uploader",
+    st.markdown(
+        '<div class="sidebar-version">FantasySync Public Beta · v4.0</div>',
+        unsafe_allow_html=True,
     )
-    if uploaded_state is not None:
-        if st.button("📂 Apply uploaded state", use_container_width=True):
-            try:
-                load_state_data(json.load(uploaded_state))
-                st.success("Draft state loaded.")
-                st.rerun()
-            except Exception as exc:
-                st.error(f"Could not load draft state: {exc}")
 
-
-tabs = st.tabs([
-    "Draft Room",
-    "Recommendations",
-    "Rankings & ADP",
-    "Available Players",
-    "Team Rosters",
-    "League Setup",
-    "Keepers & Picks",
-])
-
-with tabs[0]:
+if selected_page == "Draft Room":
     idx = current_open_index()
 
     status_left, status_right = st.columns([5.5, 2.5])
@@ -2388,7 +2532,7 @@ with tabs[0]:
     )
 
 
-with tabs[1]:
+elif selected_page == "Recommendations":
     st.subheader("Team-Aware Recommendations")
     idx = current_open_index()
     if idx is None:
@@ -2410,7 +2554,7 @@ with tabs[1]:
             "It is directional—not a guarantee."
         )
 
-with tabs[2]:
+elif selected_page == "Rankings & ADP":
     st.subheader("Player Rankings & ADP Comparison")
     df = st.session_state.players.copy()
     pos_options = ["All"] + sorted([p for p in df["position"].dropna().unique().tolist() if p])
@@ -2472,7 +2616,7 @@ with tabs[2]:
             st.success("ADP comparison data loaded for this session.")
             st.rerun()
 
-with tabs[3]:
+elif selected_page == "Available Players":
     avail = available_players().copy()
     pos_options = ["All"] + sorted([p for p in avail["position"].dropna().unique().tolist() if p])
     pos = st.selectbox("Position", pos_options)
@@ -2486,7 +2630,7 @@ with tabs[3]:
         use_container_width=True, hide_index=True, height=650,
     )
 
-with tabs[4]:
+elif selected_page == "Team Rosters":
     team_names = st.session_state.teams.sort_values("draft_slot")["team_name"].tolist()
     for start in range(0, len(team_names), 2):
         cols = st.columns(2)
@@ -2498,7 +2642,7 @@ with tabs[4]:
                 st.caption(f"Rostered: {count} / 16")
                 st.dataframe(roster, hide_index=True, use_container_width=True, height=610)
 
-with tabs[5]:
+elif selected_page == "League Setup":
     st.subheader("Teams and Draft Slots")
     edited_teams = st.data_editor(
         st.session_state.teams, use_container_width=True, hide_index=True, num_rows="fixed",
@@ -2527,7 +2671,7 @@ with tabs[5]:
                 ] = new_name
             st.success("Team setup applied. Reset the draft to regenerate the snake order.")
 
-with tabs[6]:
+elif selected_page == "Keepers & Picks":
     st.subheader("Keeper Manager")
     player_choices = st.session_state.players["player"].tolist()
     team_ids = st.session_state.teams["team_id"].tolist()
@@ -2569,3 +2713,116 @@ with tabs[6]:
         st.session_state.picks["current_owner"] = edited_picks["current_owner"].tolist()
         st.success("Pick ownership updated.")
         st.rerun()
+
+elif selected_page == "League History":
+    st.subheader("League History")
+    st.caption(
+        "Saved drafts and season history will appear here in a future update."
+    )
+
+    completed = st.session_state.picks[
+        st.session_state.picks["selected_player"].map(clean) != ""
+    ].copy()
+
+    if completed.empty:
+        st.info(
+            "Complete or import a draft to begin building league history."
+        )
+    else:
+        history_display = completed[
+            [
+                "overall",
+                "round",
+                "current_owner",
+                "selected_player",
+                "source",
+            ]
+        ].copy()
+        history_display.columns = [
+            "Pick",
+            "Round",
+            "Team",
+            "Player",
+            "Source",
+        ]
+        st.dataframe(
+            history_display,
+            hide_index=True,
+            use_container_width=True,
+            height=650,
+        )
+
+
+elif selected_page == "Settings":
+    st.subheader("Application Settings")
+    st.caption(
+        "These settings were previously shown in the left sidebar."
+    )
+
+    settings_left, settings_right = st.columns(2)
+
+    with settings_left:
+        new_rounds = st.number_input(
+            "Draft rounds",
+            min_value=1,
+            max_value=20,
+            value=int(st.session_state.rounds),
+            key="settings_rounds",
+        )
+
+        new_clock = st.number_input(
+            "Pick clock length (seconds)",
+            min_value=15,
+            max_value=300,
+            value=int(st.session_state.pick_clock_seconds),
+            step=15,
+            key="settings_pick_clock",
+        )
+
+        if st.button(
+            "Apply Draft Settings",
+            type="primary",
+            use_container_width=True,
+        ):
+            rounds_changed = int(new_rounds) != int(
+                st.session_state.rounds
+            )
+            st.session_state.rounds = int(new_rounds)
+            st.session_state.pick_clock_seconds = int(new_clock)
+
+            if rounds_changed:
+                rebuild_draft()
+                st.session_state.clock_running = False
+
+            reset_pick_clock()
+            st.success("Draft settings updated.")
+            st.rerun()
+
+    with settings_right:
+        st.markdown("#### Import Draft State")
+        uploaded_state = st.file_uploader(
+            "Upload a saved draft-state JSON file",
+            type=["json"],
+            key="settings_draft_state_uploader",
+        )
+
+        if uploaded_state is not None:
+            if st.button(
+                "Apply Uploaded State",
+                use_container_width=True,
+            ):
+                try:
+                    load_state_data(json.load(uploaded_state))
+                    st.success("Draft state loaded.")
+                    st.rerun()
+                except Exception as exc:
+                    st.error(
+                        f"Could not load draft state: {exc}"
+                    )
+
+        st.markdown("#### Display")
+        st.info(
+            "Additional color, font, and accessibility settings "
+            "will be added here during the UI polish pass."
+        )
+
