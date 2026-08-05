@@ -1359,6 +1359,262 @@ body:has(section[data-testid="stSidebar"][aria-expanded="false"])
     }
 }
 
+
+/* ============================================================
+   v4.5 FantasySync Official Color System
+   Explicit browser-safe colors, including Safari text fill.
+   ============================================================ */
+
+:root {
+    --fs-bg: #0B1220;
+    --fs-panel: #162033;
+    --fs-panel-deep: #111827;
+    --fs-border: #2B3852;
+    --fs-text-primary: #F8FAFC;
+    --fs-text-secondary: #CBD5E1;
+    --fs-text-muted: #94A3B8;
+    --fs-header: #D8E4F8;
+    --fs-blue: #5B8CFF;
+    --fs-green: #2DD4BF;
+    --fs-draft-green: #22C55E;
+    --fs-draft-green-active: #16A34A;
+    --fs-action: #F15B52;
+}
+
+/* Global application text safeguards. */
+html,
+body,
+[data-testid="stAppViewContainer"],
+[data-testid="stMain"],
+.main {
+    color: var(--fs-text-primary) !important;
+}
+
+[data-testid="stAppViewContainer"] {
+    background: var(--fs-bg) !important;
+}
+
+p,
+span,
+label,
+div {
+    text-rendering: optimizeLegibility;
+}
+
+/* Titles and primary labels. */
+.app-header-title,
+.draft-room-title,
+.draft-clock-value,
+.sidebar-brand-name,
+.roster-header-team {
+    color: var(--fs-text-primary) !important;
+    -webkit-text-fill-color: var(--fs-text-primary) !important;
+}
+
+.app-header-subtitle,
+.draft-clock-label,
+.sidebar-league-meta,
+.roster-header-count {
+    color: var(--fs-text-secondary) !important;
+    -webkit-text-fill-color: var(--fs-text-secondary) !important;
+}
+
+/* Available-player table: never inherit a dark browser color. */
+.player-name2,
+.player-row-name {
+    color: var(--fs-text-primary) !important;
+    -webkit-text-fill-color: var(--fs-text-primary) !important;
+    opacity: 1 !important;
+    font-weight: 800 !important;
+}
+
+.player-sub2,
+.player-row-team {
+    color: var(--fs-text-secondary) !important;
+    -webkit-text-fill-color: var(--fs-text-secondary) !important;
+    opacity: .82 !important;
+}
+
+.player-table-header2,
+.player-row-header,
+.player-panel-title {
+    color: var(--fs-header) !important;
+    -webkit-text-fill-color: var(--fs-header) !important;
+    opacity: .84 !important;
+}
+
+.stat2,
+.rank2,
+.player-row-stat,
+.player-row-rank {
+    color: var(--fs-text-secondary) !important;
+    -webkit-text-fill-color: var(--fs-text-secondary) !important;
+    opacity: 1 !important;
+}
+
+/* Player rows remain distinguishable without sacrificing contrast. */
+.st-key-war_player_list {
+    background: var(--fs-panel) !important;
+    border-color: var(--fs-border) !important;
+}
+
+.st-key-war_player_list [data-testid="stHorizontalBlock"] {
+    color: var(--fs-text-primary) !important;
+}
+
+.player-row-divider,
+.player-header-divider {
+    background: rgba(203, 213, 225, .20) !important;
+}
+
+/* High-contrast draft + button across Safari and other browsers. */
+.st-key-war_player_list button,
+.st-key-available_player_rows button {
+    background: var(--fs-panel-deep) !important;
+    border: 1px solid #52617A !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    opacity: 1 !important;
+    font-weight: 900 !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+}
+
+.st-key-war_player_list button p,
+.st-key-war_player_list button span,
+.st-key-available_player_rows button p,
+.st-key-available_player_rows button span {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    opacity: 1 !important;
+}
+
+.st-key-war_player_list button:hover,
+.st-key-available_player_rows button:hover {
+    background: var(--fs-draft-green) !important;
+    border-color: var(--fs-draft-green) !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+
+.st-key-war_player_list button:active,
+.st-key-available_player_rows button:active {
+    background: var(--fs-draft-green-active) !important;
+    border-color: var(--fs-draft-green-active) !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    transform: scale(.92) !important;
+}
+
+.st-key-war_player_list button:focus-visible,
+.st-key-available_player_rows button:focus-visible {
+    outline: 2px solid var(--fs-blue) !important;
+    outline-offset: 2px !important;
+}
+
+.st-key-war_player_list button:disabled,
+.st-key-available_player_rows button:disabled {
+    background: #202A3A !important;
+    border-color: #3C485C !important;
+    color: #E2E8F0 !important;
+    -webkit-text-fill-color: #E2E8F0 !important;
+    opacity: .62 !important;
+}
+
+/* Draft-board tile text. */
+.snake-player {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    opacity: 1 !important;
+    font-weight: 800 !important;
+}
+
+.snake-pick,
+.tile-nfl,
+.tile-owner,
+.slot-num {
+    color: var(--fs-text-secondary) !important;
+    -webkit-text-fill-color: var(--fs-text-secondary) !important;
+    opacity: .88 !important;
+}
+
+.team-label {
+    color: var(--fs-text-primary) !important;
+    -webkit-text-fill-color: var(--fs-text-primary) !important;
+    opacity: 1 !important;
+}
+
+/* Waiting cards remain readable. */
+.empty-pick .snake-player {
+    color: #F1F5F9 !important;
+    -webkit-text-fill-color: #F1F5F9 !important;
+}
+
+.empty-pick .tile-owner {
+    color: #AEBBCB !important;
+    -webkit-text-fill-color: #AEBBCB !important;
+}
+
+/* Roster panel. */
+.roster-header-label {
+    color: var(--fs-blue) !important;
+    -webkit-text-fill-color: var(--fs-blue) !important;
+}
+
+.roster-line-player {
+    color: var(--fs-text-primary) !important;
+    -webkit-text-fill-color: var(--fs-text-primary) !important;
+    opacity: 1 !important;
+}
+
+.roster-inline-pos,
+.roster-empty {
+    color: var(--fs-text-muted) !important;
+    -webkit-text-fill-color: var(--fs-text-muted) !important;
+    opacity: 1 !important;
+}
+
+/* Search field visibility. */
+[data-testid="stTextInput"] input {
+    color: var(--fs-text-primary) !important;
+    -webkit-text-fill-color: var(--fs-text-primary) !important;
+    caret-color: #FFFFFF !important;
+    background: var(--fs-panel-deep) !important;
+}
+
+[data-testid="stTextInput"] input::placeholder {
+    color: var(--fs-text-muted) !important;
+    -webkit-text-fill-color: var(--fs-text-muted) !important;
+    opacity: 1 !important;
+}
+
+/* Position filter and navigation buttons. */
+.st-key-player_filter_rail button,
+section[data-testid="stSidebar"] button {
+    color: var(--fs-text-primary) !important;
+    -webkit-text-fill-color: var(--fs-text-primary) !important;
+}
+
+.st-key-player_filter_rail button p,
+section[data-testid="stSidebar"] button p {
+    color: var(--fs-text-primary) !important;
+    -webkit-text-fill-color: var(--fs-text-primary) !important;
+}
+
+/* Keep active action buttons clearly visible. */
+button[kind="primary"] {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+
+button[kind="primary"] p,
+button[kind="primary"] span {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -2719,7 +2975,7 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync Public Beta · v4.4</div>',
+        '<div class="sidebar-version">FantasySync Public Beta · v4.5</div>',
         unsafe_allow_html=True,
     )
 
