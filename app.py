@@ -2509,50 +2509,67 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked
     box-shadow: none !important;
 }
 
-/* Movable tray handle. */
+/* True draggable player-tray handle. */
 .st-key-v55_tray_handle {
+    display: none !important;
+}
+
+.st-key-v56_drag_handle {
     position: relative;
-    z-index: 12;
+    z-index: 20;
+    height: 34px !important;
     margin: -1px 0 0 0 !important;
     padding: 0 !important;
     border-top: 2px solid #7C5CE0;
-    height: 34px !important;
+    overflow: visible !important;
 }
 
-.st-key-v55_tray_handle > div > div > [data-testid="stHorizontalBlock"] {
-    align-items: center !important;
-    gap: .25rem !important;
+.st-key-v56_drag_handle [data-testid="stVerticalBlock"] {
+    gap: 0 !important;
 }
 
-.st-key-v55_tray_handle button {
-    min-height: 27px !important;
-    height: 27px !important;
-    border-radius: 7px !important;
-    background: #202A3B !important;
-    border: 1px solid #465774 !important;
-    color: #FFFFFF !important;
-    -webkit-text-fill-color: #FFFFFF !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-}
-
-.st-key-v55_tray_handle button:disabled {
-    background: #141D2A !important;
-    border-color: #2A374A !important;
-    color: #5D6B7F !important;
-    -webkit-text-fill-color: #5D6B7F !important;
-}
-
-.v55-drag-label {
-    min-height: 27px;
+.v56-drag-grip {
+    position: absolute;
+    left: 50%;
+    top: -15px;
+    transform: translateX(-50%);
+    min-width: 174px;
+    height: 31px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 7px;
+    gap: 8px;
+    padding: 0 14px;
+    border: 1px solid #566681;
+    border-radius: 9px;
     background: #202A3B;
-    border: 1px solid #465774;
-    color: #DCE5F2;
-    font-size: .52rem;
+    color: #E3EAF4;
+    cursor: ns-resize;
+    user-select: none;
+    touch-action: none;
+    box-shadow: none;
+    transition:
+        background-color .10s ease,
+        border-color .10s ease;
+}
+
+.v56-drag-grip:hover,
+.v56-drag-grip.dragging {
+    background: #29364B;
+    border-color: #8B72E8;
+}
+
+.v56-grip-lines {
+    color: #A993FF;
+    font-size: .88rem;
+    font-weight: 900;
+    line-height: 1;
+    transform: rotate(90deg);
+}
+
+.v56-drag-label {
+    color: #E3EAF4;
+    font-size: .53rem;
     font-weight: 850;
     letter-spacing: .035em;
     white-space: nowrap;
@@ -2725,24 +2742,8 @@ def move_player_tray(direction: int):
 
 
 def render_player_tray_css():
-    settings = player_tray_settings()
-    st.markdown(
-        f"""
-        <style>
-        .st-key-v53_board_panel,
-        .st-key-v53_roster_panel {{
-            height: {settings["board_height"]}px !important;
-            max-height: {settings["board_height"]}px !important;
-        }}
-
-        .st-key-war_player_list {{
-            height: {settings["player_height"]}px !important;
-            max-height: {settings["player_height"]}px !important;
-        }}
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    """The v5.6 tray is resized directly in the browser by drag."""
+    return None
 
 
 
@@ -4004,6 +4005,157 @@ def render_v53_recommendation(
 
 
 
+
+def render_draggable_player_tray():
+    """
+    Install a browser-side pointer drag handler.
+
+    The handle changes the upper board/roster height and the lower player-list
+    height continuously without causing a Streamlit rerun. The selected height
+    is stored in sessionStorage and reapplied after normal app reruns.
+    """
+    components.html(
+        """
+        <script>
+        (() => {
+          const doc = window.parent.document;
+          const storage = window.parent.sessionStorage;
+          const STORAGE_KEY = "fantasysync_player_tray_board_height";
+          const DEFAULT_BOARD = 430;
+          const MIN_BOARD = 285;
+          const MAX_BOARD = 560;
+          const TOTAL_WORKSPACE = 710;
+
+          function all(selector) {
+            return Array.from(doc.querySelectorAll(selector));
+          }
+
+          function setImportant(element, property, value) {
+            if (!element) return;
+            element.style.setProperty(property, value, "important");
+          }
+
+          function applyHeight(rawHeight) {
+            const boardHeight = Math.max(
+              MIN_BOARD,
+              Math.min(MAX_BOARD, Number(rawHeight) || DEFAULT_BOARD)
+            );
+            const playerHeight = Math.max(
+              150,
+              TOTAL_WORKSPACE - boardHeight
+            );
+
+            all(".st-key-v53_board_panel, .st-key-v53_roster_panel")
+              .forEach((panel) => {
+                setImportant(panel, "height", `${boardHeight}px`);
+                setImportant(panel, "max-height", `${boardHeight}px`);
+
+                panel.querySelectorAll(
+                  '[data-testid="stVerticalBlockBorderWrapper"]'
+                ).forEach((wrapper) => {
+                  setImportant(wrapper, "height", "100%");
+                  setImportant(wrapper, "max-height", "100%");
+                });
+              });
+
+            all(".st-key-war_player_list").forEach((panel) => {
+              setImportant(panel, "height", `${playerHeight}px`);
+              setImportant(panel, "max-height", `${playerHeight}px`);
+
+              panel.querySelectorAll(
+                '[data-testid="stVerticalBlockBorderWrapper"]'
+              ).forEach((wrapper) => {
+                setImportant(wrapper, "height", "100%");
+                setImportant(wrapper, "max-height", "100%");
+              });
+            });
+
+            const label = doc.querySelector(".v56-drag-label");
+            if (label) {
+              label.textContent = "↕  DRAG PLAYER TRAY";
+            }
+
+            storage.setItem(STORAGE_KEY, String(boardHeight));
+          }
+
+          function install() {
+            const handle = doc.querySelector(".v56-drag-grip");
+            if (!handle || handle.dataset.dragInstalled === "true") {
+              return false;
+            }
+
+            handle.dataset.dragInstalled = "true";
+            let dragging = false;
+            let startY = 0;
+            let startHeight = DEFAULT_BOARD;
+
+            const stored = Number(storage.getItem(STORAGE_KEY));
+            applyHeight(
+              Number.isFinite(stored) && stored > 0
+                ? stored
+                : DEFAULT_BOARD
+            );
+
+            handle.addEventListener("pointerdown", (event) => {
+              dragging = true;
+              startY = event.clientY;
+
+              const board = doc.querySelector(".st-key-v53_board_panel");
+              startHeight = board
+                ? board.getBoundingClientRect().height
+                : DEFAULT_BOARD;
+
+              handle.setPointerCapture(event.pointerId);
+              handle.classList.add("dragging");
+              doc.body.style.userSelect = "none";
+              doc.body.style.cursor = "ns-resize";
+              event.preventDefault();
+            });
+
+            handle.addEventListener("pointermove", (event) => {
+              if (!dragging) return;
+              const delta = event.clientY - startY;
+              applyHeight(startHeight + delta);
+              event.preventDefault();
+            });
+
+            const stopDragging = (event) => {
+              if (!dragging) return;
+              dragging = false;
+              handle.classList.remove("dragging");
+              doc.body.style.userSelect = "";
+              doc.body.style.cursor = "";
+              try {
+                handle.releasePointerCapture(event.pointerId);
+              } catch (_) {}
+            };
+
+            handle.addEventListener("pointerup", stopDragging);
+            handle.addEventListener("pointercancel", stopDragging);
+
+            handle.addEventListener("dblclick", () => {
+              applyHeight(DEFAULT_BOARD);
+            });
+
+            return true;
+          }
+
+          let attempts = 0;
+          const timer = window.setInterval(() => {
+            attempts += 1;
+            if (install() || attempts > 60) {
+              window.clearInterval(timer);
+            }
+          }, 100);
+        })();
+        </script>
+        """,
+        height=0,
+        width=0,
+    )
+
+
+
 def render_live_user_roster():
     render_live_roster_header()
     render_live_roster_rows()
@@ -4481,7 +4633,7 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v5.5</div>',
+        '<div class="sidebar-version">FantasySync · v5.6</div>',
         unsafe_allow_html=True,
     )
 
@@ -4526,46 +4678,24 @@ if selected_page == "Draft Room":
                 render_live_roster_header()
                 render_live_roster_rows()
 
-    # Three-position player tray control.
-    with st.container(key="v55_tray_handle"):
-        handle_left, handle_center, handle_right = st.columns(
-            [5.0, 1.35, 5.0],
-            gap="small",
+    # True draggable player-tray divider.
+    with st.container(key="v56_drag_handle"):
+        st.markdown(
+            """
+            <div
+                class="v56-drag-grip"
+                role="separator"
+                aria-label="Resize draft board and player tray"
+                title="Drag vertically to resize. Double-click to reset."
+            >
+                <span class="v56-grip-lines">≡</span>
+                <span class="v56-drag-label">↕  DRAG PLAYER TRAY</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
-        with handle_center:
-            up_col, label_col, down_col = st.columns(
-                [0.65, 1.8, 0.65],
-                gap="small",
-            )
-
-            with up_col:
-                st.button(
-                    "↑",
-                    key="v55_raise_tray",
-                    help="Raise player tray",
-                    disabled=st.session_state.player_tray_level >= 2,
-                    on_click=move_player_tray,
-                    args=(1,),
-                    use_container_width=True,
-                )
-
-            with label_col:
-                st.markdown(
-                    '<div class="v55-drag-label">↕ PLAYER TRAY</div>',
-                    unsafe_allow_html=True,
-                )
-
-            with down_col:
-                st.button(
-                    "↓",
-                    key="v55_lower_tray",
-                    help="Lower player tray",
-                    disabled=st.session_state.player_tray_level <= 0,
-                    on_click=move_player_tray,
-                    args=(-1,),
-                    use_container_width=True,
-                )
+    render_draggable_player_tray()
 
     # Player browser begins directly beneath the board.
     with st.container(key="v53_bottom_workspace"):
@@ -4595,9 +4725,7 @@ if selected_page == "Draft Room":
                 render_player_picker_table(
                     idx,
                     allow_draft=user_turn,
-                    list_height_override=player_tray_settings()[
-                        "player_height"
-                    ],
+                    list_height_override=280,
                 )
 
             with st.container(key="v53_queue_expander"):
