@@ -2866,6 +2866,80 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked
     padding: 9px 10px !important;
 }
 
+
+/* ============================================================
+   FantasySync v6.0 — Sidebar Reflow, CPU Continuity, Tight Tray
+   ============================================================ */
+
+section[data-testid="stSidebar"][aria-expanded="false"] {
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    border-right: 0 !important;
+    overflow: hidden !important;
+}
+
+body:has(section[data-testid="stSidebar"][aria-expanded="false"])
+    [data-testid="stAppViewContainer"] > .main {
+    width: 100vw !important;
+    max-width: 100vw !important;
+}
+
+body:has(section[data-testid="stSidebar"][aria-expanded="false"])
+    .main .block-container {
+    width: calc(100vw - 1.7rem) !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+body:has(section[data-testid="stSidebar"][aria-expanded="false"])
+    .st-key-v53_top_workspace,
+body:has(section[data-testid="stSidebar"][aria-expanded="false"])
+    .st-key-v53_bottom_workspace,
+body:has(section[data-testid="stSidebar"][aria-expanded="false"])
+    .st-key-v53_header {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+.st-key-v53_board_panel,
+.st-key-v53_board_panel > div,
+.st-key-v53_board_panel [data-testid="stMarkdownContainer"] {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+.st-key-v56_drag_handle {
+    height: 24px !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.st-key-v56_drag_handle [data-testid="stVerticalBlock"],
+.st-key-v56_drag_handle [data-testid="stMarkdownContainer"],
+.st-key-v56_drag_handle p {
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+}
+
+.v56-drag-grip {
+    top: -17px !important;
+}
+
+.st-key-v53_bottom_workspace {
+    margin-top: -2px !important;
+    padding-top: 0 !important;
+}
+
+.v53-player-tabs {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -2977,6 +3051,7 @@ def init_state(force=False):
         "turn_pick_overall": None,
         "pick_clock_seconds": 60,
         "clock_running": False,
+        "draft_active": False,
         "clock_paused_remaining": 60,
         "dock_level": 1,
         "cpu_variance_enabled": None,
@@ -3342,6 +3417,7 @@ def handle_user_draft_click(player: str):
         f"{player} drafted by {user_team}."
     )
     reset_pick_clock()
+    st.session_state.draft_active = True
     st.session_state.clock_running = True
 
 
@@ -3532,6 +3608,7 @@ def recommendations(limit=5) -> pd.DataFrame:
 
 
 def rebuild_draft():
+    st.session_state.draft_active = False
     st.session_state.picks = assign_keepers(
         snake_order(st.session_state.teams, int(st.session_state.rounds)),
         st.session_state.keepers,
@@ -3692,6 +3769,7 @@ def sync_user_turn_clock():
         st.session_state.turn_started_at = None
         st.session_state.turn_pick_overall = None
         st.session_state.clock_running = False
+        st.session_state.draft_active = False
         st.session_state.clock_paused_remaining = int(st.session_state.pick_clock_seconds)
         return
 
@@ -4150,7 +4228,7 @@ def render_v53_header(current_idx: Optional[int]):
             )
 
         with cpu_col:
-            status = "CPU ON" if st.session_state.clock_running else "CPU PAUSED"
+            status = "CPU ON" if st.session_state.draft_active else "CPU PAUSED"
             st.markdown(
                 f'<div class="v53-cpu">● {status}</div>',
                 unsafe_allow_html=True,
@@ -4169,12 +4247,13 @@ def render_v53_header(current_idx: Optional[int]):
 
         with action_col:
             with st.container(key="v53_header_action"):
-                if st.session_state.clock_running:
+                if st.session_state.draft_active:
                     if st.button(
                         "Pause Draft",
                         use_container_width=True,
                         key="v53_pause",
                     ):
+                        st.session_state.draft_active = False
                         pause_pick_clock()
                         st.rerun()
                 else:
@@ -4183,7 +4262,7 @@ def render_v53_header(current_idx: Optional[int]):
                         use_container_width=True,
                         key="v53_start",
                     ):
-                        st.session_state.clock_running = True
+                        st.session_state.draft_active = True
                         if current_idx is not None:
                             current_owner = clean(
                                 st.session_state.picks.loc[
@@ -4829,7 +4908,7 @@ if _current_idx is not None:
     )
 
 _cpu_turn_active = (
-    st.session_state.clock_running
+    st.session_state.draft_active
     and _current_idx is not None
     and _current_owner != clean(st.session_state.user_team)
 )
@@ -4935,6 +5014,7 @@ with st.sidebar:
         key="sidebar_reset_draft",
     ):
         rebuild_draft()
+        st.session_state.draft_active = False
         st.session_state.clock_running = False
         st.session_state.draft_message = (
             "Draft reset. Select a team and press Start Draft."
@@ -4951,13 +5031,17 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v5.9</div>',
+        '<div class="sidebar-version">FantasySync · v6.0</div>',
         unsafe_allow_html=True,
     )
 
 if selected_page == "Draft Room":
     idx = current_open_index()
     render_v53_header(idx)
+
+    # Install the zero-height drag script above the workspaces so it cannot
+    # create spacing between the handle and Players section.
+    render_draggable_player_tray()
 
     if st.session_state.draft_message:
         st.caption(st.session_state.draft_message)
@@ -5006,8 +5090,6 @@ if selected_page == "Draft Room":
             """,
             unsafe_allow_html=True,
         )
-
-    render_draggable_player_tray()
 
     # Player browser begins directly beneath the board.
     with st.container(key="v53_bottom_workspace"):
