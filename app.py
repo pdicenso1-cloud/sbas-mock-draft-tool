@@ -3757,6 +3757,112 @@ body:has(section[data-testid="stSidebar"][aria-expanded="false"])
     overflow: hidden !important;
 }
 
+
+/* ============================================================
+   FantasySync v6.3.3 — Compact Draft Header
+   ============================================================ */
+
+.main .block-container {
+    padding-top: .10rem !important;
+}
+
+.st-key-v53_header {
+    min-height: 70px !important;
+    padding: 2px 0 5px !important;
+    margin: 0 0 2px !important;
+    border-bottom: 1px solid rgba(148,163,184,.15) !important;
+}
+
+.st-key-v53_header > div,
+.st-key-v53_header > div > div,
+.st-key-v53_header [data-testid="stHorizontalBlock"] {
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    align-items: center !important;
+}
+
+.v53-title,
+.st-key-v53_header h1,
+.st-key-v53_header h2,
+.st-key-v53_header h3 {
+    font-size: 1.18rem !important;
+    line-height: 1.05 !important;
+    margin: 0 !important;
+}
+
+.v53-meta {
+    margin-top: 3px !important;
+    gap: 5px !important;
+}
+
+.v53-meta-chip {
+    min-height: 24px !important;
+    height: 24px !important;
+    padding: 0 9px !important;
+    font-size: .54rem !important;
+    border-radius: 7px !important;
+}
+
+.v53-cpu {
+    min-height: 27px !important;
+    height: 27px !important;
+    padding: 0 10px !important;
+    font-size: .55rem !important;
+}
+
+.v53-clock {
+    width: 58px !important;
+    min-width: 58px !important;
+    height: 58px !important;
+    min-height: 58px !important;
+    transform: none !important;
+    margin: 0 !important;
+}
+
+.v53-clock-time {
+    font-size: .92rem !important;
+    line-height: 1 !important;
+}
+
+.v53-clock-label {
+    font-size: .38rem !important;
+    line-height: 1 !important;
+}
+
+.st-key-v53_header_action button {
+    min-height: 39px !important;
+    height: 39px !important;
+    padding: 0 18px !important;
+    font-size: .71rem !important;
+}
+
+.st-key-v63_draft_message,
+.st-key-v621_draft_message,
+.st-key-v61_draft_message {
+    min-height: 16px !important;
+    margin: 0 0 2px !important;
+    padding: 0 !important;
+}
+
+.st-key-v63_draft_message p,
+.st-key-v621_draft_message p,
+.st-key-v61_draft_message p,
+.st-key-v63_draft_message [data-testid="stCaptionContainer"],
+.st-key-v621_draft_message [data-testid="stCaptionContainer"],
+.st-key-v61_draft_message [data-testid="stCaptionContainer"] {
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: .58rem !important;
+    line-height: 1.05 !important;
+}
+
+.st-key-v63_board_region {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -5881,7 +5987,7 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v6.3.2</div>',
+        '<div class="sidebar-version">FantasySync · v6.3.3</div>',
         unsafe_allow_html=True,
     )
 

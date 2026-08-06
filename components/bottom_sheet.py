@@ -455,7 +455,7 @@ def _render_sheet_css(level: int) -> None:
             height: 100% !important;
             max-height: 100% !important;
             min-height: 0 !important;
-            overflow-y: auto !important;
+            overflow-y: hidden !important;
             overflow-x: hidden !important;
             overscroll-behavior: contain !important;
             scrollbar-gutter: stable !important;
@@ -498,6 +498,70 @@ def _render_sheet_css(level: int) -> None:
             [data-testid="stVerticalBlockBorderWrapper"]
             ::-webkit-scrollbar-thumb:hover {{
             background: #7085A5 !important;
+        }}
+
+        .st-key-v633_roster_scroll {{
+            min-height: 0 !important;
+            overflow: visible !important;
+        }}
+
+        .st-key-v633_roster_scroll
+            [data-testid="stVerticalBlockBorderWrapper"] {{
+            height: 100% !important;
+            max-height: 100% !important;
+            min-height: 0 !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            overscroll-behavior: contain !important;
+            scrollbar-gutter: stable !important;
+            -webkit-overflow-scrolling: touch !important;
+            scrollbar-width: thin !important;
+            scrollbar-color: #60728F #101D2E !important;
+        }}
+
+        .st-key-v633_roster_scroll
+            [data-testid="stVerticalBlockBorderWrapper"]
+            > div,
+        .st-key-v633_roster_scroll
+            [data-testid="stVerticalBlock"] {{
+            height: auto !important;
+            max-height: none !important;
+            min-height: max-content !important;
+            overflow: visible !important;
+        }}
+
+        .st-key-v633_roster_scroll
+            [data-testid="stVerticalBlockBorderWrapper"]
+            ::-webkit-scrollbar {{
+            width: 7px !important;
+        }}
+
+        .st-key-v633_roster_scroll
+            [data-testid="stVerticalBlockBorderWrapper"]
+            ::-webkit-scrollbar-track {{
+            background: #101D2E !important;
+        }}
+
+        .st-key-v633_roster_scroll
+            [data-testid="stVerticalBlockBorderWrapper"]
+            ::-webkit-scrollbar-thumb {{
+            background: #60728F !important;
+            border-radius: 999px !important;
+        }}
+
+        .st-key-v633_roster_scroll
+            [data-testid="stVerticalBlockBorderWrapper"]
+            ::-webkit-scrollbar-thumb:hover {{
+            background: #7B90B0 !important;
+        }}
+
+        .st-key-v633_roster_scroll .roster-header-row,
+        .st-key-v633_roster_scroll .roster-line {{
+            position: relative !important;
+            top: auto !important;
+            bottom: auto !important;
+            transform: none !important;
+            flex-shrink: 0 !important;
         }}
 
         /* Old in-flow tray containers are no longer used. */
@@ -653,8 +717,17 @@ def _render_utility_side(
                         allow_draft=user_turn,
                     )
             else:
-                deps.render_roster_header()
-                deps.render_roster_rows()
+                with st.container(
+                    height=(
+                        188
+                        if _current_level() == 1
+                        else 318
+                    ),
+                    border=False,
+                    key="v633_roster_scroll",
+                ):
+                    deps.render_roster_header()
+                    deps.render_roster_rows()
 
 
 def render_bottom_sheet(
