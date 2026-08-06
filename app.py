@@ -3122,6 +3122,72 @@ div[data-testid="stCustomComponentV1"]:has(
     display: none !important;
 }
 
+
+/* ============================================================
+   FantasySync v6.1.5 — Restore full 16-round board scrolling
+   Keeps the hidden-autorefresh fix from v6.1.4.
+   ============================================================ */
+
+/* The board panel is the fixed-height scroll viewport. */
+.st-key-v53_board_panel {
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    overscroll-behavior: contain !important;
+    scrollbar-gutter: stable !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+/*
+ * Inner Streamlit wrappers must use natural height. Earlier rules and the
+ * drag script set these to 100%, clipping the content to the visible rounds.
+ */
+.st-key-v53_board_panel > div,
+.st-key-v53_board_panel > div > div,
+.st-key-v53_board_panel [data-testid="stVerticalBlockBorderWrapper"],
+.st-key-v53_board_panel [data-testid="stVerticalBlock"],
+.st-key-v53_board_panel [data-testid="stMarkdownContainer"] {
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+}
+
+/* Ensure the board grid contributes the height of rounds 1–16. */
+.st-key-v53_board_panel .snake-board-wrap,
+.st-key-v53_board_panel .snake-board-shell,
+.st-key-v53_board_panel .snake-board-grid {
+    height: auto !important;
+    max-height: none !important;
+    min-height: max-content !important;
+    overflow: visible !important;
+}
+
+/* Subtle internal scrollbar. */
+.st-key-v53_board_panel {
+    scrollbar-width: thin;
+    scrollbar-color: #42516A #091321;
+}
+
+.st-key-v53_board_panel::-webkit-scrollbar {
+    width: 7px;
+}
+
+.st-key-v53_board_panel::-webkit-scrollbar-track {
+    background: #091321;
+}
+
+.st-key-v53_board_panel::-webkit-scrollbar-thumb {
+    background: #42516A;
+    border-radius: 999px;
+}
+
+.st-key-v53_board_panel::-webkit-scrollbar-thumb:hover {
+    background: #60728F;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -4643,19 +4709,37 @@ def render_draggable_player_tray():
             }
 
             panels().forEach((panel) => {
+              /*
+               * The panel is the scroll viewport. Do not force its inner
+               * Markdown/vertical wrappers to 100% height; those wrappers must
+               * keep their natural height so all 16 rounds contribute to
+               * scrollHeight.
+               */
               important(panel, "height", "100%");
               important(panel, "max-height", "100%");
               important(panel, "min-height", "0px");
               important(panel, "overflow-y", "auto");
               important(panel, "overflow-x", "hidden");
 
-              let current = panel.parentElement;
-              while (current && current !== workspace) {
-                important(current, "height", "100%");
-                important(current, "max-height", "100%");
-                important(current, "min-height", "0px");
-                current = current.parentElement;
+              const column = panel.closest('[data-testid="stColumn"]');
+              if (column) {
+                important(column, "height", "100%");
+                important(column, "max-height", "100%");
+                important(column, "min-height", "0px");
+                important(column, "overflow", "hidden");
               }
+
+              panel.querySelectorAll(
+                ':scope > div, ' +
+                '[data-testid="stVerticalBlockBorderWrapper"], ' +
+                '[data-testid="stVerticalBlock"], ' +
+                '[data-testid="stMarkdownContainer"]'
+              ).forEach((inner) => {
+                important(inner, "height", "auto");
+                important(inner, "max-height", "none");
+                important(inner, "min-height", "0px");
+                important(inner, "overflow", "visible");
+              });
             });
 
             playerLists().forEach((list) => {
@@ -5228,7 +5312,7 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v6.1.4</div>',
+        '<div class="sidebar-version">FantasySync · v6.1.5</div>',
         unsafe_allow_html=True,
     )
 
