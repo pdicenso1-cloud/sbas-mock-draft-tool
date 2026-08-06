@@ -3059,84 +3059,19 @@ body:has(section[data-testid="stSidebar"][aria-expanded="false"])
 
 
 /* ============================================================
-   FantasySync v6.1.1 — Stable refresh indicator and full board scroll
-   Minimal patch based on the stable v6.1 build.
+   FantasySync v6.1.2 — Direct status and board-scroll fix
    ============================================================ */
 
 /*
- * Streamlit normally displays a wide gray running/status surface at the top
- * during reruns. Collapse it into a small corner indicator.
- */
-[data-testid="stStatusWidget"] {
-    position: fixed !important;
-    top: 11px !important;
-    right: 112px !important;
-    left: auto !important;
-    width: 22px !important;
-    min-width: 22px !important;
-    max-width: 22px !important;
-    height: 22px !important;
-    min-height: 22px !important;
-    max-height: 22px !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border: 0 !important;
-    border-radius: 50% !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    overflow: hidden !important;
-    z-index: 100000 !important;
-}
-
-[data-testid="stStatusWidget"] > div,
-[data-testid="stStatusWidget"] [data-testid="stMarkdownContainer"],
-[data-testid="stStatusWidget"] p,
-[data-testid="stStatusWidget"] span:not([data-testid="stSpinner"]) {
-    font-size: 0 !important;
-    line-height: 0 !important;
-    color: transparent !important;
-    -webkit-text-fill-color: transparent !important;
-    background: transparent !important;
-    box-shadow: none !important;
-}
-
-/* Small loading wheel when Streamlit exposes its spinner element. */
-[data-testid="stStatusWidget"] [data-testid="stSpinner"],
-[data-testid="stStatusWidget"] svg {
-    width: 18px !important;
-    height: 18px !important;
-    margin: 2px !important;
-}
-
-/*
- * Remove any wide decorative/progress strip while preserving the tiny status
- * widget above.
- */
-[data-testid="stDecoration"] {
-    display: none !important;
-}
-
-[data-testid="stAppViewContainer"] > div[style*="height: 3px"],
-[data-testid="stAppViewContainer"] > div[style*="height:3px"] {
-    display: none !important;
-}
-
-/*
- * Restore real scrolling through all 16 rounds.
- *
- * Older layout rules forced the board's internal Streamlit wrappers to the
- * same height as the viewport. That clipped later rounds rather than giving
- * the panel a larger scrollHeight.
+ * The generated board owns its own scroll viewport. This avoids depending on
+ * Streamlit's changing internal wrapper structure.
  */
 .st-key-v53_board_panel {
     height: 100% !important;
     max-height: 100% !important;
     min-height: 0 !important;
-    overflow-y: scroll !important;
-    overflow-x: hidden !important;
-    overscroll-behavior: contain !important;
-    scrollbar-gutter: stable !important;
-    -webkit-overflow-scrolling: touch !important;
+    overflow: hidden !important;
+    padding-right: 3px !important;
 }
 
 .st-key-v53_board_panel > div,
@@ -3144,44 +3079,58 @@ body:has(section[data-testid="stSidebar"][aria-expanded="false"])
 .st-key-v53_board_panel [data-testid="stVerticalBlock"],
 .st-key-v53_board_panel [data-testid="stVerticalBlockBorderWrapper"],
 .st-key-v53_board_panel [data-testid="stMarkdownContainer"] {
-    height: auto !important;
-    max-height: none !important;
+    height: 100% !important;
+    max-height: 100% !important;
     min-height: 0 !important;
-    overflow: visible !important;
+    overflow: hidden !important;
 }
 
-/* Ensure the generated board contributes its full 16-round content height. */
-.st-key-v53_board_panel .snake-board-wrap,
-.st-key-v53_board_panel .snake-board-shell,
-.st-key-v53_board_panel .snake-board-grid {
-    height: auto !important;
-    max-height: none !important;
+.v612-board-scroll {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    overscroll-behavior: contain !important;
+    scrollbar-gutter: stable !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+.v612-board-grid {
+    width: 100% !important;
+    height: max-content !important;
     min-height: max-content !important;
-    overflow: visible !important;
+    max-height: none !important;
 }
 
-/* Visible but understated board scrollbar. */
-.st-key-v53_board_panel::-webkit-scrollbar {
+/* Subtle scrollbar */
+.v612-board-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #42516A #091321;
+}
+
+.v612-board-scroll::-webkit-scrollbar {
     width: 7px;
 }
 
-.st-key-v53_board_panel::-webkit-scrollbar-track {
+.v612-board-scroll::-webkit-scrollbar-track {
     background: #091321;
 }
 
-.st-key-v53_board_panel::-webkit-scrollbar-thumb {
-    background: #3C4A61;
+.v612-board-scroll::-webkit-scrollbar-thumb {
+    background: #42516A;
     border-radius: 999px;
 }
 
-.st-key-v53_board_panel::-webkit-scrollbar-thumb:hover {
-    background: #596B87;
+.v612-board-scroll::-webkit-scrollbar-thumb:hover {
+    background: #60728F;
 }
 
-/* Firefox */
-.st-key-v53_board_panel {
-    scrollbar-width: thin;
-    scrollbar-color: #3C4A61 #091321;
+/* Defensive suppression of Streamlit's wide native status surfaces. */
+[data-testid="stStatusWidget"],
+[data-testid="stDecoration"] {
+    display: none !important;
 }
 
 </style>
@@ -3909,9 +3858,13 @@ def snake_board_html() -> str:
     }
     pmap = player_map()
 
-    html = ['<div style="width:100%;">']
+    html = [
+        '<div class="v612-board-scroll" '
+        'role="region" '
+        'aria-label="Scrollable 16-round draft board">'
+    ]
     html.append(
-        '<div style="display:grid;'
+        '<div class="v612-board-grid" style="display:grid;'
         'grid-template-columns:38px repeat(10,minmax(0,1fr));'
         'gap:2px;width:100%;">'
     )
@@ -4809,6 +4762,141 @@ def render_draggable_player_tray():
 
 
 
+
+def render_compact_loading_indicator():
+    """
+    Replace Streamlit's wide running/status surface with a small spinner.
+
+    This runs in the parent document, watches Streamlit's status widget, hides
+    the wide native surface, and mirrors activity with a compact fixed spinner.
+    """
+    components.html(
+        """
+        <script>
+        (() => {
+          const doc = window.parent.document;
+          const SPINNER_ID = "fantasysync-compact-spinner";
+
+          function ensureSpinner() {
+            let spinner = doc.getElementById(SPINNER_ID);
+
+            if (!spinner) {
+              spinner = doc.createElement("div");
+              spinner.id = SPINNER_ID;
+              spinner.setAttribute("aria-label", "FantasySync loading");
+              spinner.innerHTML = '<span></span>';
+
+              Object.assign(spinner.style, {
+                position: "fixed",
+                top: "13px",
+                right: "118px",
+                width: "20px",
+                height: "20px",
+                zIndex: "1000000",
+                display: "none",
+                alignItems: "center",
+                justifyContent: "center",
+                pointerEvents: "none"
+              });
+
+              const ring = spinner.querySelector("span");
+              Object.assign(ring.style, {
+                display: "block",
+                width: "14px",
+                height: "14px",
+                border: "2px solid rgba(148,163,184,.32)",
+                borderTopColor: "#60A5FA",
+                borderRadius: "50%",
+                animation: "fantasysyncSpin .65s linear infinite"
+              });
+
+              doc.body.appendChild(spinner);
+            }
+
+            if (!doc.getElementById("fantasysync-spinner-style")) {
+              const style = doc.createElement("style");
+              style.id = "fantasysync-spinner-style";
+              style.textContent = `
+                @keyframes fantasysyncSpin {
+                  to { transform: rotate(360deg); }
+                }
+
+                [data-testid="stStatusWidget"],
+                [data-testid="stDecoration"] {
+                  display: none !important;
+                  width: 0 !important;
+                  height: 0 !important;
+                  min-width: 0 !important;
+                  min-height: 0 !important;
+                  padding: 0 !important;
+                  margin: 0 !important;
+                  overflow: hidden !important;
+                  background: transparent !important;
+                  box-shadow: none !important;
+                }
+              `;
+              doc.head.appendChild(style);
+            }
+
+            return spinner;
+          }
+
+          function nativeStatusActive() {
+            const widgets = Array.from(
+              doc.querySelectorAll('[data-testid="stStatusWidget"]')
+            );
+
+            return widgets.some((widget) => {
+              const text = (widget.textContent || "").toLowerCase();
+              const style = window.parent.getComputedStyle(widget);
+
+              return (
+                style.display !== "none" &&
+                style.visibility !== "hidden" &&
+                (
+                  text.includes("running") ||
+                  text.includes("rerun") ||
+                  text.includes("loading") ||
+                  text.includes("connecting") ||
+                  widget.querySelector("svg")
+                )
+              );
+            });
+          }
+
+          function update() {
+            const spinner = ensureSpinner();
+            spinner.style.display = nativeStatusActive() ? "flex" : "none";
+
+            doc.querySelectorAll(
+              '[data-testid="stStatusWidget"], [data-testid="stDecoration"]'
+            ).forEach((element) => {
+              element.style.setProperty("display", "none", "important");
+            });
+          }
+
+          update();
+
+          const observer = new MutationObserver(update);
+          observer.observe(doc.documentElement, {
+            subtree: true,
+            childList: true,
+            attributes: true,
+            characterData: true
+          });
+
+          window.setTimeout(update, 50);
+          window.setTimeout(update, 250);
+          window.setTimeout(update, 750);
+        })();
+        </script>
+        """,
+        height=0,
+        width=0,
+    )
+
+
+
 def render_live_user_roster():
     render_live_roster_header()
     render_live_roster_rows()
@@ -5287,12 +5375,13 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v6.1.1</div>',
+        '<div class="sidebar-version">FantasySync · v6.1.2</div>',
         unsafe_allow_html=True,
     )
 
 if selected_page == "Draft Room":
     idx = current_open_index()
+    render_compact_loading_indicator()
     render_v53_header(idx)
 
     # Install the zero-height drag script above the workspaces so it cannot
