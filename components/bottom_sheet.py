@@ -333,6 +333,12 @@ def _render_sheet_css(level: int) -> None:
             justify-content: flex-end !important;
             gap: .22rem !important;
             padding-right: 8px !important;
+            pointer-events: auto !important;
+        }}
+
+        .st-key-v63_sheet_handle
+            [data-testid="stColumn"] {{
+            pointer-events: auto !important;
         }}
 
         .st-key-v63_sheet_handle button {{
@@ -744,7 +750,10 @@ def _render_handle(level: int) -> None:
     """
     with st.container(key="v63_sheet_handle"):
         _, up_col, down_col, trailing_space = st.columns(
-            [8.55, 0.58, 0.58, 0.18],
+            # Reserve a wide protected area at the far right for Streamlit's
+            # Manage app overlay. The controls remain above Queue/Roster but
+            # cannot be covered by the floating management button.
+            [7.25, 0.62, 0.62, 1.51],
             gap="small",
         )
 

@@ -4190,6 +4190,95 @@ body:has(section[data-testid="stSidebar"][aria-expanded="false"])
     }
 }
 
+
+/* ============================================================
+   FantasySync v6.4.5 — Full-width open-sidebar Draft Room
+   ============================================================ */
+
+/*
+ * The main element already begins after the open sidebar. Use almost all of
+ * that remaining width rather than retaining Streamlit's centered max-width.
+ */
+body:has(section[data-testid="stSidebar"][aria-expanded="true"])
+    [data-testid="stAppViewContainer"] .main {
+    width: calc(100vw - 15.25rem) !important;
+    max-width: calc(100vw - 15.25rem) !important;
+    margin-left: 15.25rem !important;
+    margin-right: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    box-sizing: border-box !important;
+}
+
+body:has(section[data-testid="stSidebar"][aria-expanded="true"])
+    .main .block-container {
+    width: calc(100% - 40px) !important;
+    max-width: calc(100% - 40px) !important;
+    min-width: 0 !important;
+    margin-left: 20px !important;
+    margin-right: 20px !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    box-sizing: border-box !important;
+}
+
+/* Alternate Streamlit state attributes used by some deployments. */
+body:has([data-testid="stSidebar"][data-state="expanded"])
+    .main .block-container,
+body:has([data-testid="stSidebarContent"][aria-hidden="false"])
+    .main .block-container {
+    width: calc(100% - 40px) !important;
+    max-width: calc(100% - 40px) !important;
+    margin-left: 20px !important;
+    margin-right: 20px !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+/* Stretch the complete Draft Room, not only the board's scroll wrapper. */
+body:has(section[data-testid="stSidebar"][aria-expanded="true"])
+    .st-key-v640_header,
+body:has(section[data-testid="stSidebar"][aria-expanded="true"])
+    .st-key-v63_draft_message,
+body:has(section[data-testid="stSidebar"][aria-expanded="true"])
+    .st-key-v63_board_region,
+body:has(section[data-testid="stSidebar"][aria-expanded="true"])
+    .v643-board-scroll,
+body:has(section[data-testid="stSidebar"][aria-expanded="true"])
+    .v643-board-content,
+body:has(section[data-testid="stSidebar"][aria-expanded="true"])
+    .snake-board-wrap,
+body:has(section[data-testid="stSidebar"][aria-expanded="true"])
+    .snake-board-shell,
+body:has(section[data-testid="stSidebar"][aria-expanded="true"])
+    .snake-board-grid {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+/* Align the fixed tray with the wider open-sidebar workspace. */
+body:has(section[data-testid="stSidebar"][aria-expanded="true"])
+    .st-key-v63_sheet_handle,
+body:has(section[data-testid="stSidebar"][aria-expanded="true"])
+    .st-key-v63_bottom_sheet {
+    left: calc(15.25rem + 20px) !important;
+    right: 20px !important;
+    width: auto !important;
+}
+
+/*
+ * Keep the arrows away from the bottom-right Manage app overlay in all sidebar
+ * states. The actual button columns also reserve protected right-side space.
+ */
+.st-key-v63_sheet_handle button {
+    position: relative !important;
+    z-index: 10050 !important;
+    pointer-events: auto !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -6314,7 +6403,7 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v6.4.4</div>',
+        '<div class="sidebar-version">FantasySync · v6.4.5</div>',
         unsafe_allow_html=True,
     )
 
