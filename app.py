@@ -3057,6 +3057,27 @@ body:has(section[data-testid="stSidebar"][aria-expanded="false"])
     margin-top: 0 !important;
 }
 
+
+/* ============================================================
+   FantasySync v6.2 — Performance Pass
+   ============================================================ */
+
+/* Reduce browser layout work in the player table. */
+.st-key-war_player_list {
+    contain: layout paint style;
+}
+
+.st-key-war_player_list [data-testid="stHorizontalBlock"] {
+    contain: layout style;
+}
+
+/* Avoid animated transitions while Streamlit is replacing widgets. */
+.st-key-war_player_list *,
+.st-key-v61_player_toolbar *,
+.st-key-v53_top_workspace * {
+    transition-duration: 0s !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -4118,21 +4139,34 @@ def ensure_draft_filters():
         st.session_state.draft_search = ""
 
 
+
+def set_draft_position_filter(position: str):
+    st.session_state.draft_position_filter = position
+
+
+def toggle_queue_player(player: str):
+    if player in st.session_state.player_queue:
+        remove_from_queue(player)
+    else:
+        add_to_queue(player)
+
+
+
 def render_position_filter():
     positions = ["ALL", "QB", "RB", "WR", "TE"]
     labels = {"ALL": "ALL", "QB": "QB", "RB": "RB", "WR": "WR", "TE": "TE"}
     cols = st.columns(len(positions))
+
     for i, pos in enumerate(positions):
         active = st.session_state.draft_position_filter == pos
-        button_type = "primary" if active else "secondary"
-        if cols[i].button(
+        cols[i].button(
             labels[pos],
             key=f"draft_pos_{pos}",
             use_container_width=True,
-            type=button_type,
-        ):
-            st.session_state.draft_position_filter = pos
-            st.rerun()
+            type="primary" if active else "secondary",
+            on_click=set_draft_position_filter,
+            args=(pos,),
+        )
 
 
 
@@ -4486,15 +4520,15 @@ def render_v53_recommendation(
     )
 
     with st.container(key="v53_rec_button"):
-        if st.button(
+        st.button(
             f"DRAFT {player.upper()}  ›",
             use_container_width=True,
             type="primary",
             disabled=not allow_draft,
             key=f"v53_recommendation_{current_idx}_{player}",
-        ):
-            handle_user_draft_click(player)
-            st.rerun()
+            on_click=handle_user_draft_click,
+            args=(player,),
+        )
 
 
 
@@ -4761,7 +4795,7 @@ def render_player_picker_table(
         unsafe_allow_html=True,
     )
 
-    shown = pool.head(60).reset_index(drop=True)
+    shown = pool.head(36).reset_index(drop=True)
     list_height = (
         int(list_height_override)
         if list_height_override is not None
@@ -4812,7 +4846,7 @@ def render_player_picker_table(
                 args=(player,),
             )
 
-            if cols[1].button(
+            cols[1].button(
                 "★" if in_queue else "☆",
                 key=f"queue_star_{current_idx}_{player}",
                 use_container_width=True,
@@ -4821,12 +4855,9 @@ def render_player_picker_table(
                     if in_queue
                     else f"Add {player} to queue"
                 ),
-            ):
-                if in_queue:
-                    remove_from_queue(player)
-                else:
-                    add_to_queue(player)
-                st.rerun()
+                on_click=toggle_queue_player,
+                args=(player,),
+            )
 
             cols[2].markdown(
                 f"<div class='rank2'>{rank}</div>",
@@ -4931,55 +4962,53 @@ def render_queue_panel(
                 unsafe_allow_html=True,
             )
 
-            if row_cols[2].button(
+            row_cols[2].button(
                 "↑",
                 key=f"queue_up_{queue_index}_{player}",
                 disabled=queue_index == 0,
                 help="Move up",
-            ):
-                move_queue_player(player, -1)
-                st.rerun()
+                on_click=move_queue_player,
+                args=(player, -1),
+            )
 
-            if row_cols[3].button(
+            row_cols[3].button(
                 "↓",
                 key=f"queue_down_{queue_index}_{player}",
                 disabled=queue_index == len(queue) - 1,
                 help="Move down",
-            ):
-                move_queue_player(player, 1)
-                st.rerun()
+                on_click=move_queue_player,
+                args=(player, 1),
+            )
 
-            if row_cols[4].button(
+            row_cols[4].button(
                 "×",
                 key=f"queue_remove_{queue_index}_{player}",
                 help="Remove from queue",
-            ):
-                remove_from_queue(player)
-                st.rerun()
+                on_click=remove_from_queue,
+                args=(player,),
+            )
 
-    if st.button(
+    st.button(
         "➤ Draft Top Queue Player",
         use_container_width=True,
         type="primary",
         disabled=not allow_draft or not queue,
         key=f"draft_top_queue_{current_idx}",
-    ):
-        draft_top_queue_player()
-        st.rerun()
+        on_click=draft_top_queue_player,
+    )
 
     utility_left, utility_right = st.columns(
         [0.90, 1.25]
     )
 
     with utility_left:
-        if st.button(
+        st.button(
             "Clear Queue",
             use_container_width=True,
             disabled=not queue,
             key="clear_queue_button",
-        ):
-            clear_player_queue()
-            st.rerun()
+            on_click=clear_player_queue,
+        )
 
     with utility_right:
         st.toggle(
@@ -5049,7 +5078,7 @@ if _cpu_turn_active:
         st.session_state.picks.loc[_current_idx, "overall"]
     )
     st_autorefresh(
-        interval=725,
+        interval=360,
         limit=None,
         key=f"cpu_pick_tick_{current_pick_number}",
     )
@@ -5160,7 +5189,7 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v6.1</div>',
+        '<div class="sidebar-version">FantasySync · v6.2</div>',
         unsafe_allow_html=True,
     )
 
