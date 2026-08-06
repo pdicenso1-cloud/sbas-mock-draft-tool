@@ -3059,105 +3059,67 @@ body:has(section[data-testid="stSidebar"][aria-expanded="false"])
 
 
 /* ============================================================
-   FantasySync v6.1.3 — Reliable Board Scroll + No Gray Status Bar
-   Minimal patch built from stable v6.1.
+   FantasySync v6.1.4 — Hidden autorefresh + faster CPU
+   Minimal patch based on stable v6.1.
    ============================================================ */
 
-/* Completely suppress Streamlit's wide rerun/loading surfaces. */
-[data-testid="stStatusWidget"],
-[data-testid="stDecoration"],
-[data-testid="stConnectionStatus"] {
+/*
+ * The gray bar was the streamlit-autorefresh component's blank iframe and
+ * wrapper—not Streamlit's status widget. Hide the dedicated mount completely.
+ */
+.st-key-cpu_autorefresh_mount,
+.st-key-cpu_autorefresh_mount > div,
+.st-key-cpu_autorefresh_mount [data-testid="stVerticalBlock"],
+.st-key-cpu_autorefresh_mount [data-testid="stElementContainer"],
+.st-key-cpu_autorefresh_mount [data-testid="stCustomComponentV1"],
+.st-key-cpu_autorefresh_mount iframe {
     display: none !important;
     visibility: hidden !important;
+    position: absolute !important;
     width: 0 !important;
     height: 0 !important;
     min-width: 0 !important;
     min-height: 0 !important;
     max-width: 0 !important;
     max-height: 0 !important;
-    padding: 0 !important;
     margin: 0 !important;
+    padding: 0 !important;
     border: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
     overflow: hidden !important;
 }
 
-/* Remove thin or wide loading strips injected above the app content. */
-[data-testid="stAppViewContainer"] > div[style*="position: fixed"][style*="top: 0"],
-[data-testid="stAppViewContainer"] > div[style*="position:fixed"][style*="top:0"],
-[data-testid="stAppViewContainer"] > div[style*="height: 3px"],
-[data-testid="stAppViewContainer"] > div[style*="height:3px"] {
+/* Defensive fallback if Streamlit changes the keyed wrapper hierarchy. */
+iframe[title*="streamlit_autorefresh"],
+iframe[src*="streamlit_autorefresh"] {
     display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    border: 0 !important;
 }
 
-/*
- * The board's outer Streamlit container is the scroll viewport.
- * Inner content must remain natural height so rounds 1–16 contribute to
- * scrollHeight.
- */
-.st-key-v53_board_panel {
-    height: 470px !important;
-    max-height: 470px !important;
+div[data-testid="stElementContainer"]:has(
+    iframe[title*="streamlit_autorefresh"]
+),
+div[data-testid="stElementContainer"]:has(
+    iframe[src*="streamlit_autorefresh"]
+),
+div[data-testid="stCustomComponentV1"]:has(
+    iframe[title*="streamlit_autorefresh"]
+),
+div[data-testid="stCustomComponentV1"]:has(
+    iframe[src*="streamlit_autorefresh"]
+) {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
     min-height: 0 !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    overscroll-behavior: contain !important;
-    scrollbar-gutter: stable !important;
-    -webkit-overflow-scrolling: touch !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
-.st-key-v53_board_panel > div,
-.st-key-v53_board_panel > div > div,
-.st-key-v53_board_panel [data-testid="stVerticalBlock"],
-.st-key-v53_board_panel [data-testid="stVerticalBlockBorderWrapper"],
-.st-key-v53_board_panel [data-testid="stMarkdownContainer"] {
-    height: auto !important;
-    max-height: none !important;
-    min-height: 0 !important;
-    overflow: visible !important;
-}
-
-/* Ensure all generated board rows remain part of the scrollable content. */
-.st-key-v53_board_panel .snake-board-wrap,
-.st-key-v53_board_panel .snake-board-shell,
-.st-key-v53_board_panel .snake-board-grid {
-    height: auto !important;
-    max-height: none !important;
-    min-height: max-content !important;
-    overflow: visible !important;
-}
-
-/* Match roster height to board while allowing its own scrolling. */
-.st-key-v53_roster_panel {
-    height: 470px !important;
-    max-height: 470px !important;
-    min-height: 0 !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-}
-
-/* Subtle board scrollbar. */
-.st-key-v53_board_panel {
-    scrollbar-width: thin;
-    scrollbar-color: #42516A #091321;
-}
-
-.st-key-v53_board_panel::-webkit-scrollbar {
-    width: 7px;
-}
-
-.st-key-v53_board_panel::-webkit-scrollbar-track {
-    background: #091321;
-}
-
-.st-key-v53_board_panel::-webkit-scrollbar-thumb {
-    background: #42516A;
-    border-radius: 999px;
-}
-
-.st-key-v53_board_panel::-webkit-scrollbar-thumb:hover {
-    background: #60728F;
+/* Keep ordinary Streamlit status UI compact and non-disruptive. */
+[data-testid="stDecoration"] {
+    display: none !important;
 }
 
 </style>
@@ -5146,16 +5108,19 @@ _cpu_turn_active = (
 )
 
 if _cpu_turn_active:
-    # Schedule the next page run, but make only one selection now.
-    # Streamlit renders this pick before the next CPU selection occurs.
+    # Mount the autorefresh component inside a dedicated hidden container.
+    # This keeps its blank iframe from creating the wide gray bar above the app.
     current_pick_number = int(
         st.session_state.picks.loc[_current_idx, "overall"]
     )
-    st_autorefresh(
-        interval=725,
-        limit=None,
-        key=f"cpu_pick_tick_{current_pick_number}",
-    )
+
+    with st.container(key="cpu_autorefresh_mount"):
+        st_autorefresh(
+            interval=180,
+            limit=None,
+            key=f"cpu_pick_tick_{current_pick_number}",
+        )
+
     run_one_cpu_pick()
 
 # Enforce the user's pick clock only on user-controlled turns.
@@ -5263,7 +5228,7 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v6.1.3</div>',
+        '<div class="sidebar-version">FantasySync · v6.1.4</div>',
         unsafe_allow_html=True,
     )
 
@@ -5295,23 +5260,15 @@ if selected_page == "Draft Room":
         )
 
         with board_col:
-            # Native bounded container owns the scroll behavior.
-            with st.container(
-                height=470,
-                border=False,
-                key="v53_board_panel",
-            ):
+            # Native bounded container: no flex centering and no false blank area.
+            with st.container(key="v53_board_panel"):
                 st.markdown(
                     snake_board_html(),
                     unsafe_allow_html=True,
                 )
 
         with roster_col:
-            with st.container(
-                height=470,
-                border=False,
-                key="v53_roster_panel",
-            ):
+            with st.container(key="v53_roster_panel"):
                 render_live_roster_header()
                 render_live_roster_rows()
 
