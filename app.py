@@ -3919,52 +3919,8 @@ def move_player_tray(direction: int):
 
 
 def render_player_tray_css():
-    settings = player_tray_settings()
-    board_height = int(settings["board_height"])
-    player_height = int(settings["player_height"])
-
-    st.markdown(
-        f"""
-        <style>
-        .st-key-v53_top_workspace {{
-            height: auto !important;
-            max-height: none !important;
-            min-height: 0 !important;
-        }}
-
-        /*
-         * Streamlit's bounded-container wrapper is the real board viewport.
-         * Its child content remains natural height so rounds 1–16 scroll.
-         */
-        .st-key-v53_board_panel
-            [data-testid="stVerticalBlockBorderWrapper"] {{
-            height: {board_height}px !important;
-            max-height: {board_height}px !important;
-            min-height: {board_height}px !important;
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
-            scrollbar-gutter: stable !important;
-        }}
-
-        .st-key-v53_board_panel
-            [data-testid="stVerticalBlockBorderWrapper"]
-            > div,
-        .st-key-v53_board_panel
-            [data-testid="stVerticalBlock"] {{
-            height: auto !important;
-            max-height: none !important;
-            min-height: 0 !important;
-            overflow: visible !important;
-        }}
-
-        .st-key-war_player_list {{
-            height: {player_height}px !important;
-            max-height: {player_height}px !important;
-        }}
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    """Legacy no-op retained for compatibility with non-Draft Room pages."""
+    return None
 
 
 
@@ -5925,7 +5881,7 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v6.3 Phase 1</div>',
+        '<div class="sidebar-version">FantasySync · v6.3 Phase 2</div>',
         unsafe_allow_html=True,
     )
 
