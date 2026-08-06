@@ -3132,6 +3132,72 @@ body,
     overflow-anchor: none !important;
 }
 
+
+/* ============================================================
+   FantasySync v6.4 — Fragment Updates and Denser Player Rows
+   ============================================================ */
+
+/* Fragment updates preserve the surrounding page and scroll position. */
+[data-testid="stFragment"] {
+    width: 100% !important;
+}
+
+/* Tighter player rows: approximately four rows fit in a compact tray. */
+.st-key-war_player_list {
+    min-height: 132px !important;
+}
+
+.st-key-war_player_list [data-testid="stHorizontalBlock"] {
+    min-height: 27px !important;
+    height: 27px !important;
+    padding: 0 !important;
+    align-items: center !important;
+}
+
+.player-row-divider {
+    height: 1px !important;
+    margin: 0 !important;
+}
+
+.player-name2 {
+    font-size: .56rem !important;
+    line-height: 1 !important;
+}
+
+.player-sub2 {
+    font-size: .42rem !important;
+    line-height: .95 !important;
+    margin-top: 0 !important;
+}
+
+.stat2,
+.rank2 {
+    font-size: .48rem !important;
+    line-height: 1 !important;
+}
+
+.st-key-war_player_list button {
+    width: 20px !important;
+    min-width: 20px !important;
+    height: 20px !important;
+    min-height: 20px !important;
+    padding: 0 !important;
+    font-size: .55rem !important;
+}
+
+.value-badge {
+    height: 17px !important;
+    min-width: 22px !important;
+    font-size: .42rem !important;
+}
+
+/* Keep the column header compact too. */
+.player-table-header2 {
+    min-height: 22px !important;
+    font-size: .47rem !important;
+    line-height: 1 !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -5171,38 +5237,8 @@ apply_team_query_selection()
 render_dynamic_dock_css()
 render_player_tray_css()
 
-# Only CPU turns use full-page refreshes.
-# User turns rely on the browser-side clock, so player clicks stay responsive.
-_current_idx = current_open_index()
-_current_owner = None
-
-if _current_idx is not None:
-    _current_owner = clean(
-        st.session_state.picks.loc[_current_idx, "current_owner"]
-    )
-
-_cpu_turn_active = (
-    st.session_state.draft_active
-    and _current_idx is not None
-    and _current_owner != clean(st.session_state.user_team)
-)
-
-if _cpu_turn_active:
-    # Schedule the next page run, but make only one selection now.
-    # Streamlit renders this pick before the next CPU selection occurs.
-    current_pick_number = int(
-        st.session_state.picks.loc[_current_idx, "overall"]
-    )
-    st_autorefresh(
-        interval=175,
-        limit=None,
-        key=f"cpu_pick_tick_{current_pick_number}",
-    )
-    run_one_cpu_pick()
-
-# Enforce the user's pick clock only on user-controlled turns.
-if auto_pick_user_if_expired():
-    st.rerun()
+# Draft Room updates are handled inside a Streamlit fragment.
+# This prevents CPU picks and clock ticks from rerunning the whole page.
 
 # The Draft Room renders its own compact v5.3 header.
 
@@ -5305,13 +5341,57 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v6.3</div>',
+        '<div class="sidebar-version">FantasySync · v6.4</div>',
         unsafe_allow_html=True,
     )
 
-if selected_page == "Draft Room":
+@st.fragment
+def render_draft_room_fragment():
+    # CPU selections and the user's clock rerun only this fragment.
+    current_idx = current_open_index()
+
+    if current_idx is not None:
+        current_owner = clean(
+            st.session_state.picks.loc[current_idx, "current_owner"]
+        )
+    else:
+        current_owner = None
+
+    cpu_turn = (
+        st.session_state.draft_active
+        and current_idx is not None
+        and current_owner != clean(st.session_state.user_team)
+    )
+
+    user_turn_active = (
+        current_idx is not None
+        and current_owner == clean(st.session_state.user_team)
+        and st.session_state.clock_running
+    )
+
+    if cpu_turn:
+        current_pick_number = int(
+            st.session_state.picks.loc[current_idx, "overall"]
+        )
+        st_autorefresh(
+            interval=125,
+            limit=None,
+            key=f"cpu_fragment_tick_{current_pick_number}",
+        )
+        run_one_cpu_pick()
+
+    elif user_turn_active:
+        # One-second fragment refresh updates the visible countdown.
+        st_autorefresh(
+            interval=1000,
+            limit=None,
+            key=f"user_clock_tick_{int(st.session_state.picks.loc[current_idx, 'overall'])}",
+        )
+
+    if auto_pick_user_if_expired():
+        st.rerun(scope="fragment")
+
     idx = current_open_index()
-    preserve_scroll_position()
     render_v53_header(idx)
 
     # Install the zero-height drag script above the workspaces so it cannot
@@ -5417,7 +5497,11 @@ if selected_page == "Draft Room":
                     )
 
 
-elif selected_page == "Recommendations":
+
+if selected_page == "Draft Room":
+    render_draft_room_fragment()
+
+if selected_page == "Recommendations":
     st.subheader("Team-Aware Recommendations")
     idx = current_open_index()
     if idx is None:
