@@ -3997,6 +3997,91 @@ body:has(section[data-testid="stSidebar"][aria-expanded="false"])
     padding-top: 0 !important;
 }
 
+
+/* ============================================================
+   FantasySync v6.4.3 — Visible position filters
+   ============================================================ */
+
+/*
+ * Some browsers were rendering Streamlit's secondary buttons as white
+ * surfaces with white text. Force a consistent dark, high-contrast system.
+ */
+.st-key-v61_player_toolbar button,
+.st-key-v61_player_toolbar
+    [data-testid="stBaseButton-secondary"],
+.st-key-v61_player_toolbar
+    [data-testid="stBaseButton-primary"] {
+    min-height: 30px !important;
+    height: 30px !important;
+    border-radius: 999px !important;
+    border: 1px solid #465671 !important;
+    background: #172437 !important;
+    color: #E7EDF6 !important;
+    -webkit-text-fill-color: #E7EDF6 !important;
+    box-shadow: none !important;
+    opacity: 1 !important;
+}
+
+.st-key-v61_player_toolbar button *,
+.st-key-v61_player_toolbar
+    [data-testid="stBaseButton-secondary"] *,
+.st-key-v61_player_toolbar
+    [data-testid="stBaseButton-primary"] * {
+    color: #E7EDF6 !important;
+    -webkit-text-fill-color: #E7EDF6 !important;
+    opacity: 1 !important;
+}
+
+/* Selected filter */
+.st-key-v61_player_toolbar
+    [data-testid="stBaseButton-primary"],
+.st-key-v61_player_toolbar button[kind="primary"] {
+    background: #345EDB !important;
+    border-color: #6C8CFF !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+
+.st-key-v61_player_toolbar
+    [data-testid="stBaseButton-primary"] *,
+.st-key-v61_player_toolbar button[kind="primary"] * {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+
+.st-key-v61_player_toolbar button:hover {
+    background: #243550 !important;
+    border-color: #7590B8 !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+
+.st-key-v61_player_toolbar button:focus-visible {
+    outline: 2px solid #7FA6FF !important;
+    outline-offset: 1px !important;
+}
+
+/* Explicit keyed fallbacks for Streamlit builds that omit button kind attrs. */
+.st-key-draft_pos_ALL button,
+.st-key-draft_pos_QB button,
+.st-key-draft_pos_RB button,
+.st-key-draft_pos_WR button,
+.st-key-draft_pos_TE button {
+    background: #172437 !important;
+    border-color: #465671 !important;
+    color: #E7EDF6 !important;
+    -webkit-text-fill-color: #E7EDF6 !important;
+}
+
+.st-key-draft_pos_ALL button *,
+.st-key-draft_pos_QB button *,
+.st-key-draft_pos_RB button *,
+.st-key-draft_pos_WR button *,
+.st-key-draft_pos_TE button * {
+    color: inherit !important;
+    -webkit-text-fill-color: inherit !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -6121,7 +6206,7 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v6.4.2</div>',
+        '<div class="sidebar-version">FantasySync · v6.4.3</div>',
         unsafe_allow_html=True,
     )
 

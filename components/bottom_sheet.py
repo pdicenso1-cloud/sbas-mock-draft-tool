@@ -295,60 +295,6 @@ def _render_sheet_css(level: int) -> None:
             padding: 0 0 20px !important;
         }}
 
-        .st-key-v63_board_scroll {{
-            height: calc(100vh - 104px) !important;
-            max-height: calc(100vh - 104px) !important;
-            min-height: 520px !important;
-            overflow: visible !important;
-        }}
-
-        .st-key-v63_board_scroll
-            [data-testid="stVerticalBlockBorderWrapper"] {{
-            height: calc(100vh - 104px) !important;
-            max-height: calc(100vh - 104px) !important;
-            min-height: 520px !important;
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
-            overscroll-behavior: contain !important;
-            scrollbar-gutter: stable !important;
-            -webkit-overflow-scrolling: touch !important;
-            scrollbar-width: thin !important;
-            scrollbar-color: #465671 #091321 !important;
-        }}
-
-        .st-key-v63_board_scroll
-            [data-testid="stVerticalBlockBorderWrapper"] > div,
-        .st-key-v63_board_scroll
-            [data-testid="stVerticalBlock"],
-        .st-key-v63_board_scroll
-            [data-testid="stMarkdownContainer"],
-        .st-key-v63_board_scroll
-            [data-testid="stMarkdownContainer"] > div {{
-            height: auto !important;
-            max-height: none !important;
-            min-height: 0 !important;
-            overflow: visible !important;
-        }}
-
-        .st-key-v63_board_scroll
-            [data-testid="stVerticalBlockBorderWrapper"]
-            ::-webkit-scrollbar {{
-            width: 7px !important;
-        }}
-
-        .st-key-v63_board_scroll
-            [data-testid="stVerticalBlockBorderWrapper"]
-            ::-webkit-scrollbar-track {{
-            background: #091321 !important;
-        }}
-
-        .st-key-v63_board_scroll
-            [data-testid="stVerticalBlockBorderWrapper"]
-            ::-webkit-scrollbar-thumb {{
-            background: #465671 !important;
-            border-radius: 999px !important;
-        }}
-
         /*
          * Fixed tray handle. It sits directly above the sheet and remains
          * visible when the sheet is collapsed.
