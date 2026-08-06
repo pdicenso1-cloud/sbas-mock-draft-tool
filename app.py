@@ -3059,36 +3059,46 @@ body:has(section[data-testid="stSidebar"][aria-expanded="false"])
 
 
 /* ============================================================
-   FantasySync v6.1.2 — Direct status and board-scroll fix
+   FantasySync v6.1.3 — Reliable Board Scroll + No Gray Status Bar
+   Minimal patch built from stable v6.1.
    ============================================================ */
 
+/* Completely suppress Streamlit's wide rerun/loading surfaces. */
+[data-testid="stStatusWidget"],
+[data-testid="stDecoration"],
+[data-testid="stConnectionStatus"] {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: 0 !important;
+    max-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+}
+
+/* Remove thin or wide loading strips injected above the app content. */
+[data-testid="stAppViewContainer"] > div[style*="position: fixed"][style*="top: 0"],
+[data-testid="stAppViewContainer"] > div[style*="position:fixed"][style*="top:0"],
+[data-testid="stAppViewContainer"] > div[style*="height: 3px"],
+[data-testid="stAppViewContainer"] > div[style*="height:3px"] {
+    display: none !important;
+}
+
 /*
- * The generated board owns its own scroll viewport. This avoids depending on
- * Streamlit's changing internal wrapper structure.
+ * The board's outer Streamlit container is the scroll viewport.
+ * Inner content must remain natural height so rounds 1–16 contribute to
+ * scrollHeight.
  */
 .st-key-v53_board_panel {
-    height: 100% !important;
-    max-height: 100% !important;
-    min-height: 0 !important;
-    overflow: hidden !important;
-    padding-right: 3px !important;
-}
-
-.st-key-v53_board_panel > div,
-.st-key-v53_board_panel > div > div,
-.st-key-v53_board_panel [data-testid="stVerticalBlock"],
-.st-key-v53_board_panel [data-testid="stVerticalBlockBorderWrapper"],
-.st-key-v53_board_panel [data-testid="stMarkdownContainer"] {
-    height: 100% !important;
-    max-height: 100% !important;
-    min-height: 0 !important;
-    overflow: hidden !important;
-}
-
-.v612-board-scroll {
-    width: 100% !important;
-    height: 100% !important;
-    max-height: 100% !important;
+    height: 470px !important;
+    max-height: 470px !important;
     min-height: 0 !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
@@ -3097,40 +3107,57 @@ body:has(section[data-testid="stSidebar"][aria-expanded="false"])
     -webkit-overflow-scrolling: touch !important;
 }
 
-.v612-board-grid {
-    width: 100% !important;
-    height: max-content !important;
-    min-height: max-content !important;
+.st-key-v53_board_panel > div,
+.st-key-v53_board_panel > div > div,
+.st-key-v53_board_panel [data-testid="stVerticalBlock"],
+.st-key-v53_board_panel [data-testid="stVerticalBlockBorderWrapper"],
+.st-key-v53_board_panel [data-testid="stMarkdownContainer"] {
+    height: auto !important;
     max-height: none !important;
+    min-height: 0 !important;
+    overflow: visible !important;
 }
 
-/* Subtle scrollbar */
-.v612-board-scroll {
+/* Ensure all generated board rows remain part of the scrollable content. */
+.st-key-v53_board_panel .snake-board-wrap,
+.st-key-v53_board_panel .snake-board-shell,
+.st-key-v53_board_panel .snake-board-grid {
+    height: auto !important;
+    max-height: none !important;
+    min-height: max-content !important;
+    overflow: visible !important;
+}
+
+/* Match roster height to board while allowing its own scrolling. */
+.st-key-v53_roster_panel {
+    height: 470px !important;
+    max-height: 470px !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+/* Subtle board scrollbar. */
+.st-key-v53_board_panel {
     scrollbar-width: thin;
     scrollbar-color: #42516A #091321;
 }
 
-.v612-board-scroll::-webkit-scrollbar {
+.st-key-v53_board_panel::-webkit-scrollbar {
     width: 7px;
 }
 
-.v612-board-scroll::-webkit-scrollbar-track {
+.st-key-v53_board_panel::-webkit-scrollbar-track {
     background: #091321;
 }
 
-.v612-board-scroll::-webkit-scrollbar-thumb {
+.st-key-v53_board_panel::-webkit-scrollbar-thumb {
     background: #42516A;
     border-radius: 999px;
 }
 
-.v612-board-scroll::-webkit-scrollbar-thumb:hover {
+.st-key-v53_board_panel::-webkit-scrollbar-thumb:hover {
     background: #60728F;
-}
-
-/* Defensive suppression of Streamlit's wide native status surfaces. */
-[data-testid="stStatusWidget"],
-[data-testid="stDecoration"] {
-    display: none !important;
 }
 
 </style>
@@ -3858,13 +3885,9 @@ def snake_board_html() -> str:
     }
     pmap = player_map()
 
-    html = [
-        '<div class="v612-board-scroll" '
-        'role="region" '
-        'aria-label="Scrollable 16-round draft board">'
-    ]
+    html = ['<div style="width:100%;">']
     html.append(
-        '<div class="v612-board-grid" style="display:grid;'
+        '<div style="display:grid;'
         'grid-template-columns:38px repeat(10,minmax(0,1fr));'
         'gap:2px;width:100%;">'
     )
@@ -4762,141 +4785,6 @@ def render_draggable_player_tray():
 
 
 
-
-def render_compact_loading_indicator():
-    """
-    Replace Streamlit's wide running/status surface with a small spinner.
-
-    This runs in the parent document, watches Streamlit's status widget, hides
-    the wide native surface, and mirrors activity with a compact fixed spinner.
-    """
-    components.html(
-        """
-        <script>
-        (() => {
-          const doc = window.parent.document;
-          const SPINNER_ID = "fantasysync-compact-spinner";
-
-          function ensureSpinner() {
-            let spinner = doc.getElementById(SPINNER_ID);
-
-            if (!spinner) {
-              spinner = doc.createElement("div");
-              spinner.id = SPINNER_ID;
-              spinner.setAttribute("aria-label", "FantasySync loading");
-              spinner.innerHTML = '<span></span>';
-
-              Object.assign(spinner.style, {
-                position: "fixed",
-                top: "13px",
-                right: "118px",
-                width: "20px",
-                height: "20px",
-                zIndex: "1000000",
-                display: "none",
-                alignItems: "center",
-                justifyContent: "center",
-                pointerEvents: "none"
-              });
-
-              const ring = spinner.querySelector("span");
-              Object.assign(ring.style, {
-                display: "block",
-                width: "14px",
-                height: "14px",
-                border: "2px solid rgba(148,163,184,.32)",
-                borderTopColor: "#60A5FA",
-                borderRadius: "50%",
-                animation: "fantasysyncSpin .65s linear infinite"
-              });
-
-              doc.body.appendChild(spinner);
-            }
-
-            if (!doc.getElementById("fantasysync-spinner-style")) {
-              const style = doc.createElement("style");
-              style.id = "fantasysync-spinner-style";
-              style.textContent = `
-                @keyframes fantasysyncSpin {
-                  to { transform: rotate(360deg); }
-                }
-
-                [data-testid="stStatusWidget"],
-                [data-testid="stDecoration"] {
-                  display: none !important;
-                  width: 0 !important;
-                  height: 0 !important;
-                  min-width: 0 !important;
-                  min-height: 0 !important;
-                  padding: 0 !important;
-                  margin: 0 !important;
-                  overflow: hidden !important;
-                  background: transparent !important;
-                  box-shadow: none !important;
-                }
-              `;
-              doc.head.appendChild(style);
-            }
-
-            return spinner;
-          }
-
-          function nativeStatusActive() {
-            const widgets = Array.from(
-              doc.querySelectorAll('[data-testid="stStatusWidget"]')
-            );
-
-            return widgets.some((widget) => {
-              const text = (widget.textContent || "").toLowerCase();
-              const style = window.parent.getComputedStyle(widget);
-
-              return (
-                style.display !== "none" &&
-                style.visibility !== "hidden" &&
-                (
-                  text.includes("running") ||
-                  text.includes("rerun") ||
-                  text.includes("loading") ||
-                  text.includes("connecting") ||
-                  widget.querySelector("svg")
-                )
-              );
-            });
-          }
-
-          function update() {
-            const spinner = ensureSpinner();
-            spinner.style.display = nativeStatusActive() ? "flex" : "none";
-
-            doc.querySelectorAll(
-              '[data-testid="stStatusWidget"], [data-testid="stDecoration"]'
-            ).forEach((element) => {
-              element.style.setProperty("display", "none", "important");
-            });
-          }
-
-          update();
-
-          const observer = new MutationObserver(update);
-          observer.observe(doc.documentElement, {
-            subtree: true,
-            childList: true,
-            attributes: true,
-            characterData: true
-          });
-
-          window.setTimeout(update, 50);
-          window.setTimeout(update, 250);
-          window.setTimeout(update, 750);
-        })();
-        </script>
-        """,
-        height=0,
-        width=0,
-    )
-
-
-
 def render_live_user_roster():
     render_live_roster_header()
     render_live_roster_rows()
@@ -5375,13 +5263,12 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v6.1.2</div>',
+        '<div class="sidebar-version">FantasySync · v6.1.3</div>',
         unsafe_allow_html=True,
     )
 
 if selected_page == "Draft Room":
     idx = current_open_index()
-    render_compact_loading_indicator()
     render_v53_header(idx)
 
     # Install the zero-height drag script above the workspaces so it cannot
@@ -5408,15 +5295,23 @@ if selected_page == "Draft Room":
         )
 
         with board_col:
-            # Native bounded container: no flex centering and no false blank area.
-            with st.container(key="v53_board_panel"):
+            # Native bounded container owns the scroll behavior.
+            with st.container(
+                height=470,
+                border=False,
+                key="v53_board_panel",
+            ):
                 st.markdown(
                     snake_board_html(),
                     unsafe_allow_html=True,
                 )
 
         with roster_col:
-            with st.container(key="v53_roster_panel"):
+            with st.container(
+                height=470,
+                border=False,
+                key="v53_roster_panel",
+            ):
                 render_live_roster_header()
                 render_live_roster_rows()
 
