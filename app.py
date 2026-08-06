@@ -2644,6 +2644,228 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked
     margin-top: 0 !important;
 }
 
+
+/* ============================================================
+   FantasySync v5.9 — Approved Final Layout
+   ============================================================ */
+
+/* Clean top header: no rule through chips, timer, or title. */
+.st-key-v53_header {
+    padding: 5px 2px 15px !important;
+    margin-bottom: 9px !important;
+    border-bottom: 0 !important;
+    position: relative;
+}
+
+.st-key-v53_header::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: rgba(148, 163, 184, .16);
+}
+
+.v53-title,
+.v53-meta,
+.v53-cpu,
+.v53-clock,
+.st-key-v53_header_action {
+    position: relative;
+    z-index: 2;
+}
+
+.v53-clock {
+    transform: translateY(-9px) !important;
+}
+
+/* Slightly larger board to match the approved render. */
+.st-key-v53_top_workspace {
+    height: 470px !important;
+    max-height: 470px !important;
+    min-height: 470px !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.st-key-v53_top_workspace > div,
+.st-key-v53_top_workspace > div > div,
+.st-key-v53_top_workspace
+    > div
+    > div
+    > [data-testid="stHorizontalBlock"] {
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.st-key-v53_top_workspace
+    > div
+    > div
+    > [data-testid="stHorizontalBlock"]
+    > [data-testid="stColumn"] {
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+.st-key-v53_board_panel,
+.st-key-v53_roster_panel {
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+.st-key-v53_board_panel > div,
+.st-key-v53_roster_panel > div {
+    margin: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* Remove every possible gap around the handle and lower workspace. */
+.st-key-v56_drag_handle {
+    height: 32px !important;
+    min-height: 32px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-top: 2px solid #7C5CE0;
+}
+
+.v56-drag-grip {
+    top: -15px !important;
+}
+
+.st-key-v53_bottom_workspace {
+    margin: 0 !important;
+    padding: 3px 0 0 !important;
+    border-top: 0 !important;
+}
+
+/* Slightly larger board tiles while preserving all colors. */
+.snake-team-select {
+    min-height: 46px !important;
+}
+
+.snake-team-select .team-label {
+    font-size: .66rem !important;
+}
+
+.snake-cell {
+    min-height: 66px !important;
+    padding: 5px 7px !important;
+}
+
+.snake-round-label {
+    min-height: 66px !important;
+    font-size: .66rem !important;
+}
+
+.snake-player {
+    font-size: .64rem !important;
+    line-height: 1.12 !important;
+}
+
+.snake-pick {
+    font-size: .49rem !important;
+}
+
+/* Compact roster rows to align with the larger five-round board. */
+.roster-line {
+    min-height: 31px !important;
+    padding: 1px 0 !important;
+}
+
+.roster-slot-pill {
+    height: 22px !important;
+}
+
+.roster-line-player {
+    font-size: .59rem !important;
+}
+
+/* Denser player list matching the approved mockup. */
+.st-key-war_player_list {
+    height: 290px !important;
+    max-height: 290px !important;
+}
+
+.st-key-war_player_list [data-testid="stHorizontalBlock"] {
+    min-height: 31px !important;
+    height: 31px !important;
+    padding: 0 !important;
+    align-items: center !important;
+}
+
+.player-row-divider {
+    margin: 0 !important;
+    background: rgba(148, 163, 184, .09) !important;
+}
+
+.player-name2 {
+    font-size: .59rem !important;
+    line-height: 1.05 !important;
+}
+
+.player-sub2 {
+    font-size: .45rem !important;
+    line-height: 1 !important;
+    margin-top: 1px !important;
+}
+
+.stat2,
+.rank2 {
+    font-size: .51rem !important;
+}
+
+.st-key-war_player_list button {
+    width: 22px !important;
+    min-width: 22px !important;
+    height: 22px !important;
+    min-height: 22px !important;
+    padding: 0 !important;
+}
+
+.value-badge {
+    height: 18px !important;
+    min-width: 24px !important;
+    font-size: .45rem !important;
+}
+
+/* Compact the player-browser heading and controls. */
+.v53-player-tabs {
+    min-height: 29px !important;
+    margin-bottom: 6px !important;
+}
+
+.v53-player-tab {
+    padding-bottom: 7px !important;
+    font-size: .59rem !important;
+}
+
+.st-key-v53_filter_row [data-testid="stTextInputRootElement"] {
+    min-height: 31px !important;
+}
+
+.st-key-v53_filter_row button {
+    min-height: 30px !important;
+    height: 30px !important;
+    font-size: .57rem !important;
+}
+
+/* Recommendation panel follows the compact lower workspace. */
+.st-key-v53_recommendation_panel {
+    min-height: 290px !important;
+    padding: 9px 10px !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -4071,9 +4293,11 @@ def render_v53_recommendation(
 
 def render_draggable_player_tray():
     """
-    Resize the complete upper workspace and keep the divider attached to the
-    actual bottom of the board/roster content. Downward dragging is capped at
-    the board's available content height, preventing an empty black gap.
+    Install a stable browser-side divider.
+
+    The divider directly controls the complete top workspace height. Because
+    the handle immediately follows that workspace in the normal document flow,
+    the full Players section moves with it and no spacer can remain.
     """
     components.html(
         """
@@ -4081,168 +4305,103 @@ def render_draggable_player_tray():
         (() => {
           const doc = window.parent.document;
           const storage = window.parent.sessionStorage;
-          const STORAGE_KEY = "fantasysync_true_tray_height_v58";
+          const STORAGE_KEY = "fantasysync_tray_height_v59";
 
-          const DEFAULT_HEIGHT = 430;
-          const MIN_HEIGHT = 245;
-          const ABSOLUTE_MAX_HEIGHT = 650;
-          const TOTAL_HEIGHT = 730;
-
-          function nodes(selector) {
-            return Array.from(doc.querySelectorAll(selector));
-          }
+          const DEFAULT_HEIGHT = 470;
+          const MIN_HEIGHT = 300;
+          const MAX_HEIGHT = 575;
+          const TOTAL_HEIGHT = 760;
 
           function important(element, property, value) {
             if (!element) return;
             element.style.setProperty(property, value, "important");
           }
 
-          function stretchAncestors(panel, workspace) {
-            let current = panel ? panel.parentElement : null;
-
-            while (current && current !== workspace) {
-              important(current, "height", "100%");
-              important(current, "max-height", "100%");
-              important(current, "min-height", "0px");
-
-              if (
-                current.matches('[data-testid="stColumn"]') ||
-                current.matches('[data-testid="stHorizontalBlock"]') ||
-                current.matches('[data-testid="stVerticalBlock"]') ||
-                current.matches(
-                  '[data-testid="stVerticalBlockBorderWrapper"]'
-                )
-              ) {
-                important(current, "overflow", "hidden");
-              }
-
-              current = current.parentElement;
-            }
-          }
-
-          function boardContentMaximum() {
-            const board = doc.querySelector(".st-key-v53_board_panel");
-            const roster = doc.querySelector(".st-key-v53_roster_panel");
-
-            const boardScroll = board ? board.scrollHeight : DEFAULT_HEIGHT;
-            const rosterScroll = roster ? roster.scrollHeight : DEFAULT_HEIGHT;
-
-            /*
-             * Use the larger real content height, but never allow the divider
-             * to travel into space where neither panel has visible content.
-             */
-            return Math.max(
-              DEFAULT_HEIGHT,
-              Math.min(
-                ABSOLUTE_MAX_HEIGHT,
-                Math.max(boardScroll, rosterScroll)
+          function panels() {
+            return Array.from(
+              doc.querySelectorAll(
+                ".st-key-v53_board_panel, .st-key-v53_roster_panel"
               )
             );
           }
 
+          function playerLists() {
+            return Array.from(
+              doc.querySelectorAll(".st-key-war_player_list")
+            );
+          }
+
           function applyHeight(rawHeight) {
+            const height = Math.max(
+              MIN_HEIGHT,
+              Math.min(MAX_HEIGHT, Number(rawHeight) || DEFAULT_HEIGHT)
+            );
+            const playerHeight = Math.max(170, TOTAL_HEIGHT - height);
+
             const workspace = doc.querySelector(
               ".st-key-v53_top_workspace"
             );
-            const board = doc.querySelector(
-              ".st-key-v53_board_panel"
-            );
-            const roster = doc.querySelector(
-              ".st-key-v53_roster_panel"
-            );
-
-            const contentMaximum = boardContentMaximum();
-            const upperHeight = Math.max(
-              MIN_HEIGHT,
-              Math.min(contentMaximum, Number(rawHeight) || DEFAULT_HEIGHT)
-            );
-
-            const playerHeight = Math.max(
-              165,
-              TOTAL_HEIGHT - upperHeight
-            );
 
             if (workspace) {
-              important(workspace, "height", `${upperHeight}px`);
-              important(workspace, "max-height", `${upperHeight}px`);
-              important(workspace, "min-height", "0px");
+              important(workspace, "height", `${height}px`);
+              important(workspace, "max-height", `${height}px`);
+              important(workspace, "min-height", `${height}px`);
               important(workspace, "overflow", "hidden");
 
-              workspace.querySelectorAll(
-                ':scope > div, ' +
-                '[data-testid="stHorizontalBlock"], ' +
-                '[data-testid="stColumn"]'
-              ).forEach((wrapper) => {
-                important(wrapper, "height", "100%");
-                important(wrapper, "max-height", "100%");
-                important(wrapper, "min-height", "0px");
-                important(wrapper, "overflow", "hidden");
-              });
+              const direct = workspace.querySelector(
+                ':scope > div > div > [data-testid="stHorizontalBlock"]'
+              );
+
+              if (direct) {
+                important(direct, "height", "100%");
+                important(direct, "max-height", "100%");
+                important(direct, "min-height", "0px");
+                important(direct, "align-items", "stretch");
+
+                direct.querySelectorAll(
+                  ':scope > [data-testid="stColumn"]'
+                ).forEach((column) => {
+                  important(column, "height", "100%");
+                  important(column, "max-height", "100%");
+                  important(column, "min-height", "0px");
+                  important(column, "overflow", "hidden");
+                });
+              }
             }
 
-            [board, roster].forEach((panel) => {
-              if (!panel) return;
-
-              stretchAncestors(panel, workspace);
-
+            panels().forEach((panel) => {
               important(panel, "height", "100%");
               important(panel, "max-height", "100%");
               important(panel, "min-height", "0px");
               important(panel, "overflow-y", "auto");
               important(panel, "overflow-x", "hidden");
 
-              panel.querySelectorAll(
-                ':scope > div, ' +
-                '[data-testid="stVerticalBlockBorderWrapper"], ' +
-                '[data-testid="stVerticalBlock"]'
-              ).forEach((wrapper) => {
-                important(wrapper, "height", "100%");
-                important(wrapper, "max-height", "100%");
-                important(wrapper, "min-height", "0px");
-              });
+              let current = panel.parentElement;
+              while (current && current !== workspace) {
+                important(current, "height", "100%");
+                important(current, "max-height", "100%");
+                important(current, "min-height", "0px");
+                current = current.parentElement;
+              }
             });
 
-            const dragHandle = doc.querySelector(
-              ".st-key-v56_drag_handle"
-            );
-            if (dragHandle) {
-              important(dragHandle, "margin-top", "0px");
-            }
-
-            const bottomWorkspace = doc.querySelector(
-              ".st-key-v53_bottom_workspace"
-            );
-            if (bottomWorkspace) {
-              important(bottomWorkspace, "margin-top", "0px");
-            }
-
-            nodes(".st-key-war_player_list").forEach((panel) => {
-              important(panel, "height", `${playerHeight}px`);
-              important(panel, "max-height", `${playerHeight}px`);
-              important(panel, "min-height", "150px");
-              important(panel, "overflow-y", "auto");
-
-              panel.querySelectorAll(
-                '[data-testid="stVerticalBlockBorderWrapper"], ' +
-                '[data-testid="stVerticalBlock"]'
-              ).forEach((wrapper) => {
-                important(wrapper, "height", "100%");
-                important(wrapper, "max-height", "100%");
-                important(wrapper, "min-height", "0px");
-              });
+            playerLists().forEach((list) => {
+              important(list, "height", `${playerHeight}px`);
+              important(list, "max-height", `${playerHeight}px`);
+              important(list, "min-height", "150px");
+              important(list, "overflow-y", "auto");
             });
 
-            storage.setItem(STORAGE_KEY, String(upperHeight));
+            storage.setItem(STORAGE_KEY, String(height));
           }
 
           function install() {
             const handle = doc.querySelector(".v56-drag-grip");
-
-            if (!handle || handle.dataset.v58Installed === "true") {
+            if (!handle || handle.dataset.v59Installed === "true") {
               return false;
             }
 
-            handle.dataset.v58Installed = "true";
+            handle.dataset.v59Installed = "true";
 
             let dragging = false;
             let startY = 0;
@@ -4275,54 +4434,35 @@ def render_draggable_player_tray():
 
             handle.addEventListener("pointermove", (event) => {
               if (!dragging) return;
-
-              const delta = event.clientY - startY;
-              applyHeight(startHeight + delta);
+              applyHeight(startHeight + (event.clientY - startY));
               event.preventDefault();
             });
 
-            function stopDragging(event) {
+            function stop(event) {
               if (!dragging) return;
-
               dragging = false;
               handle.classList.remove("dragging");
               doc.body.style.userSelect = "";
               doc.body.style.cursor = "";
-
               try {
                 handle.releasePointerCapture(event.pointerId);
               } catch (_) {}
             }
 
-            handle.addEventListener("pointerup", stopDragging);
-            handle.addEventListener("pointercancel", stopDragging);
-
+            handle.addEventListener("pointerup", stop);
+            handle.addEventListener("pointercancel", stop);
             handle.addEventListener("dblclick", () => {
               applyHeight(DEFAULT_HEIGHT);
             });
-
-            /*
-             * Reapply after layout settles so a Streamlit rerun cannot restore
-             * stale wrapper heights.
-             */
-            window.setTimeout(() => {
-              const saved = Number(storage.getItem(STORAGE_KEY));
-              applyHeight(
-                Number.isFinite(saved) && saved > 0
-                  ? saved
-                  : DEFAULT_HEIGHT
-              );
-            }, 250);
 
             return true;
           }
 
           let attempts = 0;
-          const installer = window.setInterval(() => {
+          const timer = window.setInterval(() => {
             attempts += 1;
-
             if (install() || attempts > 80) {
-              window.clearInterval(installer);
+              window.clearInterval(timer);
             }
           }, 100);
         })();
@@ -4811,7 +4951,7 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v5.8</div>',
+        '<div class="sidebar-version">FantasySync · v5.9</div>',
         unsafe_allow_html=True,
     )
 
@@ -4839,20 +4979,14 @@ if selected_page == "Draft Room":
 
         with board_col:
             # Native bounded container: no flex centering and no false blank area.
-            with st.container(
-                height=430,
-                key="v53_board_panel",
-            ):
+            with st.container(key="v53_board_panel"):
                 st.markdown(
                     snake_board_html(),
                     unsafe_allow_html=True,
                 )
 
         with roster_col:
-            with st.container(
-                height=430,
-                key="v53_roster_panel",
-            ):
+            with st.container(key="v53_roster_panel"):
                 render_live_roster_header()
                 render_live_roster_rows()
 
