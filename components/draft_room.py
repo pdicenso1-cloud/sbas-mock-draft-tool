@@ -10,6 +10,10 @@ from components.bottom_sheet import (
     render_bottom_sheet,
 )
 from components.draft_board import render_draft_board
+from components.draft_header import (
+    DraftHeaderDependencies,
+    render_compact_draft_header,
+)
 
 
 @dataclass(frozen=True)
@@ -20,6 +24,10 @@ class DraftRoomDependencies:
     render_player_tray_css: Callable[[], None]
     render_header: Callable[[Optional[int]], None]
     clean: Callable[[Any], str]
+    remaining_pick_time: Callable[[], int]
+    pause_pick_clock: Callable[[], None]
+    start_pick_clock: Callable[[], None]
+    current_user_roster: Callable[[], Any]
     player_tray_settings: Callable[[], dict]
     snake_board_html: Callable[[], str]
     move_player_tray: Callable[[int], None]
@@ -58,7 +66,15 @@ def render_draft_room(
     """
 
     current_index = deps.current_open_index()
-    deps.render_header(current_index)
+    render_compact_draft_header(
+        DraftHeaderDependencies(
+            clean=deps.clean,
+            remaining_pick_time=deps.remaining_pick_time,
+            pause_pick_clock=deps.pause_pick_clock,
+            start_pick_clock=deps.start_pick_clock,
+        ),
+        current_index,
+    )
 
     if st.session_state.draft_message:
         with st.container(key="v63_draft_message"):
@@ -75,6 +91,8 @@ def render_draft_room(
             render_queue=deps.render_queue,
             render_roster_header=deps.render_roster_header,
             render_roster_rows=deps.render_roster_rows,
+            current_user_roster=deps.current_user_roster,
+            clean=deps.clean,
         ),
         current_index=current_index,
         user_turn=user_turn,

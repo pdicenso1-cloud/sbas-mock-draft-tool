@@ -2,11 +2,15 @@
 
 from components.bottom_sheet import render_bottom_sheet
 from components.draft_board import render_draft_board
+from components.draft_header import render_compact_draft_header
 from components.draft_room import DraftRoomDependencies, render_draft_room
+from components.roster_panel import render_scrollable_roster
 
 __all__ = [
     "DraftRoomDependencies",
     "render_bottom_sheet",
+    "render_compact_draft_header",
     "render_draft_board",
     "render_draft_room",
+    "render_scrollable_roster",
 ]

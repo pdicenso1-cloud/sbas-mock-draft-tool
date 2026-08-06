@@ -3863,6 +3863,140 @@ body:has(section[data-testid="stSidebar"][aria-expanded="false"])
     padding-top: 0 !important;
 }
 
+
+/* ============================================================
+   FantasySync v6.4.0 — Structural compact header
+   ============================================================ */
+
+.main .block-container {
+    padding-top: .05rem !important;
+}
+
+.st-key-v640_header {
+    min-height: 54px !important;
+    height: 54px !important;
+    margin: 0 !important;
+    padding: 0 0 3px !important;
+    border-bottom: 1px solid rgba(148,163,184,.16) !important;
+}
+
+.st-key-v640_header > div,
+.st-key-v640_header > div > div,
+.st-key-v640_header [data-testid="stHorizontalBlock"] {
+    min-height: 50px !important;
+    height: 50px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    align-items: center !important;
+}
+
+.v640-title-line {
+    height: 48px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.v640-title {
+    flex: 0 0 auto;
+    color: #F8FAFC;
+    font-size: 1.08rem;
+    line-height: 1;
+    font-weight: 900;
+    margin-right: 3px;
+}
+
+.v640-chip {
+    flex: 0 0 auto;
+    min-height: 23px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 9px;
+    border-radius: 7px;
+    border: 1px solid #334158;
+    background: #111C2D;
+    color: #CED7E5;
+    font-size: .50rem;
+    font-weight: 780;
+}
+
+.v640-cpu {
+    height: 27px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #276744;
+    border-radius: 999px;
+    background: #0C2B20;
+    color: #6CE38C;
+    font-size: .50rem;
+    font-weight: 850;
+    white-space: nowrap;
+}
+
+.v640-clock {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto;
+    border: 2px solid #3B82F6;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.v640-clock-time {
+    color: #FFFFFF;
+    font-size: .78rem;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.v640-clock-label {
+    color: #7EB3FF;
+    font-size: .31rem;
+    font-weight: 850;
+    line-height: 1;
+    margin-top: 3px;
+}
+
+.st-key-v640_header button {
+    min-height: 35px !important;
+    height: 35px !important;
+    padding: 0 13px !important;
+    border-radius: 7px !important;
+    font-size: .62rem !important;
+}
+
+.st-key-v63_draft_message {
+    min-height: 13px !important;
+    height: 13px !important;
+    margin: 1px 0 1px !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+.st-key-v63_draft_message p,
+.st-key-v63_draft_message [data-testid="stCaptionContainer"] {
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: .52rem !important;
+    line-height: 1 !important;
+}
+
+/* Retire the legacy header from the Draft Room. */
+.st-key-v53_header {
+    display: none !important;
+}
+
+.st-key-v63_board_region {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -5987,7 +6121,7 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v6.3.3</div>',
+        '<div class="sidebar-version">FantasySync · v6.4.0</div>',
         unsafe_allow_html=True,
     )
 
@@ -5998,6 +6132,10 @@ if selected_page == "Draft Room":
             render_player_tray_css=render_player_tray_css,
             render_header=render_v53_header,
             clean=clean,
+            remaining_pick_time=remaining_pick_time,
+            pause_pick_clock=pause_pick_clock,
+            start_pick_clock=start_pick_clock,
+            current_user_roster=current_user_roster,
             player_tray_settings=player_tray_settings,
             snake_board_html=snake_board_html,
             move_player_tray=move_player_tray,

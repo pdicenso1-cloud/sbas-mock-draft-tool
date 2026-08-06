@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 import streamlit as st
+
+from components.roster_panel import render_scrollable_roster
 
 
 TRAY_LEVELS = {
@@ -35,6 +37,8 @@ class BottomSheetDependencies:
     render_queue: Callable[..., None]
     render_roster_header: Callable[[], None]
     render_roster_rows: Callable[[], None]
+    current_user_roster: Callable[[], Any]
+    clean: Callable[[Any], str]
 
 
 def _current_level() -> int:
@@ -570,6 +574,125 @@ def _render_sheet_css(level: int) -> None:
             display: none !important;
         }}
 
+        /* v6.4 roster: one real HTML scroll viewport. */
+        .v640-roster-card {{
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }}
+
+        .v640-roster-heading {{
+            flex: 0 0 auto;
+            min-height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 2px 2px 7px;
+            margin-bottom: 3px;
+            border-bottom: 1px solid rgba(148,163,184,.18);
+        }}
+
+        .v640-roster-team {{
+            color: #F8FAFC;
+            font-size: .72rem;
+            font-weight: 850;
+        }}
+
+        .v640-roster-count {{
+            color: #B8C4D5;
+            font-size: .51rem;
+            font-weight: 700;
+        }}
+
+        .v640-roster-scroll {{
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: scroll;
+            overflow-x: hidden;
+            overscroll-behavior: contain;
+            scrollbar-gutter: stable;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: #60728F #101D2E;
+            padding-right: 4px;
+        }}
+
+        .v640-roster-scroll::-webkit-scrollbar {{
+            width: 7px;
+        }}
+
+        .v640-roster-scroll::-webkit-scrollbar-track {{
+            background: #101D2E;
+        }}
+
+        .v640-roster-scroll::-webkit-scrollbar-thumb {{
+            background: #60728F;
+            border-radius: 999px;
+        }}
+
+        .v640-roster-scroll::-webkit-scrollbar-thumb:hover {{
+            background: #8096B8;
+        }}
+
+        .v640-roster-row {{
+            min-height: 31px;
+            display: grid;
+            grid-template-columns: 40px minmax(0,1fr);
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid rgba(148,163,184,.13);
+        }}
+
+        .v640-roster-slot {{
+            width: 36px;
+            height: 23px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 5px;
+            color: #FFFFFF;
+            font-size: .50rem;
+            font-weight: 850;
+        }}
+
+        .v640-slot-QB {{ background: #7D55C7; }}
+        .v640-slot-RB {{ background: #47A368; }}
+        .v640-slot-WR {{ background: #3E7DE0; }}
+        .v640-slot-TE {{ background: #EA9848; }}
+        .v640-slot-BN {{ background: #69758A; }}
+
+        .v640-roster-content {{
+            min-width: 0;
+            display: flex;
+            align-items: baseline;
+            gap: 5px;
+            overflow: hidden;
+            white-space: nowrap;
+        }}
+
+        .v640-roster-player {{
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #F8FAFC;
+            font-size: .61rem;
+            font-weight: 760;
+        }}
+
+        .v640-roster-pos {{
+            flex: 0 0 auto;
+            color: #9EABC0;
+            font-size: .47rem;
+        }}
+
+        .v640-roster-empty {{
+            color: #8E9BB0;
+            font-size: .58rem;
+        }}
+
         /* Keep the working hidden autorefresh behavior untouched. */
         .st-key-cpu_autorefresh_mount,
         .st-key-cpu_autorefresh_mount > div,
@@ -717,17 +840,15 @@ def _render_utility_side(
                         allow_draft=user_turn,
                     )
             else:
-                with st.container(
-                    height=(
-                        188
+                render_scrollable_roster(
+                    get_roster=deps.current_user_roster,
+                    clean=deps.clean,
+                    viewport_height=(
+                        164
                         if _current_level() == 1
-                        else 318
+                        else 292
                     ),
-                    border=False,
-                    key="v633_roster_scroll",
-                ):
-                    deps.render_roster_header()
-                    deps.render_roster_rows()
+                )
 
 
 def render_bottom_sheet(
