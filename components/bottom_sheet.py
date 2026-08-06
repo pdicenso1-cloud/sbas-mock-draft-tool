@@ -52,6 +52,33 @@ def change_tray_level(direction: int) -> None:
     )
 
 
+def _current_utility_view() -> str:
+    """
+    Return the persistent utility-panel view.
+
+    Streamlit tabs reset during frequent CPU reruns. A session-state-backed
+    view remains selected while CPU picks continue.
+    """
+    view = str(
+        st.session_state.get(
+            "v632_utility_view",
+            "queue",
+        )
+    ).lower()
+
+    if view not in {"queue", "roster"}:
+        view = "queue"
+
+    st.session_state.v632_utility_view = view
+    return view
+
+
+def set_utility_view(view: str) -> None:
+    normalized = str(view).lower()
+    if normalized in {"queue", "roster"}:
+        st.session_state.v632_utility_view = normalized
+
+
 def _render_sheet_css(level: int) -> None:
     settings = TRAY_LEVELS[level]
     sheet_height = int(settings["height"])
@@ -201,6 +228,7 @@ def _render_sheet_css(level: int) -> None:
         .st-key-v63_bottom_sheet {{
             display: {sheet_visible} !important;
             position: fixed !important;
+            pointer-events: auto !important;
             left: var(--fs-sidebar-width) !important;
             right: 0 !important;
             bottom: 0 !important;
@@ -360,9 +388,8 @@ def _render_sheet_css(level: int) -> None:
         }}
 
         .st-key-v63_utility_side {{
-            overflow-y: auto !important;
-            scrollbar-width: thin !important;
-            scrollbar-color: #465671 #101D2E !important;
+            overflow: hidden !important;
+            pointer-events: auto !important;
         }}
 
         .st-key-v63_utility_side .roster-line {{
@@ -381,26 +408,96 @@ def _render_sheet_css(level: int) -> None:
             font-size: .52rem !important;
         }}
 
+        /*
+         * Persistent Queue / Roster buttons remain clickable and selected
+         * through rapid CPU reruns.
+         */
         .st-key-v63_utility_side
-            [data-testid="stTabs"] {{
+            > div
+            > div
+            > [data-testid="stVerticalBlock"] {{
+            gap: 5px !important;
+        }}
+
+        .st-key-v63_utility_side
+            [data-testid="stHorizontalBlock"]:first-of-type {{
+            min-height: 31px !important;
+            height: 31px !important;
+            gap: 5px !important;
+            border-bottom: 1px solid rgba(148,163,184,.15) !important;
+            padding-bottom: 4px !important;
+        }}
+
+        .st-key-v63_utility_side
+            [data-testid="stHorizontalBlock"]:first-of-type button {{
+            min-height: 27px !important;
+            height: 27px !important;
+            font-size: .55rem !important;
+            font-weight: 850 !important;
+            letter-spacing: .01em !important;
+            border-radius: 6px !important;
+            pointer-events: auto !important;
+            position: relative !important;
+            z-index: 10040 !important;
+        }}
+
+        /*
+         * The utility content owns its own vertical scrollbar. This allows the
+         * complete roster to be inspected without scrolling the page or board.
+         */
+        .st-key-v632_utility_content {{
+            min-height: 0 !important;
+            overflow: visible !important;
+        }}
+
+        .st-key-v632_utility_content
+            [data-testid="stVerticalBlockBorderWrapper"] {{
             height: 100% !important;
             max-height: 100% !important;
+            min-height: 0 !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            overscroll-behavior: contain !important;
+            scrollbar-gutter: stable !important;
+            -webkit-overflow-scrolling: touch !important;
+            scrollbar-width: thin !important;
+            scrollbar-color: #53647F #101D2E !important;
         }}
 
-        .st-key-v63_utility_side
-            [data-testid="stTabs"] [role="tablist"] {{
-            gap: 4px !important;
-            margin-bottom: 5px !important;
-            border-bottom: 1px solid rgba(148,163,184,.15) !important;
+        .st-key-v632_utility_content
+            [data-testid="stVerticalBlockBorderWrapper"]
+            > div,
+        .st-key-v632_utility_content
+            [data-testid="stVerticalBlock"] {{
+            height: auto !important;
+            max-height: none !important;
+            min-height: 0 !important;
+            overflow: visible !important;
         }}
 
-        .st-key-v63_utility_side
-            [data-testid="stTabs"] button[role="tab"] {{
-            min-height: 29px !important;
-            height: 29px !important;
-            padding: 0 9px !important;
-            font-size: .55rem !important;
-            font-weight: 800 !important;
+        .st-key-v632_utility_content
+            [data-testid="stVerticalBlockBorderWrapper"]
+            ::-webkit-scrollbar {{
+            width: 7px !important;
+        }}
+
+        .st-key-v632_utility_content
+            [data-testid="stVerticalBlockBorderWrapper"]
+            ::-webkit-scrollbar-track {{
+            background: #101D2E !important;
+        }}
+
+        .st-key-v632_utility_content
+            [data-testid="stVerticalBlockBorderWrapper"]
+            ::-webkit-scrollbar-thumb {{
+            background: #53647F !important;
+            border-radius: 999px !important;
+        }}
+
+        .st-key-v632_utility_content
+            [data-testid="stVerticalBlockBorderWrapper"]
+            ::-webkit-scrollbar-thumb:hover {{
+            background: #7085A5 !important;
         }}
 
         /* Old in-flow tray containers are no longer used. */
@@ -500,25 +597,64 @@ def _render_utility_side(
     user_turn: bool,
 ) -> None:
     with st.container(key="v63_utility_side"):
-        queue_tab, roster_tab = st.tabs(
-            [
-                f"QUEUE ({len(st.session_state.player_queue)})",
-                "ROSTER",
-            ]
+        active_view = _current_utility_view()
+
+        queue_col, roster_col = st.columns(
+            [1, 1],
+            gap="small",
         )
 
-        with queue_tab:
-            if current_index is None:
-                st.caption("Draft complete.")
-            else:
-                deps.render_queue(
-                    current_index,
-                    allow_draft=user_turn,
-                )
+        with queue_col:
+            st.button(
+                f"QUEUE ({len(st.session_state.player_queue)})",
+                key="v632_queue_view",
+                type=(
+                    "primary"
+                    if active_view == "queue"
+                    else "secondary"
+                ),
+                on_click=set_utility_view,
+                args=("queue",),
+                use_container_width=True,
+            )
 
-        with roster_tab:
-            deps.render_roster_header()
-            deps.render_roster_rows()
+        with roster_col:
+            st.button(
+                "ROSTER",
+                key="v632_roster_view",
+                type=(
+                    "primary"
+                    if active_view == "roster"
+                    else "secondary"
+                ),
+                on_click=set_utility_view,
+                args=("roster",),
+                use_container_width=True,
+            )
+
+        # Read state again because a button callback executes before rendering.
+        active_view = _current_utility_view()
+
+        with st.container(
+            height=(
+                210
+                if _current_level() == 1
+                else 340
+            ),
+            border=False,
+            key="v632_utility_content",
+        ):
+            if active_view == "queue":
+                if current_index is None:
+                    st.caption("Draft complete.")
+                else:
+                    deps.render_queue(
+                        current_index,
+                        allow_draft=user_turn,
+                    )
+            else:
+                deps.render_roster_header()
+                deps.render_roster_rows()
 
 
 def render_bottom_sheet(
