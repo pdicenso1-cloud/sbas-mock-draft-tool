@@ -7,20 +7,23 @@ import streamlit as st
 
 
 TRAY_LEVELS = {
+    # Nearly the entire board is visible. Queue, roster, and players are hidden.
     0: {
         "name": "Collapsed",
         "height": 0,
         "player_height": 0,
     },
+    # Primary drafting state: roughly seven board rows remain visible.
     1: {
         "name": "Draft",
-        "height": 342,
-        "player_height": 218,
+        "height": 258,
+        "player_height": 138,
     },
+    # Player-focused state: roughly five board rows remain visible.
     2: {
         "name": "Expanded",
-        "height": 610,
-        "player_height": 475,
+        "height": 392,
+        "player_height": 265,
     },
 }
 
@@ -77,17 +80,17 @@ def _render_sheet_css(level: int) -> None:
         }}
 
         .st-key-v63_board_scroll {{
-            height: calc(100vh - 145px) !important;
-            max-height: calc(100vh - 145px) !important;
-            min-height: 430px !important;
+            height: calc(100vh - 104px) !important;
+            max-height: calc(100vh - 104px) !important;
+            min-height: 520px !important;
             overflow: visible !important;
         }}
 
         .st-key-v63_board_scroll
             [data-testid="stVerticalBlockBorderWrapper"] {{
-            height: calc(100vh - 145px) !important;
-            max-height: calc(100vh - 145px) !important;
-            min-height: 430px !important;
+            height: calc(100vh - 104px) !important;
+            max-height: calc(100vh - 104px) !important;
+            min-height: 520px !important;
             overflow-y: auto !important;
             overflow-x: hidden !important;
             overscroll-behavior: contain !important;
@@ -139,6 +142,9 @@ def _render_sheet_css(level: int) -> None:
             left: var(--fs-sidebar-width) !important;
             right: 0 !important;
             bottom: {handle_bottom}px !important;
+            transition:
+                bottom 180ms ease,
+                left 180ms ease !important;
             z-index: 10020 !important;
             height: 38px !important;
             min-height: 38px !important;
@@ -200,6 +206,9 @@ def _render_sheet_css(level: int) -> None:
             bottom: 0 !important;
             z-index: 10010 !important;
             height: {sheet_height}px !important;
+            transition:
+                height 180ms ease,
+                left 180ms ease !important;
             min-height: {sheet_height}px !important;
             max-height: {sheet_height}px !important;
             margin: 0 !important;
@@ -280,8 +289,8 @@ def _render_sheet_css(level: int) -> None:
         .st-key-v63_bottom_sheet
             .st-key-war_player_list
             [data-testid="stHorizontalBlock"] {{
-            min-height: 38px !important;
-            height: 38px !important;
+            min-height: 34px !important;
+            height: 34px !important;
             padding: 0 !important;
             align-items: center !important;
         }}
@@ -289,14 +298,14 @@ def _render_sheet_css(level: int) -> None:
         .st-key-v63_bottom_sheet
             .st-key-war_player_list
             [data-testid="stColumn"] {{
-            min-height: 38px !important;
-            height: 38px !important;
+            min-height: 34px !important;
+            height: 34px !important;
             padding-top: 0 !important;
             padding-bottom: 0 !important;
         }}
 
         .st-key-v63_bottom_sheet .player-name2 {{
-            font-size: .76rem !important;
+            font-size: .70rem !important;
             line-height: 1.08 !important;
             font-weight: 780 !important;
             color: #F8FAFC !important;
@@ -307,8 +316,8 @@ def _render_sheet_css(level: int) -> None:
         }}
 
         .st-key-v63_bottom_sheet .player-sub2 {{
-            font-size: .54rem !important;
-            line-height: 1.05 !important;
+            font-size: .50rem !important;
+            line-height: 1.02 !important;
             margin-top: 2px !important;
             color: #91A2B9 !important;
             -webkit-text-fill-color: #91A2B9 !important;
@@ -316,7 +325,7 @@ def _render_sheet_css(level: int) -> None:
 
         .st-key-v63_bottom_sheet .stat2,
         .st-key-v63_bottom_sheet .rank2 {{
-            font-size: .62rem !important;
+            font-size: .57rem !important;
             line-height: 1 !important;
             color: #CFD8E6 !important;
             -webkit-text-fill-color: #CFD8E6 !important;
@@ -324,18 +333,18 @@ def _render_sheet_css(level: int) -> None:
 
         .st-key-v63_bottom_sheet
             .st-key-war_player_list button {{
-            width: 27px !important;
-            min-width: 27px !important;
-            height: 27px !important;
-            min-height: 27px !important;
+            width: 24px !important;
+            min-width: 24px !important;
+            height: 24px !important;
+            min-height: 24px !important;
             padding: 0 !important;
             font-size: .69rem !important;
         }}
 
         .st-key-v63_bottom_sheet .value-badge {{
-            height: 22px !important;
-            min-width: 28px !important;
-            font-size: .53rem !important;
+            height: 20px !important;
+            min-width: 26px !important;
+            font-size: .49rem !important;
         }}
 
         .st-key-v63_bottom_sheet .player-row-divider {{
@@ -344,10 +353,32 @@ def _render_sheet_css(level: int) -> None:
         }}
 
         .st-key-v63_bottom_sheet .player-table-header2 {{
-            min-height: 25px !important;
-            height: 25px !important;
-            font-size: .53rem !important;
+            min-height: 23px !important;
+            height: 23px !important;
+            font-size: .49rem !important;
             line-height: 1 !important;
+        }}
+
+        .st-key-v63_utility_side {{
+            overflow-y: auto !important;
+            scrollbar-width: thin !important;
+            scrollbar-color: #465671 #101D2E !important;
+        }}
+
+        .st-key-v63_utility_side .roster-line {{
+            min-height: 27px !important;
+            padding: 0 !important;
+        }}
+
+        .st-key-v63_utility_side .roster-slot-pill {{
+            height: 20px !important;
+        }}
+
+        .st-key-v63_utility_side button {{
+            min-height: 26px !important;
+            height: 26px !important;
+            padding: 0 6px !important;
+            font-size: .52rem !important;
         }}
 
         .st-key-v63_utility_side
