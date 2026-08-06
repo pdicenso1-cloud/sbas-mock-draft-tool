@@ -6121,7 +6121,7 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v6.4.1</div>',
+        '<div class="sidebar-version">FantasySync · v6.4.2</div>',
         unsafe_allow_html=True,
     )
 

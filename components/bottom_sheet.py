@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from html import escape
 from typing import Any, Callable, Optional
 
 import streamlit as st
-
-from components.roster_panel import render_scrollable_roster
+import streamlit.components.v1 as components
 
 
 TRAY_LEVELS = {
@@ -39,6 +39,191 @@ class BottomSheetDependencies:
     render_roster_rows: Callable[[], None]
     current_user_roster: Callable[[], Any]
     clean: Callable[[Any], str]
+
+
+
+def _roster_slot_group(slot: str) -> str:
+    upper = str(slot).upper()
+    if upper.startswith("QB"):
+        return "QB"
+    if upper.startswith("RB"):
+        return "RB"
+    if upper.startswith("WR"):
+        return "WR"
+    if upper.startswith("TE"):
+        return "TE"
+    return "BN"
+
+
+def _render_isolated_roster(
+    deps: BottomSheetDependencies,
+    viewport_height: int,
+) -> None:
+    """
+    Render all roster slots inside an isolated HTML document.
+
+    Keeping this implementation inside bottom_sheet.py removes the obsolete
+    v6.4.0 roster renderer from the active dependency path.
+    """
+    roster = deps.current_user_roster()
+    filled = int((roster["Player"].astype(str) != "").sum())
+    team = escape(deps.clean(st.session_state.user_team))
+
+    rows: list[str] = []
+    for row in roster.itertuples():
+        player = deps.clean(row.Player)
+        slot = deps.clean(row.Slot)
+        pos = deps.clean(row.Pos)
+        group = _roster_slot_group(slot)
+
+        if player:
+            content = (
+                f'<span class="player">{escape(player)}</span>'
+                f'<span class="pos">({escape(pos)})</span>'
+            )
+        else:
+            content = '<span class="empty">Empty</span>'
+
+        rows.append(
+            f'<div class="row">'
+            f'<span class="slot slot-{group}">{escape(slot)}</span>'
+            f'<span class="content">{content}</span>'
+            f'</div>'
+        )
+
+    html = f"""
+    <!doctype html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        * {{ box-sizing: border-box; }}
+        html, body {{
+          width: 100%;
+          height: 100%;
+          margin: 0;
+          padding: 0;
+          overflow: hidden;
+          background: #101D2E;
+          color: #F8FAFC;
+          font-family: Inter, ui-sans-serif, system-ui, -apple-system,
+            BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }}
+        .card {{
+          width: 100%;
+          height: {int(viewport_height)}px;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        }}
+        .heading {{
+          flex: 0 0 36px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 2px 5px 7px;
+          border-bottom: 1px solid rgba(148,163,184,.18);
+        }}
+        .team {{
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          font-size: 13px;
+          font-weight: 800;
+        }}
+        .count {{
+          flex: 0 0 auto;
+          margin-left: 8px;
+          color: #B8C4D5;
+          font-size: 10px;
+          font-weight: 700;
+        }}
+        .scroll {{
+          flex: 1 1 auto;
+          min-height: 0;
+          overflow-y: scroll;
+          overflow-x: hidden;
+          overscroll-behavior: contain;
+          scrollbar-gutter: stable;
+          scrollbar-width: thin;
+          scrollbar-color: #60728F #101D2E;
+          padding-right: 4px;
+        }}
+        .scroll::-webkit-scrollbar {{ width: 7px; }}
+        .scroll::-webkit-scrollbar-track {{ background: #101D2E; }}
+        .scroll::-webkit-scrollbar-thumb {{
+          background: #60728F;
+          border-radius: 999px;
+        }}
+        .row {{
+          min-height: 32px;
+          display: grid;
+          grid-template-columns: 40px minmax(0, 1fr);
+          align-items: center;
+          gap: 8px;
+          border-bottom: 1px solid rgba(148,163,184,.13);
+        }}
+        .slot {{
+          width: 36px;
+          height: 23px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 5px;
+          color: #FFFFFF;
+          font-size: 10px;
+          font-weight: 800;
+        }}
+        .slot-QB {{ background: #7D55C7; }}
+        .slot-RB {{ background: #47A368; }}
+        .slot-WR {{ background: #3E7DE0; }}
+        .slot-TE {{ background: #EA9848; }}
+        .slot-BN {{ background: #69758A; }}
+        .content {{
+          min-width: 0;
+          display: flex;
+          align-items: baseline;
+          gap: 5px;
+          overflow: hidden;
+          white-space: nowrap;
+        }}
+        .player {{
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          font-size: 12px;
+          font-weight: 750;
+        }}
+        .pos {{
+          flex: 0 0 auto;
+          color: #9EABC0;
+          font-size: 9px;
+        }}
+        .empty {{
+          color: #8E9BB0;
+          font-size: 11px;
+        }}
+      </style>
+    </head>
+    <body>
+      <div class="card">
+        <div class="heading">
+          <span class="team">{team}</span>
+          <span class="count">{filled} / 16 players</span>
+        </div>
+        <div class="scroll">{''.join(rows)}</div>
+      </div>
+    </body>
+    </html>
+    """
+
+    components.html(
+        html,
+        height=int(viewport_height),
+        scrolling=False,
+    )
+
 
 
 def _current_level() -> int:
@@ -721,9 +906,8 @@ def _render_utility_side(
                         allow_draft=user_turn,
                     )
             else:
-                render_scrollable_roster(
-                    get_roster=deps.current_user_roster,
-                    clean=deps.clean,
+                _render_isolated_roster(
+                    deps=deps,
                     viewport_height=(
                         164
                         if _current_level() == 1
