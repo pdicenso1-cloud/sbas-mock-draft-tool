@@ -4082,6 +4082,114 @@ body:has(section[data-testid="stSidebar"][aria-expanded="false"])
     -webkit-text-fill-color: inherit !important;
 }
 
+
+/* ============================================================
+   FantasySync v6.4.4 — Full-width collapsed-sidebar Draft Room
+   ============================================================ */
+
+/*
+ * When Streamlit's sidebar is collapsed, remove the old centered workspace
+ * width and use nearly the complete browser width. The small 16 px gutters
+ * match the approved reference while leaving room for the sidebar toggle and
+ * browser edge.
+ */
+body:has(section[data-testid="stSidebar"][aria-expanded="false"])
+    [data-testid="stAppViewContainer"] > .main,
+body:has(section[data-testid="stSidebar"][aria-expanded="false"])
+    [data-testid="stAppViewContainer"] .main {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+body:has(section[data-testid="stSidebar"][aria-expanded="false"])
+    .main .block-container {
+    width: calc(100vw - 32px) !important;
+    max-width: calc(100vw - 32px) !important;
+    min-width: 0 !important;
+    margin-left: 16px !important;
+    margin-right: 16px !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    box-sizing: border-box !important;
+}
+
+/*
+ * Streamlit versions sometimes retain the sidebar element but mark its inner
+ * content collapsed rather than updating aria-expanded on the section.
+ */
+body:has([data-testid="stSidebar"][data-state="collapsed"])
+    .main .block-container,
+body:has([data-testid="stSidebarContent"][aria-hidden="true"])
+    .main .block-container {
+    width: calc(100vw - 32px) !important;
+    max-width: calc(100vw - 32px) !important;
+    margin-left: 16px !important;
+    margin-right: 16px !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+/* Stretch every Draft Room region to the new available width. */
+body:has(section[data-testid="stSidebar"][aria-expanded="false"])
+    .st-key-v640_header,
+body:has(section[data-testid="stSidebar"][aria-expanded="false"])
+    .st-key-v63_draft_message,
+body:has(section[data-testid="stSidebar"][aria-expanded="false"])
+    .st-key-v63_board_region,
+body:has(section[data-testid="stSidebar"][aria-expanded="false"])
+    .v643-board-scroll,
+body:has(section[data-testid="stSidebar"][aria-expanded="false"])
+    .v643-board-content {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+/* Remove legacy centering/max-width from the generated snake board. */
+body:has(section[data-testid="stSidebar"][aria-expanded="false"])
+    .snake-board-wrap,
+body:has(section[data-testid="stSidebar"][aria-expanded="false"])
+    .snake-board-shell,
+body:has(section[data-testid="stSidebar"][aria-expanded="false"])
+    .snake-board-grid {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+/*
+ * Keep the fixed tray aligned with the same 16 px gutters when the sidebar is
+ * fully closed.
+ */
+body:has(section[data-testid="stSidebar"][aria-expanded="false"])
+    .st-key-v63_sheet_handle,
+body:has(section[data-testid="stSidebar"][aria-expanded="false"])
+    .st-key-v63_bottom_sheet {
+    left: 16px !important;
+    right: 16px !important;
+    width: auto !important;
+}
+
+/* Fallback for compact desktop widths where the sidebar is removed from flow. */
+@media (min-width: 1100px) {
+    body:not(:has(section[data-testid="stSidebar"]))
+        .main .block-container {
+        width: calc(100vw - 32px) !important;
+        max-width: calc(100vw - 32px) !important;
+        margin-left: 16px !important;
+        margin-right: 16px !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -6206,7 +6314,7 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v6.4.3</div>',
+        '<div class="sidebar-version">FantasySync · v6.4.4</div>',
         unsafe_allow_html=True,
     )
 
