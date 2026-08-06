@@ -2397,6 +2397,173 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked
     letter-spacing: .02em !important;
 }
 
+
+/* ============================================================
+   FantasySync v5.5 — Matte Controls, Tray, Timer, CPU Ticks
+   ============================================================ */
+
+/* Distinct matte purple team and round labels. */
+.snake-team-select {
+    background: #2A1F55 !important;
+    border-color: #5F4AA8 !important;
+    box-shadow: none !important;
+}
+
+.snake-team-select:hover {
+    background: #342668 !important;
+    border-color: #7B61D1 !important;
+}
+
+.snake-team-select .team-label {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    font-size: .64rem !important;
+    font-weight: 850 !important;
+}
+
+.snake-team-select .slot-num {
+    color: #C4B8F4 !important;
+    -webkit-text-fill-color: #C4B8F4 !important;
+}
+
+.snake-team-select.active {
+    background: #49348A !important;
+    border-color: #A78BFA !important;
+    box-shadow: inset 0 0 0 1px #A78BFA !important;
+}
+
+.snake-round-label {
+    background: #2A1F55 !important;
+    border-color: #6D55BD !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    box-shadow: none !important;
+}
+
+/* Raise the clock so the header divider cannot intersect it. */
+.v53-clock {
+    transform: translateY(-7px) !important;
+    background: #0A1524 !important;
+}
+
+.st-key-v53_header {
+    padding-top: 8px !important;
+}
+
+/* Matte top controls and metadata chips. */
+.v53-chip {
+    background: #111D2E !important;
+    border-color: #2A3A51 !important;
+    box-shadow: none !important;
+}
+
+.v53-cpu {
+    background: #0D2A20 !important;
+    border-color: #1D6A48 !important;
+    box-shadow: none !important;
+}
+
+.st-key-v53_header_action button {
+    background: #E55B52 !important;
+    border-color: #E55B52 !important;
+    box-shadow: none !important;
+}
+
+.st-key-v53_header_action button:hover {
+    background: #F06A61 !important;
+    border-color: #F06A61 !important;
+}
+
+/* Matte player filters. */
+.st-key-v53_filter_row button {
+    background: #111D2E !important;
+    border-color: #2A3A51 !important;
+    box-shadow: none !important;
+}
+
+.st-key-v53_filter_row button:hover {
+    background: #18263A !important;
+    border-color: #3C526F !important;
+}
+
+.st-key-v53_filter_row button[kind="primary"] {
+    background: #316CD4 !important;
+    border-color: #316CD4 !important;
+}
+
+/* Matte draft and queue actions. */
+.st-key-war_player_list button {
+    background: #111D2E !important;
+    border-color: #34455D !important;
+    box-shadow: none !important;
+}
+
+.st-key-war_player_list button:hover {
+    background: #188A49 !important;
+    border-color: #188A49 !important;
+}
+
+.st-key-v53_rec_button button {
+    background: #1D9648 !important;
+    border-color: #1D9648 !important;
+    box-shadow: none !important;
+}
+
+/* Movable tray handle. */
+.st-key-v55_tray_handle {
+    position: relative;
+    z-index: 12;
+    margin: -1px 0 0 0 !important;
+    padding: 0 !important;
+    border-top: 2px solid #7C5CE0;
+    height: 34px !important;
+}
+
+.st-key-v55_tray_handle > div > div > [data-testid="stHorizontalBlock"] {
+    align-items: center !important;
+    gap: .25rem !important;
+}
+
+.st-key-v55_tray_handle button {
+    min-height: 27px !important;
+    height: 27px !important;
+    border-radius: 7px !important;
+    background: #202A3B !important;
+    border: 1px solid #465774 !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+.st-key-v55_tray_handle button:disabled {
+    background: #141D2A !important;
+    border-color: #2A374A !important;
+    color: #5D6B7F !important;
+    -webkit-text-fill-color: #5D6B7F !important;
+}
+
+.v55-drag-label {
+    min-height: 27px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 7px;
+    background: #202A3B;
+    border: 1px solid #465774;
+    color: #DCE5F2;
+    font-size: .52rem;
+    font-weight: 850;
+    letter-spacing: .035em;
+    white-space: nowrap;
+}
+
+/* Keep player workspace tight against the tray handle. */
+.st-key-v53_bottom_workspace {
+    margin-top: 0 !important;
+    padding-top: 3px !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -2514,10 +2681,68 @@ def init_state(force=False):
         "cpu_variance_seed": None,
         "player_queue": [],
         "queue_auto_draft": False,
+        "player_tray_level": 1,
     }
     for key, value in defaults.items():
         if force or key not in st.session_state:
             st.session_state[key] = value
+
+
+
+
+PLAYER_TRAY_LEVELS = {
+    0: {
+        "name": "Lower",
+        "board_height": 500,
+        "player_height": 205,
+    },
+    1: {
+        "name": "Standard",
+        "board_height": 430,
+        "player_height": 280,
+    },
+    2: {
+        "name": "Raised",
+        "board_height": 350,
+        "player_height": 360,
+    },
+}
+
+
+def player_tray_settings() -> dict:
+    level = int(st.session_state.get("player_tray_level", 1))
+    level = max(0, min(2, level))
+    st.session_state.player_tray_level = level
+    return PLAYER_TRAY_LEVELS[level]
+
+
+def move_player_tray(direction: int):
+    current = int(st.session_state.get("player_tray_level", 1))
+    st.session_state.player_tray_level = max(
+        0,
+        min(2, current + direction),
+    )
+
+
+def render_player_tray_css():
+    settings = player_tray_settings()
+    st.markdown(
+        f"""
+        <style>
+        .st-key-v53_board_panel,
+        .st-key-v53_roster_panel {{
+            height: {settings["board_height"]}px !important;
+            max-height: {settings["board_height"]}px !important;
+        }}
+
+        .st-key-war_player_list {{
+            height: {settings["player_height"]}px !important;
+            max-height: {settings["player_height"]}px !important;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 
@@ -4121,6 +4346,7 @@ init_state()
 initialize_cpu_variance()
 apply_team_query_selection()
 render_dynamic_dock_css()
+render_player_tray_css()
 
 # Only CPU turns use full-page refreshes.
 # User turns rely on the browser-side clock, so player clicks stay responsive.
@@ -4139,11 +4365,17 @@ _cpu_turn_active = (
 )
 
 if _cpu_turn_active:
-    # Advance one CPU selection, briefly display it, then immediately rerun.
-    # clock_running stays True, so this continues until the user's turn.
-    if run_one_cpu_pick():
-        time.sleep(0.32)
-        st.rerun()
+    # Schedule the next page run, but make only one selection now.
+    # Streamlit renders this pick before the next CPU selection occurs.
+    current_pick_number = int(
+        st.session_state.picks.loc[_current_idx, "overall"]
+    )
+    st_autorefresh(
+        interval=725,
+        limit=None,
+        key=f"cpu_pick_tick_{current_pick_number}",
+    )
+    run_one_cpu_pick()
 
 # Enforce the user's pick clock only on user-controlled turns.
 if auto_pick_user_if_expired():
@@ -4249,7 +4481,7 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v5.4</div>',
+        '<div class="sidebar-version">FantasySync · v5.5</div>',
         unsafe_allow_html=True,
     )
 
@@ -4294,6 +4526,47 @@ if selected_page == "Draft Room":
                 render_live_roster_header()
                 render_live_roster_rows()
 
+    # Three-position player tray control.
+    with st.container(key="v55_tray_handle"):
+        handle_left, handle_center, handle_right = st.columns(
+            [5.0, 1.35, 5.0],
+            gap="small",
+        )
+
+        with handle_center:
+            up_col, label_col, down_col = st.columns(
+                [0.65, 1.8, 0.65],
+                gap="small",
+            )
+
+            with up_col:
+                st.button(
+                    "↑",
+                    key="v55_raise_tray",
+                    help="Raise player tray",
+                    disabled=st.session_state.player_tray_level >= 2,
+                    on_click=move_player_tray,
+                    args=(1,),
+                    use_container_width=True,
+                )
+
+            with label_col:
+                st.markdown(
+                    '<div class="v55-drag-label">↕ PLAYER TRAY</div>',
+                    unsafe_allow_html=True,
+                )
+
+            with down_col:
+                st.button(
+                    "↓",
+                    key="v55_lower_tray",
+                    help="Lower player tray",
+                    disabled=st.session_state.player_tray_level <= 0,
+                    on_click=move_player_tray,
+                    args=(-1,),
+                    use_container_width=True,
+                )
+
     # Player browser begins directly beneath the board.
     with st.container(key="v53_bottom_workspace"):
         player_col, recommendation_col = st.columns(
@@ -4322,7 +4595,9 @@ if selected_page == "Draft Room":
                 render_player_picker_table(
                     idx,
                     allow_draft=user_turn,
-                    list_height_override=280,
+                    list_height_override=player_tray_settings()[
+                        "player_height"
+                    ],
                 )
 
             with st.container(key="v53_queue_expander"):
