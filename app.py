@@ -2940,6 +2940,123 @@ body:has(section[data-testid="stSidebar"][aria-expanded="false"])
     padding-top: 0 !important;
 }
 
+
+/* ============================================================
+   FantasySync v6.1 — Compact Status and Player Toolbar
+   ============================================================ */
+
+/* Reduce the space between metadata chips, status message, and board. */
+.st-key-v53_header {
+    padding-bottom: 9px !important;
+    margin-bottom: 2px !important;
+}
+
+.st-key-v61_draft_message {
+    min-height: 22px !important;
+    margin: 0 0 3px !important;
+    padding: 0 !important;
+}
+
+.st-key-v61_draft_message [data-testid="stCaptionContainer"],
+.st-key-v61_draft_message [data-testid="stMarkdownContainer"],
+.st-key-v61_draft_message p {
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+    line-height: 1.2 !important;
+}
+
+.st-key-v61_draft_message p {
+    font-size: .67rem !important;
+    color: #93A0B3 !important;
+    -webkit-text-fill-color: #93A0B3 !important;
+}
+
+.st-key-v53_top_workspace {
+    margin-top: 0 !important;
+}
+
+/* One-line Players / Search / Position toolbar. */
+.st-key-v61_player_toolbar {
+    margin: 0 !important;
+    padding: 0 0 5px !important;
+    border-bottom: 1px solid rgba(148, 163, 184, .17);
+}
+
+.st-key-v61_player_toolbar > div,
+.st-key-v61_player_toolbar [data-testid="stVerticalBlock"] {
+    gap: 0 !important;
+}
+
+.st-key-v61_player_toolbar [data-testid="stHorizontalBlock"] {
+    align-items: center !important;
+    gap: .45rem !important;
+    min-height: 35px !important;
+}
+
+.v61-inline-tabs {
+    height: 34px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    white-space: nowrap;
+}
+
+.v61-inline-tab {
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    color: #8D9AAF;
+    font-size: .58rem;
+    font-weight: 850;
+    letter-spacing: .02em;
+    border-bottom: 2px solid transparent;
+}
+
+.v61-inline-tab.active {
+    color: #6CA8FF;
+    border-bottom-color: #4F8FF5;
+}
+
+.st-key-v61_player_toolbar [data-testid="stTextInputRootElement"] {
+    min-height: 32px !important;
+    height: 32px !important;
+    border-radius: 7px !important;
+}
+
+.st-key-v61_player_toolbar
+    [data-testid="stTextInputRootElement"]
+    input {
+    min-height: 30px !important;
+    height: 30px !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    font-size: .63rem !important;
+}
+
+.st-key-v61_player_toolbar button {
+    min-height: 30px !important;
+    height: 30px !important;
+    border-radius: 999px !important;
+    padding: 0 8px !important;
+    font-size: .57rem !important;
+}
+
+/* The old tabs/filter wrappers are no longer used on the Draft Room. */
+.v53-player-tabs,
+.st-key-v53_filter_row {
+    display: none !important;
+}
+
+/* Pull the player table directly beneath the compact toolbar. */
+.player-table-header2 {
+    margin-top: 2px !important;
+}
+
+.st-key-war_player_list {
+    margin-top: 0 !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -4275,13 +4392,25 @@ def render_v53_header(current_idx: Optional[int]):
                         st.rerun()
 
 
-def render_v53_filters():
+def render_v61_player_toolbar():
     ensure_draft_filters()
 
-    search_col, filter_col = st.columns(
-        [2.55, 4.85],
+    tabs_col, search_col, filter_col = st.columns(
+        [2.15, 2.65, 4.9],
         gap="small",
     )
+
+    with tabs_col:
+        st.markdown(
+            """
+            <div class="v61-inline-tabs">
+                <span class="v61-inline-tab active">PLAYERS</span>
+                <span class="v61-inline-tab">QUEUE</span>
+                <span class="v61-inline-tab">WATCHLIST</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
     with search_col:
         st.text_input(
@@ -5031,7 +5160,7 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v6.0</div>',
+        '<div class="sidebar-version">FantasySync · v6.1</div>',
         unsafe_allow_html=True,
     )
 
@@ -5044,7 +5173,8 @@ if selected_page == "Draft Room":
     render_draggable_player_tray()
 
     if st.session_state.draft_message:
-        st.caption(st.session_state.draft_message)
+        with st.container(key="v61_draft_message"):
+            st.caption(st.session_state.draft_message)
 
     if idx is None:
         user_turn = False
@@ -5099,19 +5229,8 @@ if selected_page == "Draft Room":
         )
 
         with player_col:
-            st.markdown(
-                """
-                <div class="v53-player-tabs">
-                    <div class="v53-player-tab active">PLAYERS</div>
-                    <div class="v53-player-tab">QUEUE</div>
-                    <div class="v53-player-tab">WATCHLIST</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
-            with st.container(key="v53_filter_row"):
-                render_v53_filters()
+            with st.container(key="v61_player_toolbar"):
+                render_v61_player_toolbar()
 
             if idx is None:
                 st.success("Draft complete.")
