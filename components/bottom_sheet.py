@@ -162,7 +162,9 @@ def _render_sheet_css(level: int) -> None:
             height: 36px !important;
             min-height: 36px !important;
             align-items: center !important;
-            gap: .28rem !important;
+            justify-content: flex-end !important;
+            gap: .22rem !important;
+            padding-right: 8px !important;
         }}
 
         .st-key-v63_sheet_handle button {{
@@ -184,21 +186,6 @@ def _render_sheet_css(level: int) -> None:
 
         .st-key-v63_sheet_handle button:disabled {{
             opacity: .34 !important;
-        }}
-
-        .v63-sheet-label {{
-            min-height: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            background: #1C2739;
-            border: 1px solid #4B5B74;
-            color: #E4EAF3;
-            font-size: .54rem;
-            font-weight: 850;
-            letter-spacing: .04em;
-            white-space: nowrap;
         }}
 
         /*
@@ -279,6 +266,90 @@ def _render_sheet_css(level: int) -> None:
             overflow-y: auto !important;
         }}
 
+        /*
+         * Bottom-sheet-specific typography overrides the older global compact
+         * table rules. Player names remain readable in Draft and Expanded
+         * states without changing draft-board card typography.
+         */
+        .st-key-v63_bottom_sheet
+            .st-key-war_player_list
+            [data-testid="stVerticalBlock"] {{
+            gap: 0 !important;
+        }}
+
+        .st-key-v63_bottom_sheet
+            .st-key-war_player_list
+            [data-testid="stHorizontalBlock"] {{
+            min-height: 38px !important;
+            height: 38px !important;
+            padding: 0 !important;
+            align-items: center !important;
+        }}
+
+        .st-key-v63_bottom_sheet
+            .st-key-war_player_list
+            [data-testid="stColumn"] {{
+            min-height: 38px !important;
+            height: 38px !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+        }}
+
+        .st-key-v63_bottom_sheet .player-name2 {{
+            font-size: .76rem !important;
+            line-height: 1.08 !important;
+            font-weight: 780 !important;
+            color: #F8FAFC !important;
+            -webkit-text-fill-color: #F8FAFC !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }}
+
+        .st-key-v63_bottom_sheet .player-sub2 {{
+            font-size: .54rem !important;
+            line-height: 1.05 !important;
+            margin-top: 2px !important;
+            color: #91A2B9 !important;
+            -webkit-text-fill-color: #91A2B9 !important;
+        }}
+
+        .st-key-v63_bottom_sheet .stat2,
+        .st-key-v63_bottom_sheet .rank2 {{
+            font-size: .62rem !important;
+            line-height: 1 !important;
+            color: #CFD8E6 !important;
+            -webkit-text-fill-color: #CFD8E6 !important;
+        }}
+
+        .st-key-v63_bottom_sheet
+            .st-key-war_player_list button {{
+            width: 27px !important;
+            min-width: 27px !important;
+            height: 27px !important;
+            min-height: 27px !important;
+            padding: 0 !important;
+            font-size: .69rem !important;
+        }}
+
+        .st-key-v63_bottom_sheet .value-badge {{
+            height: 22px !important;
+            min-width: 28px !important;
+            font-size: .53rem !important;
+        }}
+
+        .st-key-v63_bottom_sheet .player-row-divider {{
+            margin: 0 !important;
+            background: rgba(148,163,184,.12) !important;
+        }}
+
+        .st-key-v63_bottom_sheet .player-table-header2 {{
+            min-height: 25px !important;
+            height: 25px !important;
+            font-size: .53rem !important;
+            line-height: 1 !important;
+        }}
+
         .st-key-v63_utility_side
             [data-testid="stTabs"] {{
             height: 100% !important;
@@ -338,9 +409,15 @@ def _render_sheet_css(level: int) -> None:
 
 
 def _render_handle(level: int) -> None:
+    """
+    Render compact Sleeper-style tray arrows over the utility-panel side.
+
+    The centered PLAYER TRAY label is intentionally removed so the divider is
+    visually quieter and the controls sit above Queue / Roster.
+    """
     with st.container(key="v63_sheet_handle"):
-        _, up_col, label_col, down_col, _ = st.columns(
-            [5.0, 0.55, 1.55, 0.55, 5.0],
+        _, up_col, down_col, trailing_space = st.columns(
+            [8.55, 0.58, 0.58, 0.18],
             gap="small",
         )
 
@@ -353,12 +430,6 @@ def _render_handle(level: int) -> None:
                 on_click=change_tray_level,
                 args=(1,),
                 use_container_width=True,
-            )
-
-        with label_col:
-            st.markdown(
-                '<div class="v63-sheet-label">PLAYER TRAY</div>',
-                unsafe_allow_html=True,
             )
 
         with down_col:
