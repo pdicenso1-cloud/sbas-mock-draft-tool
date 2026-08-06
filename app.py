@@ -3057,147 +3057,6 @@ body:has(section[data-testid="stSidebar"][aria-expanded="false"])
     margin-top: 0 !important;
 }
 
-
-/* ============================================================
-   FantasySync v6.2 — Performance Pass
-   ============================================================ */
-
-/* Reduce browser layout work in the player table. */
-.st-key-war_player_list {
-    contain: layout paint style;
-}
-
-.st-key-war_player_list [data-testid="stHorizontalBlock"] {
-    contain: layout style;
-}
-
-/* Avoid animated transitions while Streamlit is replacing widgets. */
-.st-key-war_player_list *,
-.st-key-v61_player_toolbar *,
-.st-key-v53_top_workspace * {
-    transition-duration: 0s !important;
-}
-
-
-/* ============================================================
-   FantasySync v6.3 — Smooth CPU and Stable Viewport
-   ============================================================ */
-
-/* Hide Streamlit's running/rerun overlays and top progress surfaces. */
-[data-testid="stStatusWidget"],
-[data-testid="stDecoration"],
-[data-testid="stToolbarActions"] + div,
-div[data-testid="stAppViewContainer"] > div[style*="position: fixed"] {
-    box-shadow: none !important;
-}
-
-/* Common Streamlit running bar selectors. */
-.stAppDeployButton,
-[data-testid="stConnectionStatus"],
-[data-testid="stSpinner"],
-[data-testid="stNotification"],
-[data-testid="stException"] + div {
-    display: none !important;
-}
-
-/* Remove the pale top loading bar while preserving normal page content. */
-[data-testid="stAppViewContainer"] > div:first-child:not(.main),
-[data-testid="stAppViewContainer"] > div[style*="background-color: rgb(240"],
-[data-testid="stAppViewContainer"] > div[style*="background: rgb(240"] {
-    display: none !important;
-}
-
-/* Keep major workspaces geometrically stable during reruns. */
-.st-key-v53_header,
-.st-key-v53_top_workspace,
-.st-key-v56_drag_handle,
-.st-key-v53_bottom_workspace {
-    contain: layout style;
-}
-
-/* Disable movement-producing transitions during CPU updates. */
-.st-key-v53_top_workspace *,
-.st-key-v53_bottom_workspace *,
-.st-key-v53_header * {
-    animation: none !important;
-    transition: none !important;
-}
-
-/* Avoid browser scroll anchoring fighting the saved scroll position. */
-html,
-body,
-[data-testid="stAppViewContainer"],
-.main,
-.main .block-container {
-    overflow-anchor: none !important;
-}
-
-
-/* ============================================================
-   FantasySync v6.4 — Fragment Updates and Denser Player Rows
-   ============================================================ */
-
-/* Fragment updates preserve the surrounding page and scroll position. */
-[data-testid="stFragment"] {
-    width: 100% !important;
-}
-
-/* Tighter player rows: approximately four rows fit in a compact tray. */
-.st-key-war_player_list {
-    min-height: 132px !important;
-}
-
-.st-key-war_player_list [data-testid="stHorizontalBlock"] {
-    min-height: 27px !important;
-    height: 27px !important;
-    padding: 0 !important;
-    align-items: center !important;
-}
-
-.player-row-divider {
-    height: 1px !important;
-    margin: 0 !important;
-}
-
-.player-name2 {
-    font-size: .56rem !important;
-    line-height: 1 !important;
-}
-
-.player-sub2 {
-    font-size: .42rem !important;
-    line-height: .95 !important;
-    margin-top: 0 !important;
-}
-
-.stat2,
-.rank2 {
-    font-size: .48rem !important;
-    line-height: 1 !important;
-}
-
-.st-key-war_player_list button {
-    width: 20px !important;
-    min-width: 20px !important;
-    height: 20px !important;
-    min-height: 20px !important;
-    padding: 0 !important;
-    font-size: .55rem !important;
-}
-
-.value-badge {
-    height: 17px !important;
-    min-width: 22px !important;
-    font-size: .42rem !important;
-}
-
-/* Keep the column header compact too. */
-.player-table-header2 {
-    min-height: 22px !important;
-    font-size: .47rem !important;
-    line-height: 1 !important;
-}
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -4259,34 +4118,21 @@ def ensure_draft_filters():
         st.session_state.draft_search = ""
 
 
-
-def set_draft_position_filter(position: str):
-    st.session_state.draft_position_filter = position
-
-
-def toggle_queue_player(player: str):
-    if player in st.session_state.player_queue:
-        remove_from_queue(player)
-    else:
-        add_to_queue(player)
-
-
-
 def render_position_filter():
     positions = ["ALL", "QB", "RB", "WR", "TE"]
     labels = {"ALL": "ALL", "QB": "QB", "RB": "RB", "WR": "WR", "TE": "TE"}
     cols = st.columns(len(positions))
-
     for i, pos in enumerate(positions):
         active = st.session_state.draft_position_filter == pos
-        cols[i].button(
+        button_type = "primary" if active else "secondary"
+        if cols[i].button(
             labels[pos],
             key=f"draft_pos_{pos}",
             use_container_width=True,
-            type="primary" if active else "secondary",
-            on_click=set_draft_position_filter,
-            args=(pos,),
-        )
+            type=button_type,
+        ):
+            st.session_state.draft_position_filter = pos
+            st.rerun()
 
 
 
@@ -4640,15 +4486,15 @@ def render_v53_recommendation(
     )
 
     with st.container(key="v53_rec_button"):
-        st.button(
+        if st.button(
             f"DRAFT {player.upper()}  ›",
             use_container_width=True,
             type="primary",
             disabled=not allow_draft,
             key=f"v53_recommendation_{current_idx}_{player}",
-            on_click=handle_user_draft_click,
-            args=(player,),
-        )
+        ):
+            handle_user_draft_click(player)
+            st.rerun()
 
 
 
@@ -4836,68 +4682,6 @@ def render_draggable_player_tray():
 
 
 
-
-def preserve_scroll_position():
-    """
-    Keep the page anchored during Streamlit reruns.
-
-    CPU picks trigger rapid reruns. This stores the current scroll position
-    before Streamlit replaces the DOM and restores it immediately afterward,
-    preventing the screen from jumping up and down.
-    """
-    components.html(
-        """
-        <script>
-        (() => {
-          const win = window.parent;
-          const doc = win.document;
-          const storage = win.sessionStorage;
-          const KEY = "fantasysync_scroll_y_v63";
-
-          const restore = () => {
-            const saved = Number(storage.getItem(KEY));
-            if (Number.isFinite(saved)) {
-              win.requestAnimationFrame(() => {
-                win.scrollTo({ top: saved, left: 0, behavior: "auto" });
-              });
-            }
-          };
-
-          restore();
-
-          let ticking = false;
-          win.addEventListener(
-            "scroll",
-            () => {
-              if (ticking) return;
-              ticking = true;
-              win.requestAnimationFrame(() => {
-                storage.setItem(KEY, String(win.scrollY || 0));
-                ticking = false;
-              });
-            },
-            { passive: true }
-          );
-
-          const observer = new MutationObserver(() => {
-            restore();
-          });
-
-          observer.observe(doc.body, {
-            childList: true,
-            subtree: true,
-          });
-
-          win.setTimeout(() => observer.disconnect(), 1200);
-        })();
-        </script>
-        """,
-        height=0,
-        width=0,
-    )
-
-
-
 def render_live_user_roster():
     render_live_roster_header()
     render_live_roster_rows()
@@ -4977,7 +4761,7 @@ def render_player_picker_table(
         unsafe_allow_html=True,
     )
 
-    shown = pool.head(36).reset_index(drop=True)
+    shown = pool.head(60).reset_index(drop=True)
     list_height = (
         int(list_height_override)
         if list_height_override is not None
@@ -5028,7 +4812,7 @@ def render_player_picker_table(
                 args=(player,),
             )
 
-            cols[1].button(
+            if cols[1].button(
                 "★" if in_queue else "☆",
                 key=f"queue_star_{current_idx}_{player}",
                 use_container_width=True,
@@ -5037,9 +4821,12 @@ def render_player_picker_table(
                     if in_queue
                     else f"Add {player} to queue"
                 ),
-                on_click=toggle_queue_player,
-                args=(player,),
-            )
+            ):
+                if in_queue:
+                    remove_from_queue(player)
+                else:
+                    add_to_queue(player)
+                st.rerun()
 
             cols[2].markdown(
                 f"<div class='rank2'>{rank}</div>",
@@ -5144,53 +4931,55 @@ def render_queue_panel(
                 unsafe_allow_html=True,
             )
 
-            row_cols[2].button(
+            if row_cols[2].button(
                 "↑",
                 key=f"queue_up_{queue_index}_{player}",
                 disabled=queue_index == 0,
                 help="Move up",
-                on_click=move_queue_player,
-                args=(player, -1),
-            )
+            ):
+                move_queue_player(player, -1)
+                st.rerun()
 
-            row_cols[3].button(
+            if row_cols[3].button(
                 "↓",
                 key=f"queue_down_{queue_index}_{player}",
                 disabled=queue_index == len(queue) - 1,
                 help="Move down",
-                on_click=move_queue_player,
-                args=(player, 1),
-            )
+            ):
+                move_queue_player(player, 1)
+                st.rerun()
 
-            row_cols[4].button(
+            if row_cols[4].button(
                 "×",
                 key=f"queue_remove_{queue_index}_{player}",
                 help="Remove from queue",
-                on_click=remove_from_queue,
-                args=(player,),
-            )
+            ):
+                remove_from_queue(player)
+                st.rerun()
 
-    st.button(
+    if st.button(
         "➤ Draft Top Queue Player",
         use_container_width=True,
         type="primary",
         disabled=not allow_draft or not queue,
         key=f"draft_top_queue_{current_idx}",
-        on_click=draft_top_queue_player,
-    )
+    ):
+        draft_top_queue_player()
+        st.rerun()
 
     utility_left, utility_right = st.columns(
         [0.90, 1.25]
     )
 
     with utility_left:
-        st.button(
+        if st.button(
             "Clear Queue",
             use_container_width=True,
             disabled=not queue,
             key="clear_queue_button",
-            on_click=clear_player_queue,
-        )
+        ):
+            clear_player_queue()
+            st.rerun()
 
     with utility_right:
         st.toggle(
@@ -5237,8 +5026,38 @@ apply_team_query_selection()
 render_dynamic_dock_css()
 render_player_tray_css()
 
-# Draft Room updates are handled inside a Streamlit fragment.
-# This prevents CPU picks and clock ticks from rerunning the whole page.
+# Only CPU turns use full-page refreshes.
+# User turns rely on the browser-side clock, so player clicks stay responsive.
+_current_idx = current_open_index()
+_current_owner = None
+
+if _current_idx is not None:
+    _current_owner = clean(
+        st.session_state.picks.loc[_current_idx, "current_owner"]
+    )
+
+_cpu_turn_active = (
+    st.session_state.draft_active
+    and _current_idx is not None
+    and _current_owner != clean(st.session_state.user_team)
+)
+
+if _cpu_turn_active:
+    # Schedule the next page run, but make only one selection now.
+    # Streamlit renders this pick before the next CPU selection occurs.
+    current_pick_number = int(
+        st.session_state.picks.loc[_current_idx, "overall"]
+    )
+    st_autorefresh(
+        interval=725,
+        limit=None,
+        key=f"cpu_pick_tick_{current_pick_number}",
+    )
+    run_one_cpu_pick()
+
+# Enforce the user's pick clock only on user-controlled turns.
+if auto_pick_user_if_expired():
+    st.rerun()
 
 # The Draft Room renders its own compact v5.3 header.
 
@@ -5341,56 +5160,11 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v6.4</div>',
+        '<div class="sidebar-version">FantasySync · v6.1</div>',
         unsafe_allow_html=True,
     )
 
-@st.fragment
-def render_draft_room_fragment():
-    # CPU selections and the user's clock rerun only this fragment.
-    current_idx = current_open_index()
-
-    if current_idx is not None:
-        current_owner = clean(
-            st.session_state.picks.loc[current_idx, "current_owner"]
-        )
-    else:
-        current_owner = None
-
-    cpu_turn = (
-        st.session_state.draft_active
-        and current_idx is not None
-        and current_owner != clean(st.session_state.user_team)
-    )
-
-    user_turn_active = (
-        current_idx is not None
-        and current_owner == clean(st.session_state.user_team)
-        and st.session_state.clock_running
-    )
-
-    if cpu_turn:
-        current_pick_number = int(
-            st.session_state.picks.loc[current_idx, "overall"]
-        )
-        st_autorefresh(
-            interval=125,
-            limit=None,
-            key=f"cpu_fragment_tick_{current_pick_number}",
-        )
-        run_one_cpu_pick()
-
-    elif user_turn_active:
-        # One-second fragment refresh updates the visible countdown.
-        st_autorefresh(
-            interval=1000,
-            limit=None,
-            key=f"user_clock_tick_{int(st.session_state.picks.loc[current_idx, 'overall'])}",
-        )
-
-    if auto_pick_user_if_expired():
-        st.rerun(scope="fragment")
-
+if selected_page == "Draft Room":
     idx = current_open_index()
     render_v53_header(idx)
 
@@ -5497,11 +5271,7 @@ def render_draft_room_fragment():
                     )
 
 
-
-if selected_page == "Draft Room":
-    render_draft_room_fragment()
-
-if selected_page == "Recommendations":
+elif selected_page == "Recommendations":
     st.subheader("Team-Aware Recommendations")
     idx = current_open_index()
     if idx is None:
