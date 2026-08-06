@@ -3188,6 +3188,229 @@ div[data-testid="stCustomComponentV1"]:has(
     background: #60728F;
 }
 
+
+/* ============================================================
+   FantasySync v6.2 — Sleeper-style full-width draft room
+   Keeps v6.1.5 hidden autorefresh and fast CPU behavior.
+   ============================================================ */
+
+/* Full-width board workspace. */
+.st-key-v53_top_workspace {
+    width: 100% !important;
+    max-width: none !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.st-key-v53_board_panel {
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    overscroll-behavior: contain !important;
+    scrollbar-gutter: stable !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+/*
+ * The panel is the scroll viewport. Its internal wrappers must retain natural
+ * height so all 16 rounds contribute to scrollHeight.
+ */
+.st-key-v53_board_panel > div,
+.st-key-v53_board_panel > div > div,
+.st-key-v53_board_panel [data-testid="stVerticalBlockBorderWrapper"],
+.st-key-v53_board_panel [data-testid="stVerticalBlock"],
+.st-key-v53_board_panel [data-testid="stMarkdownContainer"] {
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+}
+
+.st-key-v53_board_panel .snake-board-wrap,
+.st-key-v53_board_panel .snake-board-shell,
+.st-key-v53_board_panel .snake-board-grid {
+    height: auto !important;
+    max-height: none !important;
+    min-height: max-content !important;
+    overflow: visible !important;
+}
+
+/* Subtle Sleeper-like board scrollbar. */
+.st-key-v53_board_panel {
+    scrollbar-width: thin;
+    scrollbar-color: #465671 #091321;
+}
+
+.st-key-v53_board_panel::-webkit-scrollbar {
+    width: 7px;
+}
+
+.st-key-v53_board_panel::-webkit-scrollbar-track {
+    background: #091321;
+}
+
+.st-key-v53_board_panel::-webkit-scrollbar-thumb {
+    background: #465671;
+    border-radius: 999px;
+}
+
+.st-key-v53_board_panel::-webkit-scrollbar-thumb:hover {
+    background: #657995;
+}
+
+/* Sleeper-style snap tray divider. */
+.st-key-v62_tray_controls {
+    height: 36px !important;
+    min-height: 36px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-top: 2px solid #7C5CE0;
+}
+
+.st-key-v62_tray_controls [data-testid="stHorizontalBlock"] {
+    align-items: center !important;
+    gap: .25rem !important;
+}
+
+.st-key-v62_tray_controls button {
+    min-height: 27px !important;
+    height: 27px !important;
+    padding: 0 !important;
+    border-radius: 8px !important;
+    background: #1C2739 !important;
+    border: 1px solid #4B5B74 !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    box-shadow: none !important;
+}
+
+.st-key-v62_tray_controls button:hover {
+    background: #27354A !important;
+    border-color: #846CE0 !important;
+}
+
+.st-key-v62_tray_controls button:disabled {
+    opacity: .38 !important;
+}
+
+.v62-tray-label {
+    min-height: 27px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: #1C2739;
+    border: 1px solid #4B5B74;
+    color: #E4EAF3;
+    font-size: .53rem;
+    font-weight: 850;
+    letter-spacing: .04em;
+    white-space: nowrap;
+}
+
+/* Lower workspace fills the full width. */
+.st-key-v53_bottom_workspace {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 2px 0 0 !important;
+    border-top: 0 !important;
+}
+
+.st-key-v53_bottom_workspace [data-testid="stHorizontalBlock"] {
+    align-items: stretch !important;
+    gap: .65rem !important;
+}
+
+/* Queue and roster replace recommendations. */
+.st-key-v62_queue_panel,
+.st-key-v62_roster_panel {
+    height: 100% !important;
+    min-height: 220px !important;
+    padding: 9px 10px !important;
+    border: 1px solid rgba(148, 163, 184, .18) !important;
+    border-radius: 8px !important;
+    background: linear-gradient(180deg, #111E30, #0C1726) !important;
+    overflow-y: auto !important;
+}
+
+.v62-panel-header {
+    min-height: 31px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #F8FAFC;
+    font-size: .60rem;
+    font-weight: 850;
+    border-bottom: 1px solid rgba(148, 163, 184, .17);
+    margin-bottom: 7px;
+}
+
+/* Recommendation panel is no longer part of the Draft Room. */
+.st-key-v53_recommendation_panel {
+    display: none !important;
+}
+
+/* Make the expanded board use every available horizontal pixel. */
+body:has(section[data-testid="stSidebar"][aria-expanded="false"])
+    .main .block-container {
+    width: calc(100vw - 1.4rem) !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+/* Keep queue controls compact inside the narrower middle panel. */
+.st-key-v62_queue_panel button {
+    min-height: 27px !important;
+    height: 27px !important;
+    padding: 0 6px !important;
+    font-size: .54rem !important;
+}
+
+.st-key-v62_queue_panel [data-testid="stHorizontalBlock"] {
+    gap: .25rem !important;
+}
+
+/* Compact roster rows in the tray. */
+.st-key-v62_roster_panel .roster-header-row {
+    margin-bottom: 4px !important;
+}
+
+.st-key-v62_roster_panel .roster-line {
+    min-height: 29px !important;
+    padding: 1px 0 !important;
+}
+
+.st-key-v62_roster_panel .roster-slot-pill {
+    height: 21px !important;
+}
+
+/* Preserve the v6.1.4 hidden autorefresh mount. */
+.st-key-cpu_autorefresh_mount,
+.st-key-cpu_autorefresh_mount > div,
+.st-key-cpu_autorefresh_mount [data-testid="stVerticalBlock"],
+.st-key-cpu_autorefresh_mount [data-testid="stElementContainer"],
+.st-key-cpu_autorefresh_mount [data-testid="stCustomComponentV1"],
+.st-key-cpu_autorefresh_mount iframe {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    width: 0 !important;
+    height: 0 !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    overflow: hidden !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -3350,8 +3573,30 @@ def move_player_tray(direction: int):
 
 
 def render_player_tray_css():
-    """The v5.6 tray is resized directly in the browser by drag."""
-    return None
+    settings = player_tray_settings()
+
+    st.markdown(
+        f"""
+        <style>
+        .st-key-v53_top_workspace {{
+            height: {settings["board_height"]}px !important;
+            max-height: {settings["board_height"]}px !important;
+            min-height: {settings["board_height"]}px !important;
+        }}
+
+        .st-key-v53_board_panel {{
+            height: {settings["board_height"]}px !important;
+            max-height: {settings["board_height"]}px !important;
+        }}
+
+        .st-key-war_player_list {{
+            height: {settings["player_height"]}px !important;
+            max-height: {settings["player_height"]}px !important;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 
@@ -5312,17 +5557,14 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v6.1.5</div>',
+        '<div class="sidebar-version">FantasySync · v6.2</div>',
         unsafe_allow_html=True,
     )
 
 if selected_page == "Draft Room":
     idx = current_open_index()
+    render_player_tray_css()
     render_v53_header(idx)
-
-    # Install the zero-height drag script above the workspaces so it cannot
-    # create spacing between the handle and Players section.
-    render_draggable_player_tray()
 
     if st.session_state.draft_message:
         with st.container(key="v61_draft_message"):
@@ -5336,47 +5578,53 @@ if selected_page == "Draft Room":
         )
         user_turn = current_owner == clean(st.session_state.user_team)
 
-    # Board and roster start at the same top edge.
+    # Full-width draft board.
     with st.container(key="v53_top_workspace"):
-        board_col, roster_col = st.columns(
-            [5.45, 1.70],
+        with st.container(key="v53_board_panel"):
+            st.markdown(
+                snake_board_html(),
+                unsafe_allow_html=True,
+            )
+
+    # Sleeper-style snap tray controls.
+    with st.container(key="v62_tray_controls"):
+        left_space, up_col, label_col, down_col, right_space = st.columns(
+            [5.0, .55, 1.55, .55, 5.0],
             gap="small",
         )
 
-        with board_col:
-            # Native bounded container: no flex centering and no false blank area.
-            with st.container(key="v53_board_panel"):
-                st.markdown(
-                    snake_board_html(),
-                    unsafe_allow_html=True,
-                )
+        with up_col:
+            st.button(
+                "▲",
+                key="v62_raise_tray",
+                help="Show more players",
+                disabled=st.session_state.player_tray_level >= 2,
+                on_click=move_player_tray,
+                args=(1,),
+                use_container_width=True,
+            )
 
-        with roster_col:
-            with st.container(key="v53_roster_panel"):
-                render_live_roster_header()
-                render_live_roster_rows()
+        with label_col:
+            st.markdown(
+                '<div class="v62-tray-label">PLAYER TRAY</div>',
+                unsafe_allow_html=True,
+            )
 
-    # True draggable player-tray divider.
-    with st.container(key="v56_drag_handle"):
-        st.markdown(
-            """
-            <div
-                class="v56-drag-grip"
-                role="separator"
-                aria-label="Resize draft board and player tray"
-                title="Drag vertically to resize. Double-click to reset."
-            >
-                <span class="v56-grip-lines">≡</span>
-                <span class="v56-drag-label">↕  DRAG PLAYER TRAY</span>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        with down_col:
+            st.button(
+                "▼",
+                key="v62_lower_tray",
+                help="Show more draft board",
+                disabled=st.session_state.player_tray_level <= 0,
+                on_click=move_player_tray,
+                args=(-1,),
+                use_container_width=True,
+            )
 
-    # Player browser begins directly beneath the board.
+    # Players, queue, and roster share the lower tray.
     with st.container(key="v53_bottom_workspace"):
-        player_col, recommendation_col = st.columns(
-            [5.45, 1.70],
+        player_col, queue_col, roster_col = st.columns(
+            [4.75, 1.65, 2.25],
             gap="small",
         )
 
@@ -5390,37 +5638,34 @@ if selected_page == "Draft Room":
                 render_player_picker_table(
                     idx,
                     allow_draft=user_turn,
-                    list_height_override=280,
+                    list_height_override=player_tray_settings()[
+                        "player_height"
+                    ],
                 )
 
-            with st.container(key="v53_queue_expander"):
-                with st.expander(
-                    f"Queue ({len(st.session_state.player_queue)})",
-                    expanded=False,
-                ):
-                    if idx is not None:
-                        render_queue_panel(
-                            idx,
-                            allow_draft=user_turn,
-                        )
+        with queue_col:
+            with st.container(key="v62_queue_panel"):
+                st.markdown(
+                    f"""
+                    <div class="v62-panel-header">
+                        <span>QUEUE</span>
+                        <span>{len(st.session_state.player_queue)}</span>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
 
-        with recommendation_col:
-            with st.container(key="v53_recommendation_panel"):
-                if idx is None:
-                    st.markdown(
-                        """
-                        <div class="v53-rec-eyebrow">★ DRAFT COMPLETE</div>
-                        <div class="queue-empty">
-                            Open League History to review the completed draft.
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
-                    )
-                else:
-                    render_v53_recommendation(
+                if idx is not None:
+                    render_queue_panel(
                         idx,
                         allow_draft=user_turn,
                     )
+
+        with roster_col:
+            with st.container(key="v62_roster_panel"):
+                render_live_roster_header()
+                render_live_roster_rows()
+
 
 
 elif selected_page == "Recommendations":
