@@ -3057,6 +3057,133 @@ body:has(section[data-testid="stSidebar"][aria-expanded="false"])
     margin-top: 0 !important;
 }
 
+
+/* ============================================================
+   FantasySync v6.1.1 — Stable refresh indicator and full board scroll
+   Minimal patch based on the stable v6.1 build.
+   ============================================================ */
+
+/*
+ * Streamlit normally displays a wide gray running/status surface at the top
+ * during reruns. Collapse it into a small corner indicator.
+ */
+[data-testid="stStatusWidget"] {
+    position: fixed !important;
+    top: 11px !important;
+    right: 112px !important;
+    left: auto !important;
+    width: 22px !important;
+    min-width: 22px !important;
+    max-width: 22px !important;
+    height: 22px !important;
+    min-height: 22px !important;
+    max-height: 22px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 50% !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+    z-index: 100000 !important;
+}
+
+[data-testid="stStatusWidget"] > div,
+[data-testid="stStatusWidget"] [data-testid="stMarkdownContainer"],
+[data-testid="stStatusWidget"] p,
+[data-testid="stStatusWidget"] span:not([data-testid="stSpinner"]) {
+    font-size: 0 !important;
+    line-height: 0 !important;
+    color: transparent !important;
+    -webkit-text-fill-color: transparent !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Small loading wheel when Streamlit exposes its spinner element. */
+[data-testid="stStatusWidget"] [data-testid="stSpinner"],
+[data-testid="stStatusWidget"] svg {
+    width: 18px !important;
+    height: 18px !important;
+    margin: 2px !important;
+}
+
+/*
+ * Remove any wide decorative/progress strip while preserving the tiny status
+ * widget above.
+ */
+[data-testid="stDecoration"] {
+    display: none !important;
+}
+
+[data-testid="stAppViewContainer"] > div[style*="height: 3px"],
+[data-testid="stAppViewContainer"] > div[style*="height:3px"] {
+    display: none !important;
+}
+
+/*
+ * Restore real scrolling through all 16 rounds.
+ *
+ * Older layout rules forced the board's internal Streamlit wrappers to the
+ * same height as the viewport. That clipped later rounds rather than giving
+ * the panel a larger scrollHeight.
+ */
+.st-key-v53_board_panel {
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    overflow-y: scroll !important;
+    overflow-x: hidden !important;
+    overscroll-behavior: contain !important;
+    scrollbar-gutter: stable !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+.st-key-v53_board_panel > div,
+.st-key-v53_board_panel > div > div,
+.st-key-v53_board_panel [data-testid="stVerticalBlock"],
+.st-key-v53_board_panel [data-testid="stVerticalBlockBorderWrapper"],
+.st-key-v53_board_panel [data-testid="stMarkdownContainer"] {
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+}
+
+/* Ensure the generated board contributes its full 16-round content height. */
+.st-key-v53_board_panel .snake-board-wrap,
+.st-key-v53_board_panel .snake-board-shell,
+.st-key-v53_board_panel .snake-board-grid {
+    height: auto !important;
+    max-height: none !important;
+    min-height: max-content !important;
+    overflow: visible !important;
+}
+
+/* Visible but understated board scrollbar. */
+.st-key-v53_board_panel::-webkit-scrollbar {
+    width: 7px;
+}
+
+.st-key-v53_board_panel::-webkit-scrollbar-track {
+    background: #091321;
+}
+
+.st-key-v53_board_panel::-webkit-scrollbar-thumb {
+    background: #3C4A61;
+    border-radius: 999px;
+}
+
+.st-key-v53_board_panel::-webkit-scrollbar-thumb:hover {
+    background: #596B87;
+}
+
+/* Firefox */
+.st-key-v53_board_panel {
+    scrollbar-width: thin;
+    scrollbar-color: #3C4A61 #091321;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -5160,7 +5287,7 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v6.1</div>',
+        '<div class="sidebar-version">FantasySync · v6.1.1</div>',
         unsafe_allow_html=True,
     )
 
