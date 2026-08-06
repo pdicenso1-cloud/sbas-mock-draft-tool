@@ -2581,6 +2581,41 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked
     padding-top: 3px !important;
 }
 
+
+/* ============================================================
+   FantasySync v5.7 — True Draggable Player Workspace
+   ============================================================ */
+
+.st-key-v53_top_workspace {
+    height: 430px !important;
+    max-height: 430px !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+.st-key-v53_top_workspace > div,
+.st-key-v53_top_workspace > div > div,
+.st-key-v53_top_workspace [data-testid="stHorizontalBlock"] {
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+}
+
+.st-key-v53_board_panel,
+.st-key-v53_roster_panel {
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+}
+
+.st-key-v56_drag_handle {
+    margin-top: 0 !important;
+}
+
+.st-key-v53_bottom_workspace {
+    margin-top: 0 !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -4008,11 +4043,9 @@ def render_v53_recommendation(
 
 def render_draggable_player_tray():
     """
-    Install a browser-side pointer drag handler.
-
-    The handle changes the upper board/roster height and the lower player-list
-    height continuously without causing a Streamlit rerun. The selected height
-    is stored in sessionStorage and reapplied after normal app reruns.
+    Install a browser-side drag handler that resizes the complete upper
+    workspace. This moves the player section itself instead of leaving an
+    empty gap below the draft board.
     """
     components.html(
         """
@@ -4020,90 +4053,139 @@ def render_draggable_player_tray():
         (() => {
           const doc = window.parent.document;
           const storage = window.parent.sessionStorage;
-          const STORAGE_KEY = "fantasysync_player_tray_board_height";
-          const DEFAULT_BOARD = 430;
-          const MIN_BOARD = 285;
-          const MAX_BOARD = 560;
-          const TOTAL_WORKSPACE = 710;
+          const STORAGE_KEY = "fantasysync_true_tray_height_v57";
 
-          function all(selector) {
+          const DEFAULT_HEIGHT = 430;
+          const MIN_HEIGHT = 245;
+          const MAX_HEIGHT = 590;
+          const TOTAL_HEIGHT = 730;
+
+          function nodes(selector) {
             return Array.from(doc.querySelectorAll(selector));
           }
 
-          function setImportant(element, property, value) {
+          function important(element, property, value) {
             if (!element) return;
             element.style.setProperty(property, value, "important");
           }
 
+          function sizeContainerTree(root, height) {
+            if (!root) return;
+
+            important(root, "height", `${height}px`);
+            important(root, "max-height", `${height}px`);
+            important(root, "min-height", "0px");
+
+            root.querySelectorAll(
+              ':scope > div, ' +
+              '[data-testid="stVerticalBlock"], ' +
+              '[data-testid="stVerticalBlockBorderWrapper"], ' +
+              '[data-testid="stHorizontalBlock"]'
+            ).forEach((node) => {
+              important(node, "height", `${height}px`);
+              important(node, "max-height", `${height}px`);
+              important(node, "min-height", "0px");
+            });
+          }
+
           function applyHeight(rawHeight) {
-            const boardHeight = Math.max(
-              MIN_BOARD,
-              Math.min(MAX_BOARD, Number(rawHeight) || DEFAULT_BOARD)
+            const upperHeight = Math.max(
+              MIN_HEIGHT,
+              Math.min(MAX_HEIGHT, Number(rawHeight) || DEFAULT_HEIGHT)
             );
+
             const playerHeight = Math.max(
-              150,
-              TOTAL_WORKSPACE - boardHeight
+              165,
+              TOTAL_HEIGHT - upperHeight
             );
 
-            all(".st-key-v53_board_panel, .st-key-v53_roster_panel")
-              .forEach((panel) => {
-                setImportant(panel, "height", `${boardHeight}px`);
-                setImportant(panel, "max-height", `${boardHeight}px`);
+            const topWorkspace = doc.querySelector(
+              ".st-key-v53_top_workspace"
+            );
 
-                panel.querySelectorAll(
-                  '[data-testid="stVerticalBlockBorderWrapper"]'
-                ).forEach((wrapper) => {
-                  setImportant(wrapper, "height", "100%");
-                  setImportant(wrapper, "max-height", "100%");
-                });
-              });
+            sizeContainerTree(topWorkspace, upperHeight);
 
-            all(".st-key-war_player_list").forEach((panel) => {
-              setImportant(panel, "height", `${playerHeight}px`);
-              setImportant(panel, "max-height", `${playerHeight}px`);
+            nodes(
+              ".st-key-v53_board_panel, .st-key-v53_roster_panel"
+            ).forEach((panel) => {
+              important(panel, "height", `${upperHeight}px`);
+              important(panel, "max-height", `${upperHeight}px`);
+              important(panel, "min-height", "0px");
+              important(panel, "overflow-y", "auto");
 
               panel.querySelectorAll(
-                '[data-testid="stVerticalBlockBorderWrapper"]'
+                '[data-testid="stVerticalBlockBorderWrapper"], ' +
+                '[data-testid="stVerticalBlock"]'
               ).forEach((wrapper) => {
-                setImportant(wrapper, "height", "100%");
-                setImportant(wrapper, "max-height", "100%");
+                important(wrapper, "height", "100%");
+                important(wrapper, "max-height", "100%");
+                important(wrapper, "min-height", "0px");
               });
             });
 
-            const label = doc.querySelector(".v56-drag-label");
-            if (label) {
-              label.textContent = "↕  DRAG PLAYER TRAY";
+            const dragHandle = doc.querySelector(
+              ".st-key-v56_drag_handle"
+            );
+            if (dragHandle) {
+              important(dragHandle, "margin-top", "0px");
             }
 
-            storage.setItem(STORAGE_KEY, String(boardHeight));
+            const bottomWorkspace = doc.querySelector(
+              ".st-key-v53_bottom_workspace"
+            );
+            if (bottomWorkspace) {
+              important(bottomWorkspace, "margin-top", "0px");
+            }
+
+            nodes(".st-key-war_player_list").forEach((panel) => {
+              important(panel, "height", `${playerHeight}px`);
+              important(panel, "max-height", `${playerHeight}px`);
+              important(panel, "min-height", "150px");
+              important(panel, "overflow-y", "auto");
+
+              panel.querySelectorAll(
+                '[data-testid="stVerticalBlockBorderWrapper"], ' +
+                '[data-testid="stVerticalBlock"]'
+              ).forEach((wrapper) => {
+                important(wrapper, "height", "100%");
+                important(wrapper, "max-height", "100%");
+                important(wrapper, "min-height", "0px");
+              });
+            });
+
+            storage.setItem(STORAGE_KEY, String(upperHeight));
           }
 
           function install() {
             const handle = doc.querySelector(".v56-drag-grip");
-            if (!handle || handle.dataset.dragInstalled === "true") {
+
+            if (!handle || handle.dataset.v57Installed === "true") {
               return false;
             }
 
-            handle.dataset.dragInstalled = "true";
+            handle.dataset.v57Installed = "true";
+
             let dragging = false;
             let startY = 0;
-            let startHeight = DEFAULT_BOARD;
+            let startHeight = DEFAULT_HEIGHT;
 
             const stored = Number(storage.getItem(STORAGE_KEY));
             applyHeight(
               Number.isFinite(stored) && stored > 0
                 ? stored
-                : DEFAULT_BOARD
+                : DEFAULT_HEIGHT
             );
 
             handle.addEventListener("pointerdown", (event) => {
+              const topWorkspace = doc.querySelector(
+                ".st-key-v53_top_workspace"
+              );
+
               dragging = true;
               startY = event.clientY;
-
-              const board = doc.querySelector(".st-key-v53_board_panel");
-              startHeight = board
-                ? board.getBoundingClientRect().height
-                : DEFAULT_BOARD;
+              startHeight = topWorkspace
+                ? topWorkspace.getBoundingClientRect().height
+                : DEFAULT_HEIGHT;
 
               handle.setPointerCapture(event.pointerId);
               handle.classList.add("dragging");
@@ -4114,37 +4196,41 @@ def render_draggable_player_tray():
 
             handle.addEventListener("pointermove", (event) => {
               if (!dragging) return;
+
               const delta = event.clientY - startY;
               applyHeight(startHeight + delta);
               event.preventDefault();
             });
 
-            const stopDragging = (event) => {
+            function stopDragging(event) {
               if (!dragging) return;
+
               dragging = false;
               handle.classList.remove("dragging");
               doc.body.style.userSelect = "";
               doc.body.style.cursor = "";
+
               try {
                 handle.releasePointerCapture(event.pointerId);
               } catch (_) {}
-            };
+            }
 
             handle.addEventListener("pointerup", stopDragging);
             handle.addEventListener("pointercancel", stopDragging);
 
             handle.addEventListener("dblclick", () => {
-              applyHeight(DEFAULT_BOARD);
+              applyHeight(DEFAULT_HEIGHT);
             });
 
             return true;
           }
 
           let attempts = 0;
-          const timer = window.setInterval(() => {
+          const installer = window.setInterval(() => {
             attempts += 1;
-            if (install() || attempts > 60) {
-              window.clearInterval(timer);
+
+            if (install() || attempts > 80) {
+              window.clearInterval(installer);
             }
           }, 100);
         })();
@@ -4633,7 +4719,7 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v5.6</div>',
+        '<div class="sidebar-version">FantasySync · v5.7</div>',
         unsafe_allow_html=True,
     )
 
