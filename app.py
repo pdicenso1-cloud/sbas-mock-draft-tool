@@ -3078,6 +3078,60 @@ body:has(section[data-testid="stSidebar"][aria-expanded="false"])
     transition-duration: 0s !important;
 }
 
+
+/* ============================================================
+   FantasySync v6.3 — Smooth CPU and Stable Viewport
+   ============================================================ */
+
+/* Hide Streamlit's running/rerun overlays and top progress surfaces. */
+[data-testid="stStatusWidget"],
+[data-testid="stDecoration"],
+[data-testid="stToolbarActions"] + div,
+div[data-testid="stAppViewContainer"] > div[style*="position: fixed"] {
+    box-shadow: none !important;
+}
+
+/* Common Streamlit running bar selectors. */
+.stAppDeployButton,
+[data-testid="stConnectionStatus"],
+[data-testid="stSpinner"],
+[data-testid="stNotification"],
+[data-testid="stException"] + div {
+    display: none !important;
+}
+
+/* Remove the pale top loading bar while preserving normal page content. */
+[data-testid="stAppViewContainer"] > div:first-child:not(.main),
+[data-testid="stAppViewContainer"] > div[style*="background-color: rgb(240"],
+[data-testid="stAppViewContainer"] > div[style*="background: rgb(240"] {
+    display: none !important;
+}
+
+/* Keep major workspaces geometrically stable during reruns. */
+.st-key-v53_header,
+.st-key-v53_top_workspace,
+.st-key-v56_drag_handle,
+.st-key-v53_bottom_workspace {
+    contain: layout style;
+}
+
+/* Disable movement-producing transitions during CPU updates. */
+.st-key-v53_top_workspace *,
+.st-key-v53_bottom_workspace *,
+.st-key-v53_header * {
+    animation: none !important;
+    transition: none !important;
+}
+
+/* Avoid browser scroll anchoring fighting the saved scroll position. */
+html,
+body,
+[data-testid="stAppViewContainer"],
+.main,
+.main .block-container {
+    overflow-anchor: none !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -4716,6 +4770,68 @@ def render_draggable_player_tray():
 
 
 
+
+def preserve_scroll_position():
+    """
+    Keep the page anchored during Streamlit reruns.
+
+    CPU picks trigger rapid reruns. This stores the current scroll position
+    before Streamlit replaces the DOM and restores it immediately afterward,
+    preventing the screen from jumping up and down.
+    """
+    components.html(
+        """
+        <script>
+        (() => {
+          const win = window.parent;
+          const doc = win.document;
+          const storage = win.sessionStorage;
+          const KEY = "fantasysync_scroll_y_v63";
+
+          const restore = () => {
+            const saved = Number(storage.getItem(KEY));
+            if (Number.isFinite(saved)) {
+              win.requestAnimationFrame(() => {
+                win.scrollTo({ top: saved, left: 0, behavior: "auto" });
+              });
+            }
+          };
+
+          restore();
+
+          let ticking = false;
+          win.addEventListener(
+            "scroll",
+            () => {
+              if (ticking) return;
+              ticking = true;
+              win.requestAnimationFrame(() => {
+                storage.setItem(KEY, String(win.scrollY || 0));
+                ticking = false;
+              });
+            },
+            { passive: true }
+          );
+
+          const observer = new MutationObserver(() => {
+            restore();
+          });
+
+          observer.observe(doc.body, {
+            childList: true,
+            subtree: true,
+          });
+
+          win.setTimeout(() => observer.disconnect(), 1200);
+        })();
+        </script>
+        """,
+        height=0,
+        width=0,
+    )
+
+
+
 def render_live_user_roster():
     render_live_roster_header()
     render_live_roster_rows()
@@ -5078,7 +5194,7 @@ if _cpu_turn_active:
         st.session_state.picks.loc[_current_idx, "overall"]
     )
     st_autorefresh(
-        interval=360,
+        interval=175,
         limit=None,
         key=f"cpu_pick_tick_{current_pick_number}",
     )
@@ -5189,12 +5305,13 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v6.2</div>',
+        '<div class="sidebar-version">FantasySync · v6.3</div>',
         unsafe_allow_html=True,
     )
 
 if selected_page == "Draft Room":
     idx = current_open_index()
+    preserve_scroll_position()
     render_v53_header(idx)
 
     # Install the zero-height drag script above the workspaces so it cannot
