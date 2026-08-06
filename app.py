@@ -3411,6 +3411,238 @@ body:has(section[data-testid="stSidebar"][aria-expanded="false"])
     overflow: hidden !important;
 }
 
+
+/* ============================================================
+   FantasySync v6.2.1 — Higher board, native 16-round scroll,
+   compact tabbed Queue/Roster utility panel
+   ============================================================ */
+
+/* Pull the entire Draft Room higher without changing its visual language. */
+.main .block-container {
+    padding-top: .18rem !important;
+}
+
+.st-key-v53_header {
+    padding-top: 1px !important;
+    padding-bottom: 5px !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+.st-key-v621_draft_message {
+    min-height: 16px !important;
+    height: auto !important;
+    margin: 0 0 2px !important;
+    padding: 0 !important;
+}
+
+.st-key-v621_draft_message p,
+.st-key-v621_draft_message [data-testid="stCaptionContainer"],
+.st-key-v621_draft_message [data-testid="stMarkdownContainer"] {
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+    line-height: 1.05 !important;
+    font-size: .57rem !important;
+}
+
+/* Do not make the outer workspace itself a clipping viewport. */
+.st-key-v53_top_workspace,
+.st-key-v53_top_workspace > div,
+.st-key-v53_top_workspace > div > div {
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/*
+ * Native Streamlit bounded wrapper owns scrolling. The keyed outer block
+ * stays natural height and must not clip it.
+ */
+.st-key-v53_board_panel {
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.st-key-v53_board_panel
+    [data-testid="stVerticalBlockBorderWrapper"] {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    overscroll-behavior: contain !important;
+    scrollbar-gutter: stable !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: thin;
+    scrollbar-color: #465671 #091321;
+}
+
+.st-key-v53_board_panel
+    [data-testid="stVerticalBlockBorderWrapper"]
+    > div,
+.st-key-v53_board_panel
+    [data-testid="stVerticalBlock"] {
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+}
+
+/* Ensure rounds 1–16 contribute their full natural height. */
+.st-key-v53_board_panel [data-testid="stMarkdownContainer"],
+.st-key-v53_board_panel [data-testid="stMarkdownContainer"] > div,
+.st-key-v53_board_panel .snake-board-wrap,
+.st-key-v53_board_panel .snake-board-shell,
+.st-key-v53_board_panel .snake-board-grid {
+    height: auto !important;
+    max-height: none !important;
+    min-height: max-content !important;
+    overflow: visible !important;
+}
+
+.st-key-v53_board_panel
+    [data-testid="stVerticalBlockBorderWrapper"]
+   ::-webkit-scrollbar {
+    width: 7px;
+}
+
+.st-key-v53_board_panel
+    [data-testid="stVerticalBlockBorderWrapper"]
+   ::-webkit-scrollbar-track {
+    background: #091321;
+}
+
+.st-key-v53_board_panel
+    [data-testid="stVerticalBlockBorderWrapper"]
+   ::-webkit-scrollbar-thumb {
+    background: #465671;
+    border-radius: 999px;
+}
+
+.st-key-v53_board_panel
+    [data-testid="stVerticalBlockBorderWrapper"]
+   ::-webkit-scrollbar-thumb:hover {
+    background: #657995;
+}
+
+/* Keep tray immediately attached beneath the visible board. */
+.st-key-v62_tray_controls {
+    margin-top: 0 !important;
+}
+
+/* One compact utility box; click Queue or Roster. */
+.st-key-v621_utility_panel {
+    height: 100% !important;
+    min-height: 220px !important;
+    padding: 7px 9px !important;
+    border: 1px solid rgba(148, 163, 184, .18) !important;
+    border-radius: 8px !important;
+    background: linear-gradient(180deg, #111E30, #0C1726) !important;
+    overflow-y: auto !important;
+}
+
+.st-key-v621_utility_panel
+    [data-testid="stTabs"] {
+    margin: 0 !important;
+}
+
+.st-key-v621_utility_panel
+    [data-testid="stTabs"] [role="tablist"] {
+    gap: 4px !important;
+    margin-bottom: 5px !important;
+    border-bottom: 1px solid rgba(148, 163, 184, .15);
+}
+
+.st-key-v621_utility_panel
+    [data-testid="stTabs"] button[role="tab"] {
+    min-height: 29px !important;
+    height: 29px !important;
+    padding: 0 9px !important;
+    font-size: .55rem !important;
+    font-weight: 800 !important;
+    color: #8FA0B7 !important;
+    -webkit-text-fill-color: #8FA0B7 !important;
+}
+
+.st-key-v621_utility_panel
+    [data-testid="stTabs"] button[role="tab"][aria-selected="true"] {
+    color: #70A7FF !important;
+    -webkit-text-fill-color: #70A7FF !important;
+    border-bottom-color: #4F8FF5 !important;
+}
+
+.st-key-v621_utility_panel
+    [data-testid="stTabContent"] {
+    padding-top: 2px !important;
+}
+
+/* Queue is intentionally more compact than the prior dedicated column. */
+.st-key-v621_utility_panel .queue-title-row {
+    display: none !important;
+}
+
+.st-key-v621_utility_panel .queue-empty {
+    min-height: 52px !important;
+    padding: 10px 7px !important;
+    font-size: .53rem !important;
+}
+
+.st-key-v621_utility_panel button {
+    min-height: 25px !important;
+    height: 25px !important;
+    padding: 0 5px !important;
+    font-size: .50rem !important;
+}
+
+.st-key-v621_utility_panel [data-testid="stHorizontalBlock"] {
+    gap: .20rem !important;
+}
+
+/* Roster remains one clean box when its tab is selected. */
+.st-key-v621_utility_panel .roster-header-row {
+    margin-bottom: 3px !important;
+}
+
+.st-key-v621_utility_panel .roster-line {
+    min-height: 27px !important;
+    padding: 0 !important;
+}
+
+.st-key-v621_utility_panel .roster-slot-pill {
+    height: 20px !important;
+}
+
+.st-key-v621_utility_panel .roster-line-player {
+    font-size: .55rem !important;
+}
+
+/* Preserve hidden autorefresh and fast CPU behavior exactly. */
+.st-key-cpu_autorefresh_mount,
+.st-key-cpu_autorefresh_mount > div,
+.st-key-cpu_autorefresh_mount [data-testid="stVerticalBlock"],
+.st-key-cpu_autorefresh_mount [data-testid="stElementContainer"],
+.st-key-cpu_autorefresh_mount [data-testid="stCustomComponentV1"],
+.st-key-cpu_autorefresh_mount iframe {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    width: 0 !important;
+    height: 0 !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    overflow: hidden !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -3574,24 +3806,46 @@ def move_player_tray(direction: int):
 
 def render_player_tray_css():
     settings = player_tray_settings()
+    board_height = int(settings["board_height"])
+    player_height = int(settings["player_height"])
 
     st.markdown(
         f"""
         <style>
         .st-key-v53_top_workspace {{
-            height: {settings["board_height"]}px !important;
-            max-height: {settings["board_height"]}px !important;
-            min-height: {settings["board_height"]}px !important;
+            height: auto !important;
+            max-height: none !important;
+            min-height: 0 !important;
         }}
 
-        .st-key-v53_board_panel {{
-            height: {settings["board_height"]}px !important;
-            max-height: {settings["board_height"]}px !important;
+        /*
+         * Streamlit's bounded-container wrapper is the real board viewport.
+         * Its child content remains natural height so rounds 1–16 scroll.
+         */
+        .st-key-v53_board_panel
+            [data-testid="stVerticalBlockBorderWrapper"] {{
+            height: {board_height}px !important;
+            max-height: {board_height}px !important;
+            min-height: {board_height}px !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            scrollbar-gutter: stable !important;
+        }}
+
+        .st-key-v53_board_panel
+            [data-testid="stVerticalBlockBorderWrapper"]
+            > div,
+        .st-key-v53_board_panel
+            [data-testid="stVerticalBlock"] {{
+            height: auto !important;
+            max-height: none !important;
+            min-height: 0 !important;
+            overflow: visible !important;
         }}
 
         .st-key-war_player_list {{
-            height: {settings["player_height"]}px !important;
-            max-height: {settings["player_height"]}px !important;
+            height: {player_height}px !important;
+            max-height: {player_height}px !important;
         }}
         </style>
         """,
@@ -5557,7 +5811,7 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v6.2</div>',
+        '<div class="sidebar-version">FantasySync · v6.2.1</div>',
         unsafe_allow_html=True,
     )
 
@@ -5567,7 +5821,7 @@ if selected_page == "Draft Room":
     render_v53_header(idx)
 
     if st.session_state.draft_message:
-        with st.container(key="v61_draft_message"):
+        with st.container(key="v621_draft_message"):
             st.caption(st.session_state.draft_message)
 
     if idx is None:
@@ -5578,9 +5832,15 @@ if selected_page == "Draft Room":
         )
         user_turn = current_owner == clean(st.session_state.user_team)
 
-    # Full-width draft board.
+    tray_settings = player_tray_settings()
+
+    # Full-width board with a native internal viewport.
     with st.container(key="v53_top_workspace"):
-        with st.container(key="v53_board_panel"):
+        with st.container(
+            height=int(tray_settings["board_height"]),
+            border=False,
+            key="v53_board_panel",
+        ):
             st.markdown(
                 snake_board_html(),
                 unsafe_allow_html=True,
@@ -5621,10 +5881,10 @@ if selected_page == "Draft Room":
                 use_container_width=True,
             )
 
-    # Players, queue, and roster share the lower tray.
+    # Player browser plus one compact switchable Queue/Roster box.
     with st.container(key="v53_bottom_workspace"):
-        player_col, queue_col, roster_col = st.columns(
-            [4.75, 1.65, 2.25],
+        player_col, utility_col = st.columns(
+            [6.65, 2.35],
             gap="small",
         )
 
@@ -5638,33 +5898,32 @@ if selected_page == "Draft Room":
                 render_player_picker_table(
                     idx,
                     allow_draft=user_turn,
-                    list_height_override=player_tray_settings()[
-                        "player_height"
-                    ],
+                    list_height_override=int(
+                        tray_settings["player_height"]
+                    ),
                 )
 
-        with queue_col:
-            with st.container(key="v62_queue_panel"):
-                st.markdown(
-                    f"""
-                    <div class="v62-panel-header">
-                        <span>QUEUE</span>
-                        <span>{len(st.session_state.player_queue)}</span>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
+        with utility_col:
+            with st.container(key="v621_utility_panel"):
+                queue_tab, roster_tab = st.tabs(
+                    [
+                        f"QUEUE ({len(st.session_state.player_queue)})",
+                        "ROSTER",
+                    ]
                 )
 
-                if idx is not None:
-                    render_queue_panel(
-                        idx,
-                        allow_draft=user_turn,
-                    )
+                with queue_tab:
+                    if idx is None:
+                        st.caption("Draft complete.")
+                    else:
+                        render_queue_panel(
+                            idx,
+                            allow_draft=user_turn,
+                        )
 
-        with roster_col:
-            with st.container(key="v62_roster_panel"):
-                render_live_roster_header()
-                render_live_roster_rows()
+                with roster_tab:
+                    render_live_roster_header()
+                    render_live_roster_rows()
 
 
 
