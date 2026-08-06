@@ -13,6 +13,10 @@ import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
 from streamlit_autorefresh import st_autorefresh
+from components.draft_room import (
+    DraftRoomDependencies,
+    render_draft_room,
+)
 
 APP_DIR = Path(__file__).resolve().parent
 DATA_DIR = APP_DIR / "data"
@@ -3643,6 +3647,116 @@ body:has(section[data-testid="stSidebar"][aria-expanded="false"])
     overflow: hidden !important;
 }
 
+
+/* ============================================================
+   FantasySync v6.2.2 — Separate Board and Player Tray
+   Visual-only patch based on v6.2.1.
+   ============================================================ */
+
+/* Board remains its own region. */
+.st-key-v53_top_workspace {
+    position: relative !important;
+    z-index: 1 !important;
+    margin: 0 0 8px !important;
+    padding: 0 !important;
+    background: transparent !important;
+}
+
+/* Divider controls sit between—not over—the two regions. */
+.st-key-v62_tray_controls {
+    position: relative !important;
+    z-index: 4 !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    max-height: 38px !important;
+    margin: 0 0 6px !important;
+    padding: 0 !important;
+    background: #081321 !important;
+    border-top: 2px solid #7C5CE0 !important;
+    border-bottom: 1px solid rgba(148, 163, 184, .18) !important;
+    overflow: visible !important;
+}
+
+.st-key-v62_tray_controls [data-testid="stHorizontalBlock"] {
+    height: 36px !important;
+    min-height: 36px !important;
+    align-items: center !important;
+}
+
+/* The player tray is now one solid bordered panel. */
+.st-key-v53_bottom_workspace {
+    position: relative !important;
+    z-index: 2 !important;
+    clear: both !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 10px 12px 12px !important;
+    background: #0B1625 !important;
+    border: 1px solid rgba(148, 163, 184, .24) !important;
+    border-radius: 10px !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+}
+
+/* Prevent any tray content from escaping upward into the board. */
+.st-key-v53_bottom_workspace > div,
+.st-key-v53_bottom_workspace > div > div,
+.st-key-v53_bottom_workspace [data-testid="stHorizontalBlock"],
+.st-key-v53_bottom_workspace [data-testid="stColumn"] {
+    position: relative !important;
+    z-index: 1 !important;
+    margin-top: 0 !important;
+    transform: none !important;
+}
+
+.st-key-v53_bottom_workspace [data-testid="stHorizontalBlock"] {
+    align-items: flex-start !important;
+}
+
+/* Keep the player browser and Queue/Roster utility visibly separate. */
+.st-key-v61_player_toolbar {
+    background: transparent !important;
+}
+
+.st-key-v621_utility_panel {
+    border: 1px solid rgba(148, 163, 184, .22) !important;
+    background: #101D2E !important;
+    border-radius: 8px !important;
+}
+
+/* Remove older negative offsets that could cause overlap. */
+.st-key-v53_bottom_workspace,
+.st-key-v61_player_toolbar,
+.st-key-war_player_list,
+.st-key-v621_utility_panel {
+    top: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+}
+
+/* Preserve the hidden autorefresh behavior. */
+.st-key-cpu_autorefresh_mount,
+.st-key-cpu_autorefresh_mount > div,
+.st-key-cpu_autorefresh_mount [data-testid="stVerticalBlock"],
+.st-key-cpu_autorefresh_mount [data-testid="stElementContainer"],
+.st-key-cpu_autorefresh_mount [data-testid="stCustomComponentV1"],
+.st-key-cpu_autorefresh_mount iframe {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    width: 0 !important;
+    height: 0 !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    overflow: hidden !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -5811,119 +5925,27 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v6.2.1</div>',
+        '<div class="sidebar-version">FantasySync · v6.3 Phase 1</div>',
         unsafe_allow_html=True,
     )
 
 if selected_page == "Draft Room":
-    idx = current_open_index()
-    render_player_tray_css()
-    render_v53_header(idx)
-
-    if st.session_state.draft_message:
-        with st.container(key="v621_draft_message"):
-            st.caption(st.session_state.draft_message)
-
-    if idx is None:
-        user_turn = False
-    else:
-        current_owner = clean(
-            st.session_state.picks.loc[idx, "current_owner"]
+    render_draft_room(
+        DraftRoomDependencies(
+            current_open_index=current_open_index,
+            render_player_tray_css=render_player_tray_css,
+            render_header=render_v53_header,
+            clean=clean,
+            player_tray_settings=player_tray_settings,
+            snake_board_html=snake_board_html,
+            move_player_tray=move_player_tray,
+            render_player_toolbar=render_v61_player_toolbar,
+            render_player_picker=render_player_picker_table,
+            render_queue=render_queue_panel,
+            render_roster_header=render_live_roster_header,
+            render_roster_rows=render_live_roster_rows,
         )
-        user_turn = current_owner == clean(st.session_state.user_team)
-
-    tray_settings = player_tray_settings()
-
-    # Full-width board with a native internal viewport.
-    with st.container(key="v53_top_workspace"):
-        with st.container(
-            height=int(tray_settings["board_height"]),
-            border=False,
-            key="v53_board_panel",
-        ):
-            st.markdown(
-                snake_board_html(),
-                unsafe_allow_html=True,
-            )
-
-    # Sleeper-style snap tray controls.
-    with st.container(key="v62_tray_controls"):
-        left_space, up_col, label_col, down_col, right_space = st.columns(
-            [5.0, .55, 1.55, .55, 5.0],
-            gap="small",
-        )
-
-        with up_col:
-            st.button(
-                "▲",
-                key="v62_raise_tray",
-                help="Show more players",
-                disabled=st.session_state.player_tray_level >= 2,
-                on_click=move_player_tray,
-                args=(1,),
-                use_container_width=True,
-            )
-
-        with label_col:
-            st.markdown(
-                '<div class="v62-tray-label">PLAYER TRAY</div>',
-                unsafe_allow_html=True,
-            )
-
-        with down_col:
-            st.button(
-                "▼",
-                key="v62_lower_tray",
-                help="Show more draft board",
-                disabled=st.session_state.player_tray_level <= 0,
-                on_click=move_player_tray,
-                args=(-1,),
-                use_container_width=True,
-            )
-
-    # Player browser plus one compact switchable Queue/Roster box.
-    with st.container(key="v53_bottom_workspace"):
-        player_col, utility_col = st.columns(
-            [6.65, 2.35],
-            gap="small",
-        )
-
-        with player_col:
-            with st.container(key="v61_player_toolbar"):
-                render_v61_player_toolbar()
-
-            if idx is None:
-                st.success("Draft complete.")
-            else:
-                render_player_picker_table(
-                    idx,
-                    allow_draft=user_turn,
-                    list_height_override=int(
-                        tray_settings["player_height"]
-                    ),
-                )
-
-        with utility_col:
-            with st.container(key="v621_utility_panel"):
-                queue_tab, roster_tab = st.tabs(
-                    [
-                        f"QUEUE ({len(st.session_state.player_queue)})",
-                        "ROSTER",
-                    ]
-                )
-
-                with queue_tab:
-                    if idx is None:
-                        st.caption("Draft complete.")
-                    else:
-                        render_queue_panel(
-                            idx,
-                            allow_draft=user_turn,
-                        )
-
-                with roster_tab:
-                    render_live_roster_header()
-                    render_live_roster_rows()
+    )
 
 
 
