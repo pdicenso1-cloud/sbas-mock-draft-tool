@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import random
@@ -19,7 +18,7 @@ from components.draft_room import (
 )
 
 from fantasysync.config import ADP_COLUMNS, ROSTER_SLOTS, STARTER_TARGETS
-from fantasysync.paths import DATA_DIR, PROJECT_ROOT, STATE_FILE
+from fantasysync.paths import DATA_DIR, PROJECT_ROOT
 from fantasysync.navigation import render_top_navigation
 from styles.loader import inject_css
 
@@ -219,10 +218,6 @@ def dock_settings() -> dict:
     st.session_state.dock_level = level
     return DOCK_LEVELS[level]
 
-
-def move_dock(direction: int):
-    current = int(st.session_state.get("dock_level", 1))
-    st.session_state.dock_level = max(0, min(2, current + direction))
 
 
 def render_dynamic_dock_css():
@@ -627,28 +622,6 @@ def run_one_cpu_pick() -> bool:
     return True
 
 
-def run_cpu_until_user():
-    made = 0
-    while True:
-        idx = current_open_index()
-        if idx is None:
-            st.session_state.draft_message = f"Draft complete. {made} CPU picks made."
-            break
-        row = st.session_state.picks.loc[idx]
-        owner = clean(row["current_owner"])
-        if owner == clean(st.session_state.user_team):
-            st.session_state.draft_message = (
-                f"{owner} is on the clock at pick {int(row['overall'])}. "
-                f"CPU completed {made} pick(s)."
-            )
-            break
-        player = cpu_best_available()
-        if not player:
-            st.session_state.draft_message = "No available players remain."
-            break
-        make_pick(idx, player, "CPU")
-        made += 1
-
 
 def selected_for_team(team_name: str) -> pd.DataFrame:
     return st.session_state.picks[
@@ -811,9 +784,6 @@ def serializable_state():
         "queue_auto_draft": bool(st.session_state.queue_auto_draft),
     }
 
-
-def save_state():
-    STATE_FILE.write_text(json.dumps(serializable_state(), indent=2), encoding="utf-8")
 
 
 def load_state_data(data):
@@ -1055,121 +1025,6 @@ def auto_pick_user_if_expired():
     return True
 
 
-def render_pick_clock():
-    remaining = remaining_pick_time()
-    state_label = "RUNNING" if st.session_state.clock_running else "PAUSED"
-
-    if st.session_state.clock_running:
-        # The clock counts down in the browser without rerunning Streamlit.
-        # At zero, it reloads once so the server can perform the auto-pick.
-        components.html(
-            f"""
-            <div id="pick-clock-wrap" style="
-                border:1px solid rgba(128,128,128,.28);
-                border-radius:12px;
-                padding:10px;
-                text-align:center;
-                margin-bottom:8px;
-                font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-                color:#F4F7FB;
-                background:rgba(255,255,255,.015);
-            ">
-              <div style="font-size:.76rem;opacity:.72;">
-                PICK CLOCK · {state_label}
-              </div>
-              <div id="pick-clock-value" style="
-                  font-size:2rem;
-                  font-weight:800;
-                  color:#2A9D8F;
-                  line-height:1.05;
-                  margin-top:3px;
-              "></div>
-              <div style="font-size:.70rem;opacity:.64;margin-top:4px;">
-                Best available is selected at 0:00
-              </div>
-            </div>
-
-            <script>
-            (() => {{
-                let remaining = {int(remaining)};
-                const value = document.getElementById("pick-clock-value");
-                const wrap = document.getElementById("pick-clock-wrap");
-
-                function draw() {{
-                    const mins = Math.floor(remaining / 60);
-                    const secs = remaining % 60;
-                    value.textContent = `${{mins}}:${{String(secs).padStart(2, "0")}}`;
-
-                    if (remaining <= 15) {{
-                        value.style.color = "#E76F51";
-                    }}
-
-                    if (remaining <= 0) {{
-                        value.textContent = "0:00";
-                        wrap.style.opacity = "0.72";
-                        window.parent.location.reload();
-                        return;
-                    }}
-
-                    remaining -= 1;
-                    window.setTimeout(draw, 1000);
-                }}
-
-                draw();
-            }})();
-            </script>
-            """,
-            height=116,
-        )
-    else:
-        mins, secs = divmod(remaining, 60)
-        st.markdown(
-            f"""
-            <div style="
-                border:1px solid rgba(128,128,128,.28);
-                border-radius:12px;
-                padding:10px;
-                text-align:center;
-                margin-bottom:8px;
-            ">
-              <div style="font-size:.76rem;opacity:.72;">
-                PICK CLOCK · {state_label}
-              </div>
-              <div style="
-                  font-size:2rem;
-                  font-weight:800;
-                  color:#2A9D8F;
-                  line-height:1.05;
-                  margin-top:3px;
-              ">
-                {mins}:{secs:02d}
-              </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    c1, c2 = st.columns(2)
-
-    if not st.session_state.clock_running:
-        label = (
-            "▶️ Start"
-            if remaining == int(st.session_state.pick_clock_seconds)
-            else "▶️ Resume"
-        )
-        if c1.button(label, use_container_width=True, type="primary"):
-            start_pick_clock()
-            st.rerun()
-    else:
-        if c1.button("⏸️ Pause", use_container_width=True):
-            pause_pick_clock()
-            st.rerun()
-
-    if c2.button("↺ Reset", use_container_width=True):
-        reset_pick_clock()
-        st.rerun()
-
-
 
 def ensure_draft_filters():
 
@@ -1307,29 +1162,6 @@ def render_position_filter():
 
 
 
-def render_player_filter_rail():
-    ensure_draft_filters()
-
-    st.text_input(
-        "Search available players",
-        key="draft_search",
-        placeholder="🔍 Find player",
-        label_visibility="collapsed",
-    )
-
-    positions = ["ALL", "QB", "RB", "WR", "TE"]
-    for pos in positions:
-        active = st.session_state.draft_position_filter == pos
-        if st.button(
-            pos,
-            key=f"draft_rail_pos_{pos}",
-            use_container_width=True,
-            type="primary" if active else "secondary",
-        ):
-            st.session_state.draft_position_filter = pos
-            st.rerun()
-
-
 
 def filtered_draft_pool() -> pd.DataFrame:
     pool = available_players().copy()
@@ -1370,39 +1202,6 @@ def apply_team_query_selection():
     st.query_params.clear()
 
 
-
-def player_stat_value(row, *names, default="—"):
-    for name in names:
-        if hasattr(row, name):
-            value = getattr(row, name)
-            if not pd.isna(value) and clean(value) != "":
-                try:
-                    number = float(value)
-                    return f"{number:.1f}" if number % 1 else f"{int(number)}"
-                except Exception:
-                    return clean(value)
-    return default
-
-
-def render_compact_recommendations(limit=4):
-    recs = recommendations(limit)
-    st.markdown("<div class='roster-tab-title'>RECOMMENDATIONS</div>", unsafe_allow_html=True)
-    if recs.empty:
-        st.caption("No recommendations available.")
-        return
-
-    for row in recs.itertuples():
-        st.markdown(
-            f"""
-            <div class="compact-rec">
-                <div class="compact-rec-name">{clean(row.Player)}</div>
-                <div class="compact-rec-meta">
-                    {clean(row.Pos)} · Rank {row.Rank} · ADP {row.ADP if not pd.isna(row.ADP) else "—"} · {clean(getattr(row, "Chance_Back", ""))}
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
 
 
 def current_user_roster():
@@ -1582,83 +1381,6 @@ def render_v61_player_toolbar():
 
     with filter_col:
         render_position_filter()
-
-
-def v53_recommendation_row():
-    recs = recommendations(limit=1)
-    if recs.empty:
-        return None
-    return recs.iloc[0]
-
-
-def render_v53_recommendation(
-    current_idx: int,
-    allow_draft: bool,
-):
-    row = v53_recommendation_row()
-
-    if row is None:
-        st.markdown(
-            """
-            <div class="v53-rec-eyebrow">★ FANTASYSYNC RECOMMENDATION</div>
-            <div class="queue-empty">No recommendation is available.</div>
-            """,
-            unsafe_allow_html=True,
-        )
-        return
-
-    player = clean(row.get("Player", row.get("player", "")))
-    pos = clean(row.get("Pos", row.get("position", "")))
-    nfl_team = clean(row.get("Team", row.get("nfl_team", "")))
-    rank = row.get("Rank", row.get("custom_rank", "—"))
-    adp = row.get("ADP", row.get("consensus_adp", "—"))
-    confidence = 94
-
-    initials = "".join(
-        part[0]
-        for part in player.replace("-", " ").split()
-        if part
-    )[:2].upper() or "FS"
-
-    st.markdown(
-        f"""
-        <div class="v53-rec-eyebrow">★ FANTASYSYNC RECOMMENDATION</div>
-        <div class="v53-rec-person">
-            <div class="v53-avatar">{initials}</div>
-            <div>
-                <div class="v53-rec-name">{player}</div>
-                <div class="v53-rec-meta">{pos} · {nfl_team}</div>
-                <div class="v53-rec-meta">Rank {rank} &nbsp;&nbsp; ADP {adp}</div>
-            </div>
-            <div class="v53-confidence">
-                <div class="v53-confidence-number">{confidence}%</div>
-                <div class="v53-confidence-label">CONFIDENCE</div>
-            </div>
-        </div>
-        <div class="v53-rec-divider"></div>
-        <div class="v53-rec-copy-title">Why we love this pick</div>
-        <div class="v53-rec-reason"><span class="v53-check">✓</span>Best available player at a premium position</div>
-        <div class="v53-rec-reason"><span class="v53-check">✓</span>Strong value relative to current ADP</div>
-        <div class="v53-rec-reason"><span class="v53-check">✓</span>Fits the selected roster's current needs</div>
-        <div class="v53-rec-reason"><span class="v53-check">✓</span>Helps avoid the next positional tier drop</div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    with st.container(key="v53_rec_button"):
-        if st.button(
-            f"DRAFT {player.upper()}  ›",
-            use_container_width=True,
-            type="primary",
-            disabled=not allow_draft,
-            key=f"v53_recommendation_{current_idx}_{player}",
-        ):
-            handle_user_draft_click(player)
-            st.rerun()
-
-
-
-
 
 
 def render_player_picker_table(
