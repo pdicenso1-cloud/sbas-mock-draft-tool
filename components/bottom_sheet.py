@@ -344,7 +344,7 @@ def _render_sheet_css(level: int) -> None:
             min-height: 52px !important;
             max-height: min(560px, calc(100vh - 150px)) !important;
             margin: 0 !important;
-            padding: 10px 12px 12px !important;
+            padding: 0 !important;
             box-sizing: border-box !important;
             overflow: hidden !important;
             background: #0B1625 !important;
@@ -360,16 +360,49 @@ def _render_sheet_css(level: int) -> None:
         }}
 
         .st-key-v63_bottom_sheet > div,
-        .st-key-v63_bottom_sheet > div > div,
-        .st-key-v63_bottom_sheet
+        .st-key-v63_bottom_sheet > div > div {{
+            height: 100% !important;
+            max-height: 100% !important;
+            min-height: 0 !important;
+            position: relative !important;
+        }}
+
+        /*
+         * The complete player/utility workspace is pinned immediately below
+         * the drag grip. It therefore rises and falls with the same sheet.
+         */
+        .st-key-v649_tray_content {{
+            position: absolute !important;
+            top: 28px !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            margin: 0 !important;
+            padding: 6px 12px 12px !important;
+            box-sizing: border-box !important;
+            overflow: hidden !important;
+            z-index: 10020 !important;
+        }}
+
+        .st-key-v649_tray_content > div,
+        .st-key-v649_tray_content > div > div,
+        .st-key-v649_tray_content
+            [data-testid="stVerticalBlock"] {{
+            height: 100% !important;
+            max-height: 100% !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+        }}
+
+        .st-key-v649_tray_content
             [data-testid="stHorizontalBlock"] {{
             height: 100% !important;
             max-height: 100% !important;
             min-height: 0 !important;
-        }}
-
-        .st-key-v63_bottom_sheet
-            [data-testid="stHorizontalBlock"] {{
             align-items: stretch !important;
             gap: .65rem !important;
         }}
@@ -384,9 +417,13 @@ def _render_sheet_css(level: int) -> None:
 
         .st-key-v63_player_side,
         .st-key-v63_utility_side {{
+            position: relative !important;
+            top: auto !important;
+            bottom: auto !important;
             height: 100% !important;
             max-height: 100% !important;
             min-height: 0 !important;
+            margin: 0 !important;
             overflow: hidden !important;
         }}
 
@@ -402,8 +439,8 @@ def _render_sheet_css(level: int) -> None:
         }}
 
         .st-key-v63_bottom_sheet .st-key-war_player_list {{
-            height: max(92px, calc(var(--fs-live-sheet-height, {sheet_height}px) - 126px)) !important;
-            max-height: max(92px, calc(var(--fs-live-sheet-height, {sheet_height}px) - 126px)) !important;
+            height: max(72px, calc(var(--fs-live-sheet-height, {sheet_height}px) - 142px)) !important;
+            max-height: max(72px, calc(var(--fs-live-sheet-height, {sheet_height}px) - 142px)) !important;
             min-height: 0 !important;
             overflow-y: auto !important;
         }}
@@ -551,8 +588,8 @@ def _render_sheet_css(level: int) -> None:
          * complete roster to be inspected without scrolling the page or board.
          */
         .st-key-v632_utility_content {{
-            height: max(92px, calc(var(--fs-live-sheet-height, {sheet_height}px) - 82px)) !important;
-            max-height: max(92px, calc(var(--fs-live-sheet-height, {sheet_height}px) - 82px)) !important;
+            height: max(72px, calc(var(--fs-live-sheet-height, {sheet_height}px) - 104px)) !important;
+            max-height: max(72px, calc(var(--fs-live-sheet-height, {sheet_height}px) - 104px)) !important;
             min-height: 0 !important;
             overflow: visible !important;
         }}
@@ -945,22 +982,23 @@ def render_bottom_sheet(
     with st.container(key="v63_bottom_sheet"):
         _render_drag_handle(int(settings["height"]))
 
-        player_col, utility_col = st.columns(
-            [6.65, 2.35],
-            gap="small",
-        )
-
-        with player_col:
-            _render_player_side(
-                deps,
-                current_index,
-                user_turn,
-                int(settings["player_height"]),
+        with st.container(key="v649_tray_content"):
+            player_col, utility_col = st.columns(
+                [6.65, 2.35],
+                gap="small",
             )
 
-        with utility_col:
-            _render_utility_side(
-                deps,
-                current_index,
-                user_turn,
-            )
+            with player_col:
+                _render_player_side(
+                    deps,
+                    current_index,
+                    user_turn,
+                    int(settings["player_height"]),
+                )
+
+            with utility_col:
+                _render_utility_side(
+                    deps,
+                    current_index,
+                    user_turn,
+                )

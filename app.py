@@ -4301,6 +4301,22 @@ body:has(section[data-testid="stSidebar"][aria-expanded="true"])
     border: 0 !important;
 }
 
+
+/* ============================================================
+   FantasySync v6.4.9 — Linked draggable tray workspace
+   ============================================================ */
+
+.st-key-v649_tray_content {
+    position: absolute !important;
+    inset: 28px 0 0 0 !important;
+    z-index: 10020 !important;
+}
+
+.st-key-v649_tray_content,
+.st-key-v649_tray_content * {
+    box-sizing: border-box !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -6425,7 +6441,7 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v6.4.8</div>',
+        '<div class="sidebar-version">FantasySync · v6.4.9</div>',
         unsafe_allow_html=True,
     )
 
