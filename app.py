@@ -4793,7 +4793,7 @@ def render_dynamic_dock_css():
 [data-testid="stMainBlockContainer"],
 [data-testid="stAppViewContainer"] .main,
 .main,
-.main .block-container {
+.main .block-container {{
     width: 100vw !important;
     max-width: 100vw !important;
     min-width: 0 !important;
@@ -4802,22 +4802,22 @@ def render_dynamic_dock_css():
     padding-left: 0 !important;
     padding-right: 0 !important;
     box-sizing: border-box !important;
-}
+}}
 
 /* Navigation/header stay comfortably inset while the board itself uses nearly
    the full viewport. */
 .st-key-v670_top_nav,
 .st-key-v640_header,
-.st-key-v63_draft_message {
+.st-key-v63_draft_message {{
     width: calc(100vw - 28px) !important;
     max-width: calc(100vw - 28px) !important;
     margin-left: 14px !important;
     margin-right: 14px !important;
     box-sizing: border-box !important;
-}
+}}
 
 /* The draft grid is intentionally wider than the ordinary content column. */
-.st-key-v63_board_region {
+.st-key-v63_board_region {{
     width: calc(100vw - 16px) !important;
     max-width: calc(100vw - 16px) !important;
     margin-left: 8px !important;
@@ -4825,25 +4825,25 @@ def render_dynamic_dock_css():
     padding-left: 0 !important;
     padding-right: 0 !important;
     box-sizing: border-box !important;
-}
+}}
 
 .st-key-v63_board_region .v643-board-scroll,
 .st-key-v63_board_region .v643-board-content,
 .st-key-v63_board_region .snake-board-wrap,
 .st-key-v63_board_region .snake-board-shell,
 .st-key-v63_board_region .snake-board-grid,
-.st-key-v63_board_region .snake-draft-grid {
+.st-key-v63_board_region .snake-draft-grid {{
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
     margin-left: 0 !important;
     margin-right: 0 !important;
     box-sizing: border-box !important;
-}
+}}
 
 /* Round labels no longer exist; prevent stale CSS from reserving space if a
    browser keeps an old DOM fragment during a rerun. */
-.st-key-v63_board_region .snake-round-label {
+.st-key-v63_board_region .snake-round-label {{
     display: none !important;
     width: 0 !important;
     min-width: 0 !important;
@@ -4851,16 +4851,16 @@ def render_dynamic_dock_css():
     margin: 0 !important;
     padding: 0 !important;
     border: 0 !important;
-}
+}}
 
 /* Pick notation is now the useful orientation cue, so make it a touch easier
    to read without competing with the player name. */
-.st-key-v63_board_region .snake-pick {
+.st-key-v63_board_region .snake-pick {{
     font-size: .52rem !important;
     font-weight: 780 !important;
     letter-spacing: .01em !important;
     opacity: .78 !important;
-}
+}}
 
 </style>
         """,
