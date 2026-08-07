@@ -12,7 +12,7 @@ TRAY_LEVELS = {
     # Nearly the entire board is visible. Queue, roster, and players are hidden.
     0: {
         "name": "Collapsed",
-        "height": 0,
+        "height": 46,
         "player_height": 0,
     },
     # Primary drafting state: roughly seven board rows remain visible.
@@ -272,7 +272,7 @@ def _render_sheet_css(level: int) -> None:
     settings = TRAY_LEVELS[level]
     sheet_height = int(settings["height"])
     player_height = int(settings["player_height"])
-    sheet_visible = "none" if level == 0 else "block"
+    sheet_visible = "block"
     handle_bottom = sheet_height
 
     st.markdown(
@@ -296,48 +296,48 @@ def _render_sheet_css(level: int) -> None:
         }}
 
         /*
-         * Sleeper-style floating controls. They sit above the tray edge and
-         * consume no document-flow height.
+         * Persistent tray controls are rendered inside the fixed bottom sheet.
+         * This avoids clipping by Streamlit's outer wrappers.
          */
-        .st-key-v646_floating_tray_controls {{
-            position: fixed !important;
-            right: 96px !important;
-            bottom: calc({handle_bottom}px + 8px) !important;
-            z-index: 10060 !important;
-            width: 88px !important;
-            height: 42px !important;
-            min-height: 42px !important;
-            max-height: 42px !important;
+        .st-key-v647_tray_controls {{
+            position: absolute !important;
+            top: 4px !important;
+            right: 176px !important;
+            z-index: 10080 !important;
+            width: 86px !important;
+            height: 38px !important;
+            min-height: 38px !important;
+            max-height: 38px !important;
             margin: 0 !important;
             padding: 0 !important;
             background: transparent !important;
             border: 0 !important;
             pointer-events: none !important;
-            transition: bottom 180ms ease !important;
         }}
 
-        .st-key-v646_floating_tray_controls
+        .st-key-v647_tray_controls
             [data-testid="stHorizontalBlock"] {{
-            width: 88px !important;
-            height: 42px !important;
-            min-height: 42px !important;
+            width: 86px !important;
+            height: 38px !important;
+            min-height: 38px !important;
+            gap: 6px !important;
             align-items: center !important;
             justify-content: flex-end !important;
-            gap: 6px !important;
             margin: 0 !important;
             padding: 0 !important;
             pointer-events: none !important;
         }}
 
-        .st-key-v646_floating_tray_controls
+        .st-key-v647_tray_controls
             [data-testid="stColumn"] {{
-            min-width: 38px !important;
             width: 38px !important;
+            min-width: 38px !important;
+            max-width: 38px !important;
             flex: 0 0 38px !important;
             pointer-events: auto !important;
         }}
 
-        .st-key-v646_floating_tray_controls button {{
+        .st-key-v647_tray_controls button {{
             width: 38px !important;
             min-width: 38px !important;
             max-width: 38px !important;
@@ -346,51 +346,42 @@ def _render_sheet_css(level: int) -> None:
             max-height: 38px !important;
             padding: 0 !important;
             border-radius: 999px !important;
-            border: 1px solid rgba(151, 166, 190, .35) !important;
-            background: rgba(84, 99, 126, .58) !important;
-            color: rgba(255,255,255,.92) !important;
-            -webkit-text-fill-color: rgba(255,255,255,.92) !important;
+            border: 1px solid rgba(151,166,190,.42) !important;
+            background: rgba(84,99,126,.66) !important;
+            color: #FFFFFF !important;
+            -webkit-text-fill-color: #FFFFFF !important;
             backdrop-filter: blur(10px) !important;
             -webkit-backdrop-filter: blur(10px) !important;
             box-shadow:
-                0 4px 16px rgba(0,0,0,.28),
-                inset 0 1px 0 rgba(255,255,255,.08) !important;
+                0 4px 14px rgba(0,0,0,.30),
+                inset 0 1px 0 rgba(255,255,255,.10) !important;
             opacity: 1 !important;
             pointer-events: auto !important;
+            z-index: 10081 !important;
         }}
 
-        .st-key-v646_floating_tray_controls button * {{
-            color: rgba(255,255,255,.92) !important;
-            -webkit-text-fill-color: rgba(255,255,255,.92) !important;
+        .st-key-v647_tray_controls button * {{
+            color: #FFFFFF !important;
+            -webkit-text-fill-color: #FFFFFF !important;
         }}
 
-        .st-key-v646_floating_tray_controls button:hover {{
-            background: rgba(105, 121, 151, .75) !important;
-            border-color: rgba(180, 193, 218, .55) !important;
-            transform: translateY(-1px) !important;
+        .st-key-v647_tray_controls button:hover {{
+            background: rgba(108,124,155,.84) !important;
+            border-color: rgba(194,205,225,.62) !important;
         }}
 
-        .st-key-v646_floating_tray_controls button:disabled {{
-            opacity: .30 !important;
-            cursor: default !important;
-            transform: none !important;
+        .st-key-v647_tray_controls button:disabled {{
+            opacity: .28 !important;
         }}
 
         body:has(section[data-testid="stSidebar"][aria-expanded="true"])
-            .st-key-v646_floating_tray_controls {{
-            right: 116px !important;
+            .st-key-v647_tray_controls {{
+            right: 188px !important;
         }}
 
         body:has(section[data-testid="stSidebar"][aria-expanded="false"])
-            .st-key-v646_floating_tray_controls {{
-            right: 104px !important;
-        }}
-
-        /*
-         * Retire the legacy full-width handle row completely.
-         */
-        .st-key-v63_sheet_handle {{
-            display: none !important;
+            .st-key-v647_tray_controls {{
+            right: 176px !important;
         }}
 
         /*
@@ -416,6 +407,7 @@ def _render_sheet_css(level: int) -> None:
             box-sizing: border-box !important;
             overflow: hidden !important;
             background: #0B1625 !important;
+            isolation: isolate !important;
             border-top: 1px solid rgba(148,163,184,.25) !important;
             box-shadow: 0 -8px 24px rgba(0,0,0,.28) !important;
         }}
@@ -773,17 +765,9 @@ def _render_sheet_css(level: int) -> None:
 
 
 def _render_handle(level: int) -> None:
-    """
-    Render Sleeper-style floating tray controls.
-
-    The controls overlay the tray edge instead of occupying a full-width row,
-    preserving vertical space for the draft board and player list.
-    """
-    with st.container(key="v646_floating_tray_controls"):
-        up_col, down_col = st.columns(
-            [1, 1],
-            gap="small",
-        )
+    """Render persistent tray arrows inside the fixed bottom sheet."""
+    with st.container(key="v647_tray_controls"):
+        up_col, down_col = st.columns([1, 1], gap="small")
 
         with up_col:
             st.button(
@@ -907,13 +891,14 @@ def render_bottom_sheet(
     level = _current_level()
     settings = TRAY_LEVELS[level]
     _render_sheet_css(level)
-    _render_handle(level)
-
-    # Collapsed state intentionally renders no player widgets.
-    if level == 0:
-        return
 
     with st.container(key="v63_bottom_sheet"):
+        _render_handle(level)
+
+        # Collapsed state is a thin dock containing only the arrows.
+        if level == 0:
+            return
+
         player_col, utility_col = st.columns(
             [6.65, 2.35],
             gap="small",

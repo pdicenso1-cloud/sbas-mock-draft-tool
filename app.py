@@ -4276,21 +4276,19 @@ body:has(section[data-testid="stSidebar"][aria-expanded="true"])
 }
 
 
+
 /* ============================================================
-   FantasySync v6.4.6 — Floating Sleeper-style tray controls
+   FantasySync v6.4.7 — Persistent tray arrow dock
    ============================================================ */
 
-.st-key-v646_floating_tray_controls {
-    isolation: isolate !important;
+.st-key-v647_tray_controls,
+.st-key-v647_tray_controls button {
+    z-index: 10080 !important;
+    pointer-events: auto !important;
 }
 
-/* Keep the control dock above Streamlit's Manage app surface. */
+/* Legacy control containers must not reserve space. */
 .st-key-v646_floating_tray_controls,
-.st-key-v646_floating_tray_controls button {
-    z-index: 10060 !important;
-}
-
-/* Ensure no stale divider/control row reserves vertical space. */
 .st-key-v63_sheet_handle,
 .st-key-v62_tray_controls {
     display: none !important;
@@ -6426,7 +6424,7 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v6.4.6</div>',
+        '<div class="sidebar-version">FantasySync · v6.4.7</div>',
         unsafe_allow_html=True,
     )
 
