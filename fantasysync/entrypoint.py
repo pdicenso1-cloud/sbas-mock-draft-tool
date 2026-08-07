@@ -1,21 +1,37 @@
 """Stable FantasySync entrypoint.
 
-v7.0.3 boot order:
-1. Configure Streamlit before any other UI command.
-2. Import/render the runtime without global application CSS.
-3. Inject legacy CSS only after a successful render.
-4. Apply a tiny visibility safeguard last.
-5. If startup fails, show the native Streamlit error surface.
+v7.1.2 fixes Streamlit reruns while keeping app.py frozen.
+
+Why this is required:
+Streamlit reruns app.py after widget interaction and state changes. A normal
+Python import executes fantasysync.runtime only once per process because Python
+caches imported modules. On later Streamlit reruns, import_module() returned the
+cached runtime without executing its UI code again, leaving the page empty.
+
+This entrypoint explicitly reloads the runtime on every subsequent Streamlit
+rerun so the full interface renders every time.
 """
 from __future__ import annotations
 
-from importlib import import_module
-import traceback
+import importlib
 from pathlib import Path
+import sys
+import traceback
 
 import streamlit as st
 
 from styles.loader import inject_css
+
+
+RUNTIME_MODULE = "fantasysync.runtime"
+
+
+def _render_runtime() -> None:
+    """Execute the FantasySync runtime on every Streamlit script run."""
+    if RUNTIME_MODULE in sys.modules:
+        importlib.reload(sys.modules[RUNTIME_MODULE])
+    else:
+        importlib.import_module(RUNTIME_MODULE)
 
 
 def run() -> None:
@@ -29,15 +45,15 @@ def run() -> None:
     project_root = Path(__file__).resolve().parents[1]
 
     try:
-        # Runtime renders the entire application. CSS is intentionally delayed
-        # until this import has completed successfully.
-        import_module("fantasysync.runtime")
+        # Important: this MUST execute on every Streamlit rerun.
+        _render_runtime()
 
+        # Load design CSS only after the application UI has rendered.
         inject_css(project_root / "styles" / "legacy.css")
         inject_css(project_root / "styles" / "safety.css")
 
     except Exception as exc:
-        # Ensure no application CSS can hide the failure surface.
+        # Native visible failure surface; do not allow application CSS to hide it.
         st.markdown(
             """
             <style>
@@ -60,7 +76,3 @@ def run() -> None:
         st.write(f"**{type(exc).__name__}:** {exc}")
         with st.expander("Startup traceback", expanded=True):
             st.code(traceback.format_exc(), language="text")
-        st.info(
-            "The app.py entrypoint is still frozen. This error is coming from "
-            "a modular runtime/component and can now be diagnosed directly."
-        )
