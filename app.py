@@ -4341,6 +4341,35 @@ body:has(section[data-testid="stSidebar"][aria-expanded="true"])
     border: 0 !important;
 }
 
+
+/* ============================================================
+   FantasySync v6.6.0 — Tray-only flex refactor
+   ============================================================ */
+
+.st-key-v660_tray {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+.st-key-v660_tray .st-key-v61_player_toolbar,
+.st-key-v660_tray .st-key-war_player_list,
+.st-key-v660_tray .st-key-v63_utility_side,
+.st-key-v660_tray .st-key-v632_utility_content {
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+.st-key-v660_tray .player-row-divider,
+.st-key-v660_tray .player-header-divider {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -6465,7 +6494,7 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v6.5.2</div>',
+        '<div class="sidebar-version">FantasySync · v6.6.0</div>',
         unsafe_allow_html=True,
     )
 
