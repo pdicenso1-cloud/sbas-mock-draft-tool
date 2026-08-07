@@ -4515,19 +4515,18 @@ section[data-testid="stSidebar"],
         font-size: .54rem !important;
     }
 }
-
 /* ============================================================
-   FantasySync v7.1.0 — File-folder top navigation
-   CSS-only release. Existing navigation behavior is unchanged.
+   FantasySync v7.1.1 — SAFE folder-style top navigation
+   Visual-only override built from known-good v7.0.3.
+   No tray, board, runtime, or app.py changes.
    ============================================================ */
 
-/* Turn the shell into a tab rail rather than a rounded toolbar card. */
+/* Convert only the existing top-nav shell into a file-tab rail. */
 .st-key-v670_top_nav {
     position: relative !important;
-    width: 100% !important;
-    min-height: 48px !important;
-    margin: 0 0 6px !important;
-    padding: 5px 8px 0 !important;
+    min-height: 50px !important;
+    margin: 0 0 7px !important;
+    padding: 8px 7px 0 !important;
     border: 0 !important;
     border-radius: 0 !important;
     background: transparent !important;
@@ -4538,28 +4537,18 @@ section[data-testid="stSidebar"],
 .st-key-v670_top_nav::after {
     content: "";
     position: absolute;
-    left: 8px;
-    right: 8px;
+    left: 7px;
+    right: 7px;
     bottom: 0;
     height: 1px;
-    background: rgba(111, 139, 183, .30);
+    background: rgba(107, 132, 171, .34);
     pointer-events: none;
-    z-index: 0;
 }
 
-.st-key-v670_top_nav > div,
-.st-key-v670_top_nav > div > div,
-.st-key-v670_top_nav [data-testid="stHorizontalBlock"] {
-    min-height: 42px !important;
-    align-items: flex-end !important;
-    overflow: visible !important;
-}
-
-/* The radio group becomes the file-folder tab strip. */
+/* Preserve the existing horizontal radio navigation behavior. */
 .st-key-v670_top_nav [data-testid="stRadio"] {
     width: 100% !important;
     min-width: 0 !important;
-    overflow: visible !important;
 }
 
 .st-key-v670_top_nav [data-testid="stRadio"] > div {
@@ -4567,154 +4556,108 @@ section[data-testid="stSidebar"],
     flex-direction: row !important;
     flex-wrap: nowrap !important;
     align-items: flex-end !important;
-    gap: 0 !important;
+    gap: 2px !important;
     width: 100% !important;
-    min-height: 42px !important;
-    overflow-x: auto !important;
-    overflow-y: visible !important;
-    scrollbar-width: none !important;
+    min-height: 41px !important;
     padding: 0 0 0 2px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: none !important;
 }
 
 .st-key-v670_top_nav [data-testid="stRadio"] > div::-webkit-scrollbar {
     display: none !important;
 }
 
-/* Matte folder-tab body. */
+/*
+ * Folder / worksheet-tab body.
+ * clip-path creates the angled file-tab edge without touching Streamlit's
+ * internal radio structure.
+ */
 .st-key-v670_top_nav [data-testid="stRadio"] label {
     position: relative !important;
-    isolation: isolate !important;
     flex: 0 0 auto !important;
-    min-width: 108px !important;
-    min-height: 38px !important;
-    height: 38px !important;
-    margin: 0 -7px 0 0 !important;
-    padding: 0 22px 0 17px !important;
+    min-width: 100px !important;
+    min-height: 37px !important;
+    height: 37px !important;
+    margin: 0 -5px 0 0 !important;
+    padding: 0 20px 0 15px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    border: 1px solid #43516A !important;
-    border-bottom-color: #53627D !important;
-    border-radius: 9px 9px 0 0 !important;
-    background: linear-gradient(180deg, #263247 0%, #1C2739 100%) !important;
+    border: 1px solid #3E4E67 !important;
+    border-bottom-color: #53627B !important;
+    border-radius: 8px 8px 0 0 !important;
+    background: linear-gradient(180deg, #273348 0%, #1C2738 100%) !important;
+    clip-path: polygon(
+        0 0,
+        calc(100% - 11px) 0,
+        100% 100%,
+        0 100%
+    );
     box-shadow:
         inset 0 1px 0 rgba(255,255,255,.055),
         0 -2px 7px rgba(0,0,0,.18) !important;
-    transform: none !important;
     transition:
-        background .14s ease,
-        border-color .14s ease,
-        transform .14s ease,
-        box-shadow .14s ease !important;
+        transform .13s ease,
+        background .13s ease,
+        border-color .13s ease,
+        box-shadow .13s ease !important;
     cursor: pointer !important;
-    overflow: visible !important;
-    z-index: 2 !important;
+    overflow: hidden !important;
 }
 
-/* Small folder index protruding from the top-left. */
+/* A small file-folder index, kept inside the label so it cannot clip the app. */
 .st-key-v670_top_nav [data-testid="stRadio"] label::before {
     content: "";
     position: absolute;
-    left: 11px;
-    top: -6px;
-    width: 31px;
-    height: 7px;
-    border: 1px solid #43516A;
-    border-bottom: 0;
-    border-radius: 6px 6px 0 0;
-    background: #2B374C;
-    z-index: -1;
-    transition: background .14s ease, border-color .14s ease;
-}
-
-/* Angled trailing edge gives the Excel/file-folder silhouette. */
-.st-key-v670_top_nav [data-testid="stRadio"] label::after {
-    content: "";
-    position: absolute;
-    top: 4px;
-    right: -10px;
-    width: 22px;
-    height: 32px;
-    border-top: 1px solid #43516A;
-    border-right: 1px solid #43516A;
-    background: linear-gradient(180deg, #263247 0%, #1C2739 100%);
-    transform: skewX(20deg);
-    transform-origin: bottom left;
-    z-index: -1;
-    transition: background .14s ease, border-color .14s ease;
+    left: 12px;
+    top: 0;
+    width: 28px;
+    height: 4px;
+    border-radius: 0 0 3px 3px;
+    background: rgba(129, 149, 181, .25);
+    pointer-events: none;
 }
 
 .st-key-v670_top_nav [data-testid="stRadio"] label:hover {
-    background: linear-gradient(180deg, #33435D 0%, #25344A 100%) !important;
-    border-color: #607493 !important;
+    background: linear-gradient(180deg, #34445E 0%, #25354B 100%) !important;
+    border-color: #607695 !important;
     transform: translateY(-2px) !important;
     box-shadow:
         inset 0 1px 0 rgba(255,255,255,.08),
-        0 -4px 11px rgba(0,0,0,.24) !important;
-    z-index: 8 !important;
+        0 -4px 10px rgba(0,0,0,.22) !important;
 }
 
-.st-key-v670_top_nav [data-testid="stRadio"] label:hover::before {
-    background: #394B66;
-    border-color: #607493;
-}
-
-.st-key-v670_top_nav [data-testid="stRadio"] label:hover::after {
-    background: linear-gradient(180deg, #33435D 0%, #25344A 100%);
-    border-color: #607493;
-}
-
-/* Active sheet/folder tab. */
+/* Selected folder/tab. */
 .st-key-v670_top_nav [data-testid="stRadio"] label:has(input:checked) {
-    min-height: 42px !important;
-    height: 42px !important;
+    min-height: 41px !important;
+    height: 41px !important;
     margin-top: -4px !important;
-    padding-top: 2px !important;
-    background: linear-gradient(180deg, #286FE9 0%, #1F57BD 100%) !important;
-    border-color: #5A98FF !important;
-    border-bottom-color: #2768D5 !important;
+    background: linear-gradient(180deg, #347DF0 0%, #245DC8 100%) !important;
+    border-color: #68A0FF !important;
+    border-bottom-color: #2F6DD9 !important;
     box-shadow:
         inset 0 1px 0 rgba(255,255,255,.20),
-        0 -3px 15px rgba(50,121,255,.30),
-        0 0 14px rgba(50,121,255,.16) !important;
+        0 -3px 14px rgba(51,122,241,.28) !important;
     transform: translateY(-1px) !important;
-    z-index: 12 !important;
 }
 
 .st-key-v670_top_nav [data-testid="stRadio"] label:has(input:checked)::before {
-    top: -7px;
-    background: #347DEB;
-    border-color: #6CA6FF;
+    background: rgba(255,255,255,.26);
 }
 
-.st-key-v670_top_nav [data-testid="stRadio"] label:has(input:checked)::after {
-    height: 35px;
-    top: 4px;
-    background: linear-gradient(180deg, #286FE9 0%, #1F57BD 100%);
-    border-color: #5A98FF;
-}
-
-/* Hide native radio dot; retain the actual input for functionality/accessibility. */
-.st-key-v670_top_nav [data-testid="stRadio"] label > div:first-child {
-    position: absolute !important;
-    width: 1px !important;
-    height: 1px !important;
-    opacity: 0 !important;
-    overflow: hidden !important;
-    pointer-events: none !important;
-}
-
+/* Preserve existing hidden radio-dot behavior from v7.0.3; style text only. */
 .st-key-v670_top_nav [data-testid="stRadio"] label p {
     position: relative !important;
-    z-index: 3 !important;
+    z-index: 2 !important;
     margin: 0 !important;
-    color: #CBD5E1 !important;
-    -webkit-text-fill-color: #CBD5E1 !important;
+    color: #C5D0E1 !important;
+    -webkit-text-fill-color: #C5D0E1 !important;
     font-size: .60rem !important;
     font-weight: 780 !important;
     line-height: 1 !important;
     white-space: nowrap !important;
-    letter-spacing: .005em !important;
 }
 
 .st-key-v670_top_nav [data-testid="stRadio"] label:has(input:checked) p {
@@ -4723,19 +4666,19 @@ section[data-testid="stSidebar"],
     font-weight: 850 !important;
 }
 
-/* Keep Reset / State as distinct utilities, not folder tabs. */
+/* Reset + State remain utility buttons at the far right. */
 .st-key-v670_top_nav button,
 .st-key-v670_top_nav [data-testid="stDownloadButton"] button {
     min-height: 34px !important;
     height: 34px !important;
     margin-bottom: 2px !important;
-    padding: 0 10px !important;
+    padding: 0 9px !important;
     border-radius: 8px !important;
-    border: 1px solid #394962 !important;
-    background: #121E30 !important;
+    border: 1px solid #394A63 !important;
+    background: #111D2F !important;
     color: #E8EEF7 !important;
     -webkit-text-fill-color: #E8EEF7 !important;
-    font-size: .55rem !important;
+    font-size: .54rem !important;
     font-weight: 760 !important;
     box-shadow: inset 0 1px 0 rgba(255,255,255,.035) !important;
 }
@@ -4746,15 +4689,15 @@ section[data-testid="stSidebar"],
     border-color: #587093 !important;
 }
 
-/* Keep the folder rail usable on narrower browser windows. */
+/* Smaller windows keep the same behavior with slightly narrower folder tabs. */
 @media (max-width: 1180px) {
     .st-key-v670_top_nav [data-testid="stRadio"] label {
-        min-width: 94px !important;
-        padding-left: 14px !important;
-        padding-right: 18px !important;
+        min-width: 88px !important;
+        padding-left: 11px !important;
+        padding-right: 17px !important;
     }
 
     .st-key-v670_top_nav [data-testid="stRadio"] label p {
-        font-size: .55rem !important;
+        font-size: .54rem !important;
     }
 }
