@@ -296,92 +296,35 @@ def _render_sheet_css(level: int) -> None:
         }}
 
         /*
-         * Persistent tray controls are rendered inside the fixed bottom sheet.
-         * This avoids clipping by Streamlit's outer wrappers.
+         * Manual drag handle positioned at the tray's top edge. The actual
+         * pointer logic lives in a tiny isolated HTML component.
          */
-        .st-key-v647_tray_controls {{
+        .st-key-v648_drag_handle {{
             position: absolute !important;
-            top: 4px !important;
-            right: 176px !important;
-            z-index: 10080 !important;
-            width: 86px !important;
-            height: 38px !important;
-            min-height: 38px !important;
-            max-height: 38px !important;
+            top: -9px !important;
+            left: 55% !important;
+            transform: translateX(-50%) !important;
+            z-index: 10100 !important;
+            width: 96px !important;
+            height: 28px !important;
+            min-height: 28px !important;
+            max-height: 28px !important;
             margin: 0 !important;
             padding: 0 !important;
-            background: transparent !important;
             border: 0 !important;
-            pointer-events: none !important;
-        }}
-
-        .st-key-v647_tray_controls
-            [data-testid="stHorizontalBlock"] {{
-            width: 86px !important;
-            height: 38px !important;
-            min-height: 38px !important;
-            gap: 6px !important;
-            align-items: center !important;
-            justify-content: flex-end !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            pointer-events: none !important;
-        }}
-
-        .st-key-v647_tray_controls
-            [data-testid="stColumn"] {{
-            width: 38px !important;
-            min-width: 38px !important;
-            max-width: 38px !important;
-            flex: 0 0 38px !important;
+            background: transparent !important;
+            overflow: visible !important;
             pointer-events: auto !important;
         }}
 
-        .st-key-v647_tray_controls button {{
-            width: 38px !important;
-            min-width: 38px !important;
-            max-width: 38px !important;
-            height: 38px !important;
-            min-height: 38px !important;
-            max-height: 38px !important;
-            padding: 0 !important;
-            border-radius: 999px !important;
-            border: 1px solid rgba(151,166,190,.42) !important;
-            background: rgba(84,99,126,.66) !important;
-            color: #FFFFFF !important;
-            -webkit-text-fill-color: #FFFFFF !important;
-            backdrop-filter: blur(10px) !important;
-            -webkit-backdrop-filter: blur(10px) !important;
-            box-shadow:
-                0 4px 14px rgba(0,0,0,.30),
-                inset 0 1px 0 rgba(255,255,255,.10) !important;
-            opacity: 1 !important;
+        .st-key-v648_drag_handle iframe {{
+            width: 96px !important;
+            height: 28px !important;
+            min-height: 28px !important;
+            border: 0 !important;
+            background: transparent !important;
+            overflow: visible !important;
             pointer-events: auto !important;
-            z-index: 10081 !important;
-        }}
-
-        .st-key-v647_tray_controls button * {{
-            color: #FFFFFF !important;
-            -webkit-text-fill-color: #FFFFFF !important;
-        }}
-
-        .st-key-v647_tray_controls button:hover {{
-            background: rgba(108,124,155,.84) !important;
-            border-color: rgba(194,205,225,.62) !important;
-        }}
-
-        .st-key-v647_tray_controls button:disabled {{
-            opacity: .28 !important;
-        }}
-
-        body:has(section[data-testid="stSidebar"][aria-expanded="true"])
-            .st-key-v647_tray_controls {{
-            right: 188px !important;
-        }}
-
-        body:has(section[data-testid="stSidebar"][aria-expanded="false"])
-            .st-key-v647_tray_controls {{
-            right: 176px !important;
         }}
 
         /*
@@ -396,12 +339,10 @@ def _render_sheet_css(level: int) -> None:
             right: 0 !important;
             bottom: 0 !important;
             z-index: 10010 !important;
-            height: {sheet_height}px !important;
-            transition:
-                height 180ms ease,
-                left 180ms ease !important;
-            min-height: {sheet_height}px !important;
-            max-height: {sheet_height}px !important;
+            height: var(--fs-live-sheet-height, {sheet_height}px) !important;
+            transition: left 180ms ease !important;
+            min-height: 52px !important;
+            max-height: min(560px, calc(100vh - 150px)) !important;
             margin: 0 !important;
             padding: 10px 12px 12px !important;
             box-sizing: border-box !important;
@@ -461,8 +402,8 @@ def _render_sheet_css(level: int) -> None:
         }}
 
         .st-key-v63_bottom_sheet .st-key-war_player_list {{
-            height: {player_height}px !important;
-            max-height: {player_height}px !important;
+            height: max(92px, calc(var(--fs-live-sheet-height, {sheet_height}px) - 126px)) !important;
+            max-height: max(92px, calc(var(--fs-live-sheet-height, {sheet_height}px) - 126px)) !important;
             min-height: 0 !important;
             overflow-y: auto !important;
         }}
@@ -610,6 +551,8 @@ def _render_sheet_css(level: int) -> None:
          * complete roster to be inspected without scrolling the page or board.
          */
         .st-key-v632_utility_content {{
+            height: max(92px, calc(var(--fs-live-sheet-height, {sheet_height}px) - 82px)) !important;
+            max-height: max(92px, calc(var(--fs-live-sheet-height, {sheet_height}px) - 82px)) !important;
             min-height: 0 !important;
             overflow: visible !important;
         }}
@@ -764,32 +707,142 @@ def _render_sheet_css(level: int) -> None:
     )
 
 
-def _render_handle(level: int) -> None:
-    """Render persistent tray arrows inside the fixed bottom sheet."""
-    with st.container(key="v647_tray_controls"):
-        up_col, down_col = st.columns([1, 1], gap="small")
+def _render_drag_handle(initial_height: int) -> None:
+    """Render a manual vertical resize grip for the fixed player tray."""
+    drag_html = f"""
+    <!doctype html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        * {{ box-sizing: border-box; }}
+        html, body {{
+          width: 100%; height: 100%; margin: 0; padding: 0;
+          overflow: visible; background: transparent;
+          user-select: none; -webkit-user-select: none;
+        }}
+        #grip {{
+          width: 84px; height: 20px; margin: 4px auto 0;
+          display: flex; align-items: center; justify-content: center;
+          cursor: ns-resize;
+          border: 1px solid rgba(143,158,184,.48);
+          border-radius: 999px;
+          background: rgba(39,52,73,.90);
+          box-shadow: 0 3px 12px rgba(0,0,0,.30),
+                      inset 0 1px 0 rgba(255,255,255,.08);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          touch-action: none;
+        }}
+        #grip::before {{
+          content: '';
+          width: 32px; height: 4px;
+          border-radius: 999px;
+          background: rgba(204,215,232,.78);
+          box-shadow: 0 -5px 0 rgba(204,215,232,.28),
+                      0 5px 0 rgba(204,215,232,.28);
+        }}
+        #grip:hover {{
+          background: rgba(58,75,101,.96);
+          border-color: rgba(186,199,220,.70);
+        }}
+        #grip.dragging {{
+          background: rgba(67,86,116,.98);
+          border-color: rgba(205,216,235,.82);
+        }}
+      </style>
+    </head>
+    <body>
+      <div id="grip" title="Drag up or down to resize player tray"></div>
+      <script>
+      (() => {{
+        const grip = document.getElementById('grip');
+        const STORAGE_KEY = 'fantasysync_tray_height_v648';
+        let parentDoc;
+        let parentWin;
+        try {{
+          parentDoc = window.parent.document;
+          parentWin = window.parent;
+        }} catch (err) {{
+          return;
+        }}
 
-        with up_col:
-            st.button(
-                "▲",
-                key="v63_sheet_up",
-                help="Show more of the player tray",
-                disabled=level >= 2,
-                on_click=change_tray_level,
-                args=(1,),
-                use_container_width=True,
-            )
+        const getSheet = () => parentDoc.querySelector('.st-key-v63_bottom_sheet');
+        const clamp = (value) => {{
+          const maxHeight = Math.min(560, parentWin.innerHeight - 150);
+          return Math.max(52, Math.min(maxHeight, value));
+        }};
+        const applyHeight = (height, persist=true) => {{
+          const safe = clamp(Math.round(height));
+          parentDoc.documentElement.style.setProperty('--fs-live-sheet-height', `${{safe}}px`);
+          const sheet = getSheet();
+          if (sheet) {{
+            sheet.style.setProperty('height', `${{safe}}px`, 'important');
+            sheet.style.setProperty('min-height', '52px', 'important');
+            sheet.style.setProperty('max-height', `${{Math.min(560, parentWin.innerHeight - 150)}}px`, 'important');
+          }}
+          if (persist) {{
+            try {{ parentWin.localStorage.setItem(STORAGE_KEY, String(safe)); }} catch (e) {{}}
+          }}
+        }};
 
-        with down_col:
-            st.button(
-                "▼",
-                key="v63_sheet_down",
-                help="Show more of the draft board",
-                disabled=level <= 0,
-                on_click=change_tray_level,
-                args=(-1,),
-                use_container_width=True,
-            )
+        let saved = null;
+        try {{ saved = Number(parentWin.localStorage.getItem(STORAGE_KEY)); }} catch (e) {{}}
+        applyHeight(Number.isFinite(saved) && saved > 0 ? saved : {int(initial_height)}, false);
+
+        let dragging = false;
+        let startY = 0;
+        let startHeight = 0;
+
+        const move = (event) => {{
+          if (!dragging) return;
+          event.preventDefault();
+          const delta = startY - event.clientY;
+          applyHeight(startHeight + delta, false);
+        }};
+        const stop = () => {{
+          if (!dragging) return;
+          dragging = false;
+          grip.classList.remove('dragging');
+          const sheet = getSheet();
+          if (sheet) {{
+            const finalHeight = Math.round(sheet.getBoundingClientRect().height);
+            applyHeight(finalHeight, true);
+          }}
+          parentWin.removeEventListener('pointermove', move, true);
+          parentWin.removeEventListener('pointerup', stop, true);
+          parentWin.removeEventListener('pointercancel', stop, true);
+        }};
+
+        grip.addEventListener('pointerdown', (event) => {{
+          event.preventDefault();
+          const sheet = getSheet();
+          if (!sheet) return;
+          dragging = true;
+          grip.classList.add('dragging');
+          startY = event.clientY + window.frameElement.getBoundingClientRect().top;
+          startHeight = sheet.getBoundingClientRect().height;
+          parentWin.addEventListener('pointermove', move, true);
+          parentWin.addEventListener('pointerup', stop, true);
+          parentWin.addEventListener('pointercancel', stop, true);
+        }});
+
+        parentWin.addEventListener('resize', () => {{
+          const sheet = getSheet();
+          if (sheet) applyHeight(sheet.getBoundingClientRect().height, false);
+        }});
+      }})();
+      </script>
+    </body>
+    </html>
+    """
+
+    with st.container(key="v648_drag_handle"):
+        components.html(
+            drag_html,
+            height=28,
+            scrolling=False,
+        )
 
 
 def _render_player_side(
@@ -856,11 +909,7 @@ def _render_utility_side(
         active_view = _current_utility_view()
 
         with st.container(
-            height=(
-                210
-                if _current_level() == 1
-                else 340
-            ),
+            height=300,
             border=False,
             key="v632_utility_content",
         ):
@@ -889,15 +938,12 @@ def render_bottom_sheet(
     user_turn: bool,
 ) -> None:
     level = _current_level()
-    settings = TRAY_LEVELS[level]
-    _render_sheet_css(level)
+    effective_level = 1 if level == 0 else level
+    settings = TRAY_LEVELS[effective_level]
+    _render_sheet_css(effective_level)
 
     with st.container(key="v63_bottom_sheet"):
-        _render_handle(level)
-
-        # Collapsed state is a thin dock containing only the arrows.
-        if level == 0:
-            return
+        _render_drag_handle(int(settings["height"]))
 
         player_col, utility_col = st.columns(
             [6.65, 2.35],
