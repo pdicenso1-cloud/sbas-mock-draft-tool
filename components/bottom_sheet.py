@@ -296,70 +296,101 @@ def _render_sheet_css(level: int) -> None:
         }}
 
         /*
-         * Fixed tray handle. It sits directly above the sheet and remains
-         * visible when the sheet is collapsed.
+         * Sleeper-style floating controls. They sit above the tray edge and
+         * consume no document-flow height.
          */
-        .st-key-v63_sheet_handle {{
+        .st-key-v646_floating_tray_controls {{
             position: fixed !important;
-            left: var(--fs-sidebar-width) !important;
-            right: 0 !important;
-            bottom: {handle_bottom}px !important;
-            transition:
-                bottom 180ms ease,
-                left 180ms ease !important;
-            z-index: 10020 !important;
+            right: 96px !important;
+            bottom: calc({handle_bottom}px + 8px) !important;
+            z-index: 10060 !important;
+            width: 88px !important;
+            height: 42px !important;
+            min-height: 42px !important;
+            max-height: 42px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: transparent !important;
+            border: 0 !important;
+            pointer-events: none !important;
+            transition: bottom 180ms ease !important;
+        }}
+
+        .st-key-v646_floating_tray_controls
+            [data-testid="stHorizontalBlock"] {{
+            width: 88px !important;
+            height: 42px !important;
+            min-height: 42px !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
+            gap: 6px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            pointer-events: none !important;
+        }}
+
+        .st-key-v646_floating_tray_controls
+            [data-testid="stColumn"] {{
+            min-width: 38px !important;
+            width: 38px !important;
+            flex: 0 0 38px !important;
+            pointer-events: auto !important;
+        }}
+
+        .st-key-v646_floating_tray_controls button {{
+            width: 38px !important;
+            min-width: 38px !important;
+            max-width: 38px !important;
             height: 38px !important;
             min-height: 38px !important;
             max-height: 38px !important;
-            margin: 0 !important;
             padding: 0 !important;
-            background: #081321 !important;
-            border-top: 2px solid #7C5CE0 !important;
-            border-bottom: 1px solid rgba(148,163,184,.20) !important;
-            box-shadow: none !important;
-        }}
-
-        body:has(
-            section[data-testid="stSidebar"][aria-expanded="false"]
-        ) .st-key-v63_sheet_handle {{
-            left: 0 !important;
-        }}
-
-        .st-key-v63_sheet_handle
-            [data-testid="stHorizontalBlock"] {{
-            height: 36px !important;
-            min-height: 36px !important;
-            align-items: center !important;
-            justify-content: flex-end !important;
-            gap: .22rem !important;
-            padding-right: 8px !important;
+            border-radius: 999px !important;
+            border: 1px solid rgba(151, 166, 190, .35) !important;
+            background: rgba(84, 99, 126, .58) !important;
+            color: rgba(255,255,255,.92) !important;
+            -webkit-text-fill-color: rgba(255,255,255,.92) !important;
+            backdrop-filter: blur(10px) !important;
+            -webkit-backdrop-filter: blur(10px) !important;
+            box-shadow:
+                0 4px 16px rgba(0,0,0,.28),
+                inset 0 1px 0 rgba(255,255,255,.08) !important;
+            opacity: 1 !important;
             pointer-events: auto !important;
         }}
 
-        .st-key-v63_sheet_handle
-            [data-testid="stColumn"] {{
-            pointer-events: auto !important;
+        .st-key-v646_floating_tray_controls button * {{
+            color: rgba(255,255,255,.92) !important;
+            -webkit-text-fill-color: rgba(255,255,255,.92) !important;
         }}
 
-        .st-key-v63_sheet_handle button {{
-            min-height: 28px !important;
-            height: 28px !important;
-            padding: 0 !important;
-            border-radius: 8px !important;
-            background: #1C2739 !important;
-            border: 1px solid #4B5B74 !important;
-            color: #FFFFFF !important;
-            -webkit-text-fill-color: #FFFFFF !important;
-            box-shadow: none !important;
+        .st-key-v646_floating_tray_controls button:hover {{
+            background: rgba(105, 121, 151, .75) !important;
+            border-color: rgba(180, 193, 218, .55) !important;
+            transform: translateY(-1px) !important;
         }}
 
-        .st-key-v63_sheet_handle button:hover {{
-            background: #27354A !important;
-            border-color: #846CE0 !important;
+        .st-key-v646_floating_tray_controls button:disabled {{
+            opacity: .30 !important;
+            cursor: default !important;
+            transform: none !important;
         }}
 
-        .st-key-v63_sheet_handle button:disabled {{
-            opacity: .34 !important;
+        body:has(section[data-testid="stSidebar"][aria-expanded="true"])
+            .st-key-v646_floating_tray_controls {{
+            right: 116px !important;
+        }}
+
+        body:has(section[data-testid="stSidebar"][aria-expanded="false"])
+            .st-key-v646_floating_tray_controls {{
+            right: 104px !important;
+        }}
+
+        /*
+         * Retire the legacy full-width handle row completely.
+         */
+        .st-key-v63_sheet_handle {{
+            display: none !important;
         }}
 
         /*
@@ -743,17 +774,14 @@ def _render_sheet_css(level: int) -> None:
 
 def _render_handle(level: int) -> None:
     """
-    Render compact Sleeper-style tray arrows over the utility-panel side.
+    Render Sleeper-style floating tray controls.
 
-    The centered PLAYER TRAY label is intentionally removed so the divider is
-    visually quieter and the controls sit above Queue / Roster.
+    The controls overlay the tray edge instead of occupying a full-width row,
+    preserving vertical space for the draft board and player list.
     """
-    with st.container(key="v63_sheet_handle"):
-        _, up_col, down_col, trailing_space = st.columns(
-            # Reserve a wide protected area at the far right for Streamlit's
-            # Manage app overlay. The controls remain above Queue/Roster but
-            # cannot be covered by the floating management button.
-            [7.25, 0.62, 0.62, 1.51],
+    with st.container(key="v646_floating_tray_controls"):
+        up_col, down_col = st.columns(
+            [1, 1],
             gap="small",
         )
 

@@ -4169,8 +4169,6 @@ body:has(section[data-testid="stSidebar"][aria-expanded="false"])
  * fully closed.
  */
 body:has(section[data-testid="stSidebar"][aria-expanded="false"])
-    .st-key-v63_sheet_handle,
-body:has(section[data-testid="stSidebar"][aria-expanded="false"])
     .st-key-v63_bottom_sheet {
     left: 16px !important;
     right: 16px !important;
@@ -4261,8 +4259,6 @@ body:has(section[data-testid="stSidebar"][aria-expanded="true"])
 
 /* Align the fixed tray with the wider open-sidebar workspace. */
 body:has(section[data-testid="stSidebar"][aria-expanded="true"])
-    .st-key-v63_sheet_handle,
-body:has(section[data-testid="stSidebar"][aria-expanded="true"])
     .st-key-v63_bottom_sheet {
     left: calc(15.25rem + 20px) !important;
     right: 20px !important;
@@ -4277,6 +4273,33 @@ body:has(section[data-testid="stSidebar"][aria-expanded="true"])
     position: relative !important;
     z-index: 10050 !important;
     pointer-events: auto !important;
+}
+
+
+/* ============================================================
+   FantasySync v6.4.6 — Floating Sleeper-style tray controls
+   ============================================================ */
+
+.st-key-v646_floating_tray_controls {
+    isolation: isolate !important;
+}
+
+/* Keep the control dock above Streamlit's Manage app surface. */
+.st-key-v646_floating_tray_controls,
+.st-key-v646_floating_tray_controls button {
+    z-index: 10060 !important;
+}
+
+/* Ensure no stale divider/control row reserves vertical space. */
+.st-key-v63_sheet_handle,
+.st-key-v62_tray_controls {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
 }
 
 </style>
@@ -6403,7 +6426,7 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v6.4.5</div>',
+        '<div class="sidebar-version">FantasySync · v6.4.6</div>',
         unsafe_allow_html=True,
     )
 
