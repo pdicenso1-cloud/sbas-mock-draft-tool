@@ -4169,7 +4169,7 @@ body:has(section[data-testid="stSidebar"][aria-expanded="false"])
  * fully closed.
  */
 body:has(section[data-testid="stSidebar"][aria-expanded="false"])
-    .st-key-v63_bottom_sheet {
+    .st-key-v650_tray_content {
     left: 16px !important;
     right: 16px !important;
     width: auto !important;
@@ -4259,7 +4259,7 @@ body:has(section[data-testid="stSidebar"][aria-expanded="true"])
 
 /* Align the fixed tray with the wider open-sidebar workspace. */
 body:has(section[data-testid="stSidebar"][aria-expanded="true"])
-    .st-key-v63_bottom_sheet {
+    .st-key-v650_tray_content {
     left: calc(15.25rem + 20px) !important;
     right: 20px !important;
     width: auto !important;
@@ -4303,18 +4303,32 @@ body:has(section[data-testid="stSidebar"][aria-expanded="true"])
 
 
 /* ============================================================
-   FantasySync v6.4.9 — Linked draggable tray workspace
+   FantasySync v6.5.0 — Restored linked tray content
    ============================================================ */
 
-.st-key-v649_tray_content {
-    position: absolute !important;
-    inset: 28px 0 0 0 !important;
-    z-index: 10020 !important;
+.st-key-v650_tray_content {
+    display: block !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    z-index: 10010 !important;
+    overflow: hidden !important;
 }
 
-.st-key-v649_tray_content,
-.st-key-v649_tray_content * {
-    box-sizing: border-box !important;
+.st-key-v648_drag_handle {
+    display: block !important;
+    position: fixed !important;
+    z-index: 10100 !important;
+}
+
+/* Guarantee Players, Queue, and Roster are not hidden by stale rules. */
+.st-key-v650_tray_content .st-key-v63_player_side,
+.st-key-v650_tray_content .st-key-v63_utility_side,
+.st-key-v650_tray_content .st-key-v61_player_toolbar,
+.st-key-v650_tray_content .st-key-war_player_list,
+.st-key-v650_tray_content .st-key-v632_utility_content {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 </style>
@@ -6441,7 +6455,7 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v6.4.9</div>',
+        '<div class="sidebar-version">FantasySync · v6.5.0</div>',
         unsafe_allow_html=True,
     )
 

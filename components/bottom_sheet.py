@@ -300,8 +300,8 @@ def _render_sheet_css(level: int) -> None:
          * pointer logic lives in a tiny isolated HTML component.
          */
         .st-key-v648_drag_handle {{
-            position: absolute !important;
-            top: -9px !important;
+            position: fixed !important;
+            bottom: calc(var(--fs-live-sheet-height, {sheet_height}px) - 9px) !important;
             left: 55% !important;
             transform: translateX(-50%) !important;
             z-index: 10100 !important;
@@ -331,7 +331,7 @@ def _render_sheet_css(level: int) -> None:
          * True fixed bottom sheet. It overlays the board and never participates
          * in normal Streamlit page flow.
          */
-        .st-key-v63_bottom_sheet {{
+        .st-key-v650_tray_content {{
             display: {sheet_visible} !important;
             position: fixed !important;
             pointer-events: auto !important;
@@ -344,7 +344,7 @@ def _render_sheet_css(level: int) -> None:
             min-height: 52px !important;
             max-height: min(560px, calc(100vh - 150px)) !important;
             margin: 0 !important;
-            padding: 0 !important;
+            padding: 10px 12px 12px !important;
             box-sizing: border-box !important;
             overflow: hidden !important;
             background: #0B1625 !important;
@@ -355,75 +355,61 @@ def _render_sheet_css(level: int) -> None:
 
         body:has(
             section[data-testid="stSidebar"][aria-expanded="false"]
-        ) .st-key-v63_bottom_sheet {{
+        ) .st-key-v650_tray_content {{
             left: 0 !important;
-        }}
-
-        .st-key-v63_bottom_sheet > div,
-        .st-key-v63_bottom_sheet > div > div {{
-            height: 100% !important;
-            max-height: 100% !important;
-            min-height: 0 !important;
-            position: relative !important;
         }}
 
         /*
-         * The complete player/utility workspace is pinned immediately below
-         * the drag grip. It therefore rises and falls with the same sheet.
+         * Keep Streamlit's tray content in normal top-down flow. The old
+         * forced 100% descendant heights anchored the widgets at the bottom.
          */
-        .st-key-v649_tray_content {{
-            position: absolute !important;
-            top: 28px !important;
-            left: 0 !important;
-            right: 0 !important;
-            bottom: 0 !important;
+        .st-key-v650_tray_content > div,
+        .st-key-v650_tray_content > div > div {{
+            height: auto !important;
+            max-height: none !important;
+            min-height: 0 !important;
+        }}
+
+        .st-key-v650_tray_content
+            > div
+            > div
+            > [data-testid="stVerticalBlock"] {{
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: flex-start !important;
+            align-items: stretch !important;
+            height: auto !important;
+            max-height: none !important;
+            min-height: 0 !important;
+            gap: 0 !important;
+            overflow: hidden !important;
+        }}
+
+        .st-key-v650_tray_content
+            > div
+            > div
+            > [data-testid="stVerticalBlock"]
+            > [data-testid="stHorizontalBlock"] {{
+            flex: 0 0 auto !important;
             width: 100% !important;
             height: auto !important;
-            min-height: 0 !important;
             max-height: none !important;
-            margin: 0 !important;
-            padding: 6px 12px 12px !important;
-            box-sizing: border-box !important;
-            overflow: hidden !important;
-            z-index: 10020 !important;
-        }}
-
-        .st-key-v649_tray_content > div,
-        .st-key-v649_tray_content > div > div,
-        .st-key-v649_tray_content
-            [data-testid="stVerticalBlock"] {{
-            height: 100% !important;
-            max-height: 100% !important;
-            min-height: 0 !important;
-            overflow: hidden !important;
-        }}
-
-        .st-key-v649_tray_content
-            [data-testid="stHorizontalBlock"] {{
-            height: 100% !important;
-            max-height: 100% !important;
             min-height: 0 !important;
             align-items: stretch !important;
             gap: .65rem !important;
         }}
 
-        .st-key-v63_bottom_sheet
+        .st-key-v650_tray_content
             [data-testid="stColumn"] {{
-            height: 100% !important;
-            max-height: 100% !important;
             min-height: 0 !important;
             overflow: hidden !important;
         }}
 
         .st-key-v63_player_side,
         .st-key-v63_utility_side {{
-            position: relative !important;
-            top: auto !important;
-            bottom: auto !important;
-            height: 100% !important;
-            max-height: 100% !important;
+            height: calc(var(--fs-live-sheet-height, {sheet_height}px) - 22px) !important;
+            max-height: calc(var(--fs-live-sheet-height, {sheet_height}px) - 22px) !important;
             min-height: 0 !important;
-            margin: 0 !important;
             overflow: hidden !important;
         }}
 
@@ -438,9 +424,9 @@ def _render_sheet_css(level: int) -> None:
             background: #101D2E !important;
         }}
 
-        .st-key-v63_bottom_sheet .st-key-war_player_list {{
-            height: max(72px, calc(var(--fs-live-sheet-height, {sheet_height}px) - 142px)) !important;
-            max-height: max(72px, calc(var(--fs-live-sheet-height, {sheet_height}px) - 142px)) !important;
+        .st-key-v650_tray_content .st-key-war_player_list {{
+            height: max(92px, calc(var(--fs-live-sheet-height, {sheet_height}px) - 126px)) !important;
+            max-height: max(92px, calc(var(--fs-live-sheet-height, {sheet_height}px) - 126px)) !important;
             min-height: 0 !important;
             overflow-y: auto !important;
         }}
@@ -450,13 +436,13 @@ def _render_sheet_css(level: int) -> None:
          * table rules. Player names remain readable in Draft and Expanded
          * states without changing draft-board card typography.
          */
-        .st-key-v63_bottom_sheet
+        .st-key-v650_tray_content
             .st-key-war_player_list
             [data-testid="stVerticalBlock"] {{
             gap: 0 !important;
         }}
 
-        .st-key-v63_bottom_sheet
+        .st-key-v650_tray_content
             .st-key-war_player_list
             [data-testid="stHorizontalBlock"] {{
             min-height: 34px !important;
@@ -465,7 +451,7 @@ def _render_sheet_css(level: int) -> None:
             align-items: center !important;
         }}
 
-        .st-key-v63_bottom_sheet
+        .st-key-v650_tray_content
             .st-key-war_player_list
             [data-testid="stColumn"] {{
             min-height: 34px !important;
@@ -474,7 +460,7 @@ def _render_sheet_css(level: int) -> None:
             padding-bottom: 0 !important;
         }}
 
-        .st-key-v63_bottom_sheet .player-name2 {{
+        .st-key-v650_tray_content .player-name2 {{
             font-size: .70rem !important;
             line-height: 1.08 !important;
             font-weight: 780 !important;
@@ -485,7 +471,7 @@ def _render_sheet_css(level: int) -> None:
             text-overflow: ellipsis !important;
         }}
 
-        .st-key-v63_bottom_sheet .player-sub2 {{
+        .st-key-v650_tray_content .player-sub2 {{
             font-size: .50rem !important;
             line-height: 1.02 !important;
             margin-top: 2px !important;
@@ -493,15 +479,15 @@ def _render_sheet_css(level: int) -> None:
             -webkit-text-fill-color: #91A2B9 !important;
         }}
 
-        .st-key-v63_bottom_sheet .stat2,
-        .st-key-v63_bottom_sheet .rank2 {{
+        .st-key-v650_tray_content .stat2,
+        .st-key-v650_tray_content .rank2 {{
             font-size: .57rem !important;
             line-height: 1 !important;
             color: #CFD8E6 !important;
             -webkit-text-fill-color: #CFD8E6 !important;
         }}
 
-        .st-key-v63_bottom_sheet
+        .st-key-v650_tray_content
             .st-key-war_player_list button {{
             width: 24px !important;
             min-width: 24px !important;
@@ -511,18 +497,18 @@ def _render_sheet_css(level: int) -> None:
             font-size: .69rem !important;
         }}
 
-        .st-key-v63_bottom_sheet .value-badge {{
+        .st-key-v650_tray_content .value-badge {{
             height: 20px !important;
             min-width: 26px !important;
             font-size: .49rem !important;
         }}
 
-        .st-key-v63_bottom_sheet .player-row-divider {{
+        .st-key-v650_tray_content .player-row-divider {{
             margin: 0 !important;
             background: rgba(148,163,184,.12) !important;
         }}
 
-        .st-key-v63_bottom_sheet .player-table-header2 {{
+        .st-key-v650_tray_content .player-table-header2 {{
             min-height: 23px !important;
             height: 23px !important;
             font-size: .49rem !important;
@@ -588,8 +574,8 @@ def _render_sheet_css(level: int) -> None:
          * complete roster to be inspected without scrolling the page or board.
          */
         .st-key-v632_utility_content {{
-            height: max(72px, calc(var(--fs-live-sheet-height, {sheet_height}px) - 104px)) !important;
-            max-height: max(72px, calc(var(--fs-live-sheet-height, {sheet_height}px) - 104px)) !important;
+            height: max(92px, calc(var(--fs-live-sheet-height, {sheet_height}px) - 82px)) !important;
+            max-height: max(92px, calc(var(--fs-live-sheet-height, {sheet_height}px) - 82px)) !important;
             min-height: 0 !important;
             overflow: visible !important;
         }}
@@ -804,7 +790,7 @@ def _render_drag_handle(initial_height: int) -> None:
           return;
         }}
 
-        const getSheet = () => parentDoc.querySelector('.st-key-v63_bottom_sheet');
+        const getSheet = () => parentDoc.querySelector('.st-key-v650_tray_content');
         const clamp = (value) => {{
           const maxHeight = Math.min(560, parentWin.innerHeight - 150);
           return Math.max(52, Math.min(maxHeight, value));
@@ -816,7 +802,19 @@ def _render_drag_handle(initial_height: int) -> None:
           if (sheet) {{
             sheet.style.setProperty('height', `${{safe}}px`, 'important');
             sheet.style.setProperty('min-height', '52px', 'important');
-            sheet.style.setProperty('max-height', `${{Math.min(560, parentWin.innerHeight - 150)}}px`, 'important');
+            sheet.style.setProperty(
+              'max-height',
+              `${{Math.min(560, parentWin.innerHeight - 150)}}px`,
+              'important'
+            );
+          }}
+          const handle = parentDoc.querySelector('.st-key-v648_drag_handle');
+          if (handle) {{
+            handle.style.setProperty(
+              'bottom',
+              `${{Math.max(43, safe - 9)}}px`,
+              'important'
+            );
           }}
           if (persist) {{
             try {{ parentWin.localStorage.setItem(STORAGE_KEY, String(safe)); }} catch (e) {{}}
@@ -979,26 +977,27 @@ def render_bottom_sheet(
     settings = TRAY_LEVELS[effective_level]
     _render_sheet_css(effective_level)
 
-    with st.container(key="v63_bottom_sheet"):
-        _render_drag_handle(int(settings["height"]))
+    # The grip and content are sibling fixed elements driven by the same
+    # --fs-live-sheet-height value. Nothing can separate them vertically.
+    _render_drag_handle(int(settings["height"]))
 
-        with st.container(key="v649_tray_content"):
-            player_col, utility_col = st.columns(
-                [6.65, 2.35],
-                gap="small",
+    with st.container(key="v650_tray_content"):
+        player_col, utility_col = st.columns(
+            [6.65, 2.35],
+            gap="small",
+        )
+
+        with player_col:
+            _render_player_side(
+                deps,
+                current_index,
+                user_turn,
+                int(settings["player_height"]),
             )
 
-            with player_col:
-                _render_player_side(
-                    deps,
-                    current_index,
-                    user_turn,
-                    int(settings["player_height"]),
-                )
-
-            with utility_col:
-                _render_utility_side(
-                    deps,
-                    current_index,
-                    user_turn,
-                )
+        with utility_col:
+            _render_utility_side(
+                deps,
+                current_index,
+                user_turn,
+            )
