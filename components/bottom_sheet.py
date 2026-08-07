@@ -9,25 +9,31 @@ import streamlit.components.v1 as components
 
 
 TRAY_LEVELS = {
-    # Nearly the entire board is visible. Queue, roster, and players are hidden.
+    # Compact draft-board-first state.
+    # Tuned to leave roughly five board rows visible on a typical laptop.
     0: {
-        "name": "Collapsed",
-        "height": 46,
-        "player_height": 0,
+        "name": "Compact",
+        "height": 146,
+        "player_height": 62,
+        "utility_height": 78,
     },
-    # Primary drafting state: roughly seven board rows remain visible.
+    # Balanced drafting state.
     1: {
         "name": "Draft",
-        "height": 258,
-        "player_height": 138,
+        "height": 236,
+        "player_height": 146,
+        "utility_height": 168,
     },
-    # Player-focused state: roughly five board rows remain visible.
+    # Player-focused state.
+    # Tuned to leave roughly 2.5 draft-board rows visible.
     2: {
         "name": "Expanded",
-        "height": 392,
-        "player_height": 265,
+        "height": 332,
+        "player_height": 238,
+        "utility_height": 264,
     },
 }
+
 
 
 @dataclass(frozen=True)
@@ -276,51 +282,12 @@ def _render_sheet_css(level: int) -> None:
         f"""
         <style>
         :root {{
-            --fs-sidebar-width: 0rem;
             --fs-live-sheet-height: {sheet_height}px;
         }}
 
-        /* The board remains completely independent from this refactor. */
-        .st-key-v63_board_region {{
-            position: relative !important;
-            z-index: 1 !important;
-            width: 100% !important;
-            margin: 0 !important;
-            padding: 0 0 20px !important;
-        }}
-
-        /* Fixed grip, driven by the same height as the tray. */
-        .st-key-v648_drag_handle {{
-            position: fixed !important;
-            bottom: calc(var(--fs-live-sheet-height) - 9px) !important;
-            left: 55% !important;
-            transform: translateX(-50%) !important;
-            z-index: 10100 !important;
-            width: 76px !important;
-            height: 22px !important;
-            min-height: 22px !important;
-            max-height: 22px !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            border: 0 !important;
-            background: transparent !important;
-            overflow: visible !important;
-            pointer-events: auto !important;
-        }}
-
-        .st-key-v648_drag_handle iframe {{
-            width: 76px !important;
-            height: 22px !important;
-            border: 0 !important;
-            background: transparent !important;
-            overflow: visible !important;
-            pointer-events: auto !important;
-        }}
-
         /*
-         * v6.6 tray shell:
-         * one fixed container, one content row, and two independently
-         * scrollable panels. No absolute-positioned tray body.
+         * v7.2.0 tray-only state system.
+         * The draft board is intentionally not styled here.
          */
         .st-key-v660_tray {{
             display: block !important;
@@ -329,28 +296,101 @@ def _render_sheet_css(level: int) -> None:
             right: 0 !important;
             bottom: 0 !important;
             z-index: 10010 !important;
-            height: var(--fs-live-sheet-height) !important;
-            min-height: 52px !important;
-            max-height: min(560px, calc(100vh - 150px)) !important;
+            width: 100vw !important;
+            max-width: 100vw !important;
+            height: {sheet_height}px !important;
+            min-height: {sheet_height}px !important;
+            max-height: {sheet_height}px !important;
             margin: 0 !important;
             padding: 8px 12px 6px !important;
             box-sizing: border-box !important;
             overflow: hidden !important;
             background: #0B1625 !important;
-            border-top: 1px solid rgba(124,92,224,.72) !important;
+            border-top: 1px solid rgba(124,92,224,.78) !important;
             border-bottom: 0 !important;
             box-shadow: 0 -5px 16px rgba(0,0,0,.22) !important;
             pointer-events: auto !important;
             isolation: isolate !important;
         }}
 
-        body:has(
-            section[data-testid="stSidebar"][aria-expanded="false"]
-        ) .st-key-v660_tray {{
-            left: 0 !important;
+        /*
+         * Floating ▲ / ▼ controls. They occupy no layout row and remain
+         * centered on the tray's upper edge.
+         */
+        .st-key-v720_tray_controls {{
+            position: fixed !important;
+            left: 50% !important;
+            bottom: {max(0, sheet_height - 17)}px !important;
+            transform: translateX(-50%) !important;
+            z-index: 10120 !important;
+            width: 92px !important;
+            height: 32px !important;
+            min-height: 32px !important;
+            max-height: 32px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: transparent !important;
+            border: 0 !important;
+            pointer-events: none !important;
         }}
 
-        /* Only the tray's root wrappers receive full height. */
+        .st-key-v720_tray_controls
+            [data-testid="stHorizontalBlock"] {{
+            width: 92px !important;
+            height: 32px !important;
+            min-height: 32px !important;
+            gap: 6px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            align-items: center !important;
+            justify-content: center !important;
+            pointer-events: none !important;
+        }}
+
+        .st-key-v720_tray_controls
+            [data-testid="stColumn"] {{
+            flex: 0 0 42px !important;
+            width: 42px !important;
+            min-width: 42px !important;
+            max-width: 42px !important;
+            height: 30px !important;
+            min-height: 30px !important;
+            pointer-events: auto !important;
+        }}
+
+        .st-key-v720_tray_controls button {{
+            width: 42px !important;
+            min-width: 42px !important;
+            max-width: 42px !important;
+            height: 30px !important;
+            min-height: 30px !important;
+            max-height: 30px !important;
+            padding: 0 !important;
+            border-radius: 999px !important;
+            border: 1px solid rgba(151,166,190,.48) !important;
+            background: rgba(45,59,81,.94) !important;
+            color: #F8FAFC !important;
+            -webkit-text-fill-color: #F8FAFC !important;
+            font-size: .78rem !important;
+            font-weight: 900 !important;
+            line-height: 1 !important;
+            box-shadow:
+                0 3px 12px rgba(0,0,0,.30),
+                inset 0 1px 0 rgba(255,255,255,.09) !important;
+            pointer-events: auto !important;
+        }}
+
+        .st-key-v720_tray_controls button:hover {{
+            background: rgba(72,91,121,.98) !important;
+            border-color: rgba(196,210,233,.72) !important;
+        }}
+
+        .st-key-v720_tray_controls button:disabled {{
+            opacity: .28 !important;
+            cursor: default !important;
+        }}
+
+        /* Tray root fills its exact fixed state height. */
         .st-key-v660_tray > div,
         .st-key-v660_tray > div > div,
         .st-key-v660_tray
@@ -400,7 +440,6 @@ def _render_sheet_css(level: int) -> None:
             overflow: hidden !important;
         }}
 
-        /* Left and right panels fill their column. */
         .st-key-v63_player_side,
         .st-key-v63_utility_side {{
             display: flex !important;
@@ -451,29 +490,29 @@ def _render_sheet_css(level: int) -> None:
             overflow: hidden !important;
         }}
 
-        /* Toolbar and table header remain fixed at the top. */
+        /* Search and position sorting controls always remain visible. */
         .st-key-v61_player_toolbar {{
             flex: 0 0 auto !important;
             min-height: 0 !important;
             margin: 0 !important;
             padding: 0 !important;
             overflow: visible !important;
+            visibility: visible !important;
+            opacity: 1 !important;
             pointer-events: auto !important;
+            z-index: 10030 !important;
         }}
 
         .st-key-v61_player_toolbar button,
         .st-key-v61_player_toolbar input {{
+            visibility: visible !important;
+            opacity: 1 !important;
             pointer-events: auto !important;
         }}
 
-        /*
-         * The player-list shell is measured precisely by the drag component.
-         * CSS provides safe fallback behavior before JavaScript attaches.
-         */
+        /* Player list owns its own scroll viewport. */
         .st-key-v660_tray .st-key-war_player_list {{
             flex: 1 1 auto !important;
-            height: auto !important;
-            max-height: none !important;
             min-height: 0 !important;
             margin: 0 !important;
             padding: 0 !important;
@@ -512,29 +551,6 @@ def _render_sheet_css(level: int) -> None:
             overflow: visible !important;
         }}
 
-        .st-key-v660_tray
-            .st-key-war_player_list
-            [data-testid="stVerticalBlockBorderWrapper"]
-            ::-webkit-scrollbar {{
-            width: 7px !important;
-        }}
-
-        .st-key-v660_tray
-            .st-key-war_player_list
-            [data-testid="stVerticalBlockBorderWrapper"]
-            ::-webkit-scrollbar-track {{
-            background: #0B1625 !important;
-        }}
-
-        .st-key-v660_tray
-            .st-key-war_player_list
-            [data-testid="stVerticalBlockBorderWrapper"]
-            ::-webkit-scrollbar-thumb {{
-            background: #53647F !important;
-            border-radius: 999px !important;
-        }}
-
-        /* Compact, readable rows. */
         .st-key-v660_tray
             .st-key-war_player_list
             [data-testid="stVerticalBlock"] {{
@@ -588,30 +604,6 @@ def _render_sheet_css(level: int) -> None:
             -webkit-text-fill-color: #CFD8E6 !important;
         }}
 
-        .st-key-v660_tray
-            .st-key-war_player_list button {{
-            width: 24px !important;
-            min-width: 24px !important;
-            height: 24px !important;
-            min-height: 24px !important;
-            padding: 0 !important;
-            font-size: .69rem !important;
-        }}
-
-        .st-key-v660_tray .value-badge {{
-            height: 20px !important;
-            min-width: 26px !important;
-            font-size: .49rem !important;
-        }}
-
-        .st-key-v660_tray .player-table-header2 {{
-            min-height: 23px !important;
-            height: 23px !important;
-            font-size: .49rem !important;
-            line-height: 1 !important;
-        }}
-
-        /* Remove all divider artifacts crossing player names. */
         .st-key-v660_tray .player-row-divider,
         .st-key-v660_tray .player-header-divider,
         .st-key-v660_tray hr {{
@@ -626,7 +618,7 @@ def _render_sheet_css(level: int) -> None:
             background: transparent !important;
         }}
 
-        /* Utility tabs remain fixed; content gets the remaining height. */
+        /* Queue / roster tabs remain fixed; their content scrolls below. */
         .st-key-v63_utility_side
             [data-testid="stHorizontalBlock"]:first-of-type {{
             flex: 0 0 31px !important;
@@ -650,8 +642,6 @@ def _render_sheet_css(level: int) -> None:
 
         .st-key-v632_utility_content {{
             flex: 1 1 auto !important;
-            height: auto !important;
-            max-height: none !important;
             min-height: 0 !important;
             margin: 0 !important;
             padding: 0 !important;
@@ -687,387 +677,48 @@ def _render_sheet_css(level: int) -> None:
             overflow: visible !important;
         }}
 
-        /* True compact state only. */
-        .st-key-v660_tray.fs-tray-compact
-            > div
-            > div
-            > [data-testid="stVerticalBlock"]
-            > [data-testid="stHorizontalBlock"] {{
-            opacity: 0 !important;
-            visibility: hidden !important;
-            pointer-events: none !important;
-        }}
-
-        /* Retire all previous tray implementations. */
-        .st-key-v650_tray_content,
-        .st-key-v649_tray_content,
-        .st-key-v63_bottom_sheet,
-        .st-key-v53_bottom_workspace,
+        /* Ensure every obsolete drag/control implementation stays retired. */
+        .st-key-v648_drag_handle,
+        .st-key-v647_tray_controls,
+        .st-key-v646_floating_tray_controls,
+        .st-key-v63_sheet_handle,
         .st-key-v62_tray_controls {{
             display: none !important;
-        }}
-
-        /* Hidden CPU refresh remains unchanged. */
-        .st-key-cpu_autorefresh_mount,
-        .st-key-cpu_autorefresh_mount > div,
-        .st-key-cpu_autorefresh_mount
-            [data-testid="stVerticalBlock"],
-        .st-key-cpu_autorefresh_mount
-            [data-testid="stElementContainer"],
-        .st-key-cpu_autorefresh_mount
-            [data-testid="stCustomComponentV1"],
-        .st-key-cpu_autorefresh_mount iframe {{
-            display: none !important;
-            visibility: hidden !important;
-            position: absolute !important;
-            width: 0 !important;
-            height: 0 !important;
-            min-width: 0 !important;
-            min-height: 0 !important;
-            max-width: 0 !important;
-            max-height: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            border: 0 !important;
-            overflow: hidden !important;
         }}
         </style>
         """,
         unsafe_allow_html=True,
     )
 
-def _render_drag_handle(initial_height: int) -> None:
-    """
-    Resize the tray and then measure the actual remaining space for each inner
-    scroll viewport. This avoids hard-coded toolbar offsets and remains stable
-    when the sidebar opens or closes.
-    """
-    drag_html = f"""
-    <!doctype html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <style>
-        * {{ box-sizing: border-box; }}
-        html, body {{
-          width: 100%; height: 100%; margin: 0; padding: 0;
-          overflow: visible; background: transparent;
-          user-select: none; -webkit-user-select: none;
-        }}
-        #grip {{
-          width: 66px; height: 14px; margin: 3px auto 0;
-          display: flex; align-items: center; justify-content: center;
-          cursor: ns-resize;
-          border: 1px solid rgba(143,158,184,.48);
-          border-radius: 999px;
-          background: rgba(39,52,73,.90);
-          box-shadow: 0 3px 12px rgba(0,0,0,.30),
-                      inset 0 1px 0 rgba(255,255,255,.08);
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
-          touch-action: none;
-        }}
-        #grip::before {{
-          content: '';
-          width: 26px; height: 3px;
-          border-radius: 999px;
-          background: rgba(204,215,232,.78);
-          box-shadow: 0 -4px 0 rgba(204,215,232,.24),
-                      0 4px 0 rgba(204,215,232,.24);
-        }}
-        #grip:hover, #grip.dragging {{
-          background: rgba(67,86,116,.98);
-          border-color: rgba(205,216,235,.82);
-        }}
-      </style>
-    </head>
-    <body>
-      <div id="grip" title="Drag up or down to resize player tray"></div>
-      <script>
-      (() => {{
-        const grip = document.getElementById('grip');
-        const STORAGE_KEY = 'fantasysync_tray_height_v660';
-        let parentDoc;
-        let parentWin;
 
-        try {{
-          parentDoc = window.parent.document;
-          parentWin = window.parent;
-        }} catch (err) {{
-          return;
-        }}
+def _render_tray_controls(level: int) -> None:
+    """Render centered fixed-state tray controls without affecting layout."""
+    with st.container(key="v720_tray_controls"):
+        up_col, down_col = st.columns([1, 1], gap="small")
 
-        const q = (selector) => parentDoc.querySelector(selector);
-        const getTray = () => q('.st-key-v660_tray');
+        with up_col:
+            st.button(
+                "▲",
+                key="v720_tray_up",
+                help="Expand player tray",
+                disabled=level >= max(TRAY_LEVELS),
+                on_click=change_tray_level,
+                args=(1,),
+                use_container_width=True,
+            )
 
-        const clamp = (value) => {{
-          const maxHeight = Math.min(560, parentWin.innerHeight - 150);
-          return Math.max(52, Math.min(maxHeight, value));
-        }};
+        with down_col:
+            st.button(
+                "▼",
+                key="v720_tray_down",
+                help="Compact player tray",
+                disabled=level <= min(TRAY_LEVELS),
+                on_click=change_tray_level,
+                args=(-1,),
+                use_container_width=True,
+            )
 
-        const setImportant = (node, property, value) => {{
-          if (node) node.style.setProperty(property, value, 'important');
-        }};
 
-        const bindScrollIsolation = (node) => {{
-          if (!node || node.dataset.fsScrollBound === '1') return;
-          node.dataset.fsScrollBound = '1';
-
-          node.addEventListener(
-            'wheel',
-            (event) => {{
-              event.stopPropagation();
-            }},
-            {{ passive: true }}
-          );
-
-          node.addEventListener(
-            'touchmove',
-            (event) => {{
-              event.stopPropagation();
-            }},
-            {{ passive: true }}
-          );
-        }};
-
-        const syncInnerLayout = () => {{
-          const tray = getTray();
-          if (!tray) return;
-
-          const safeHeight = tray.getBoundingClientRect().height;
-          const compact = safeHeight <= 64;
-          tray.classList.toggle('fs-tray-compact', compact);
-
-          const playerSide = q(
-            '.st-key-v660_tray .st-key-v63_player_side'
-          );
-          const playerList = q(
-            '.st-key-v660_tray .st-key-war_player_list'
-          );
-          const playerScroll = playerList?.querySelector(
-            '[data-testid="stVerticalBlockBorderWrapper"]'
-          );
-
-          if (playerSide && playerList) {{
-            const sideRect = playerSide.getBoundingClientRect();
-            const listRect = playerList.getBoundingClientRect();
-            const available = Math.max(
-              compact ? 0 : 72,
-              Math.floor(sideRect.bottom - listRect.top)
-            );
-
-            setImportant(playerList, 'height', `${{available}}px`);
-            setImportant(playerList, 'max-height', `${{available}}px`);
-            setImportant(playerList, 'min-height', compact ? '0px' : '72px');
-            setImportant(playerList, 'display', compact ? 'none' : 'block');
-            setImportant(playerList, 'visibility', compact ? 'hidden' : 'visible');
-            setImportant(playerList, 'opacity', compact ? '0' : '1');
-
-            setImportant(playerScroll, 'height', '100%');
-            setImportant(playerScroll, 'max-height', '100%');
-            setImportant(playerScroll, 'min-height', '0px');
-            setImportant(playerScroll, 'overflow-y', 'auto');
-            setImportant(playerScroll, 'overflow-x', 'hidden');
-            setImportant(playerScroll, 'pointer-events', 'auto');
-            bindScrollIsolation(playerScroll);
-          }}
-
-          const utilitySide = q(
-            '.st-key-v660_tray .st-key-v63_utility_side'
-          );
-          const utilityContent = q(
-            '.st-key-v660_tray .st-key-v632_utility_content'
-          );
-          const utilityScroll = utilityContent?.querySelector(
-            '[data-testid="stVerticalBlockBorderWrapper"]'
-          );
-
-          if (utilitySide && utilityContent) {{
-            const sideRect = utilitySide.getBoundingClientRect();
-            const contentRect = utilityContent.getBoundingClientRect();
-            const available = Math.max(
-              compact ? 0 : 72,
-              Math.floor(sideRect.bottom - contentRect.top)
-            );
-
-            setImportant(utilityContent, 'height', `${{available}}px`);
-            setImportant(utilityContent, 'max-height', `${{available}}px`);
-            setImportant(utilityContent, 'min-height', compact ? '0px' : '72px');
-            setImportant(utilityContent, 'display', compact ? 'none' : 'block');
-            setImportant(utilityContent, 'visibility', compact ? 'hidden' : 'visible');
-            setImportant(utilityContent, 'opacity', compact ? '0' : '1');
-
-            setImportant(utilityScroll, 'height', '100%');
-            setImportant(utilityScroll, 'max-height', '100%');
-            setImportant(utilityScroll, 'min-height', '0px');
-            setImportant(utilityScroll, 'overflow-y', 'auto');
-            setImportant(utilityScroll, 'overflow-x', 'hidden');
-            setImportant(utilityScroll, 'pointer-events', 'auto');
-            bindScrollIsolation(utilityScroll);
-
-            const iframe = utilityContent.querySelector('iframe');
-            if (iframe) {{
-              setImportant(iframe, 'height', `${{available}}px`);
-              setImportant(iframe, 'max-height', `${{available}}px`);
-              setImportant(iframe, 'min-height', '0px');
-            }}
-          }}
-        }};
-
-        const scheduleSync = () => {{
-          parentWin.requestAnimationFrame(() => {{
-            parentWin.requestAnimationFrame(syncInnerLayout);
-          }});
-        }};
-
-        const applyHeight = (height, persist = true) => {{
-          const safe = clamp(Math.round(height));
-          parentDoc.documentElement.style.setProperty(
-            '--fs-live-sheet-height',
-            `${{safe}}px`
-          );
-
-          const tray = getTray();
-          if (tray) {{
-            setImportant(tray, 'height', `${{safe}}px`);
-            setImportant(tray, 'min-height', '52px');
-            setImportant(
-              tray,
-              'max-height',
-              `${{Math.min(560, parentWin.innerHeight - 150)}}px`
-            );
-          }}
-
-          const handle = q('.st-key-v648_drag_handle');
-          if (handle) {{
-            setImportant(
-              handle,
-              'bottom',
-              `${{Math.max(43, safe - 9)}}px`
-            );
-          }}
-
-          scheduleSync();
-
-          if (persist) {{
-            try {{
-              parentWin.localStorage.setItem(STORAGE_KEY, String(safe));
-            }} catch (err) {{}}
-          }}
-        }};
-
-        let saved = null;
-        try {{
-          saved = Number(parentWin.localStorage.getItem(STORAGE_KEY));
-        }} catch (err) {{}}
-
-        applyHeight(
-          Number.isFinite(saved) && saved > 0
-            ? saved
-            : {int(initial_height)},
-          false
-        );
-
-        let dragging = false;
-        let startY = 0;
-        let startHeight = 0;
-
-        const move = (event) => {{
-          if (!dragging) return;
-          event.preventDefault();
-          applyHeight(startHeight + (startY - event.clientY), false);
-        }};
-
-        const stop = () => {{
-          if (!dragging) return;
-          dragging = false;
-          grip.classList.remove('dragging');
-
-          const tray = getTray();
-          if (tray) {{
-            applyHeight(
-              Math.round(tray.getBoundingClientRect().height),
-              true
-            );
-          }}
-
-          parentWin.removeEventListener('pointermove', move, true);
-          parentWin.removeEventListener('pointerup', stop, true);
-          parentWin.removeEventListener('pointercancel', stop, true);
-        }};
-
-        grip.addEventListener('pointerdown', (event) => {{
-          event.preventDefault();
-          const tray = getTray();
-          if (!tray) return;
-
-          dragging = true;
-          grip.classList.add('dragging');
-          startY =
-            event.clientY +
-            window.frameElement.getBoundingClientRect().top;
-          startHeight = tray.getBoundingClientRect().height;
-
-          parentWin.addEventListener('pointermove', move, true);
-          parentWin.addEventListener('pointerup', stop, true);
-          parentWin.addEventListener('pointercancel', stop, true);
-        }});
-
-        parentWin.addEventListener('resize', () => {{
-          const tray = getTray();
-          if (tray) {{
-            applyHeight(tray.getBoundingClientRect().height, false);
-          }}
-        }});
-
-        /*
-         * Sidebar collapse/expand and Streamlit CPU reruns replace DOM nodes.
-         * Re-measure after each mutation without changing the saved height.
-         */
-        let mutationTimer = null;
-        const observer = new MutationObserver(() => {{
-          parentWin.clearTimeout(mutationTimer);
-          mutationTimer = parentWin.setTimeout(() => {{
-            const tray = getTray();
-            if (!tray) return;
-
-            let current = null;
-            try {{
-              current = Number(
-                parentWin.localStorage.getItem(STORAGE_KEY)
-              );
-            }} catch (err) {{}}
-
-            applyHeight(
-              Number.isFinite(current) && current > 0
-                ? current
-                : tray.getBoundingClientRect().height,
-              false
-            );
-          }}, 40);
-        }});
-
-        observer.observe(parentDoc.body, {{
-          childList: true,
-          subtree: true,
-          attributes: true,
-          attributeFilter: ['aria-expanded', 'data-state', 'class']
-        }});
-
-        parentWin.setTimeout(scheduleSync, 100);
-        parentWin.setTimeout(scheduleSync, 350);
-      }})();
-      </script>
-    </body>
-    </html>
-    """
-
-    with st.container(key="v648_drag_handle"):
-        components.html(
-            drag_html,
-            height=22,
-            scrolling=False,
-        )
 
 def _render_player_side(
     deps: BottomSheetDependencies,
@@ -1092,6 +743,7 @@ def _render_utility_side(
     deps: BottomSheetDependencies,
     current_index: Optional[int],
     user_turn: bool,
+    utility_height: int,
 ) -> None:
     with st.container(key="v63_utility_side"):
         active_view = _current_utility_view()
@@ -1133,7 +785,7 @@ def _render_utility_side(
         active_view = _current_utility_view()
 
         with st.container(
-            height=120,
+            height=int(utility_height),
             border=False,
             key="v632_utility_content",
         ):
@@ -1148,7 +800,7 @@ def _render_utility_side(
             else:
                 _render_isolated_roster(
                     deps=deps,
-                    viewport_height=420,
+                    viewport_height=max(72, int(utility_height) - 4),
                 )
 
 
@@ -1158,13 +810,9 @@ def render_bottom_sheet(
     user_turn: bool,
 ) -> None:
     level = _current_level()
-    effective_level = 1 if level == 0 else level
-    settings = TRAY_LEVELS[effective_level]
-    _render_sheet_css(effective_level)
-
-    # The grip and content are sibling fixed elements driven by the same
-    # --fs-live-sheet-height value. Nothing can separate them vertically.
-    _render_drag_handle(int(settings["height"]))
+    settings = TRAY_LEVELS[level]
+    _render_sheet_css(level)
+    _render_tray_controls(level)
 
     with st.container(key="v660_tray"):
         player_col, utility_col = st.columns(
@@ -1185,4 +833,5 @@ def render_bottom_sheet(
                 deps,
                 current_index,
                 user_turn,
+                int(settings["utility_height"]),
             )
