@@ -1178,6 +1178,116 @@ def ensure_draft_filters():
     if "draft_search" not in st.session_state:
         st.session_state.draft_search = ""
 
+    # v7.3 player-table sorting persists through Streamlit/CPU reruns.
+    if "player_sort_column" not in st.session_state:
+        st.session_state.player_sort_column = "RK"
+    if "player_sort_ascending" not in st.session_state:
+        st.session_state.player_sort_ascending = True
+
+
+PLAYER_SORT_CONFIG = {
+    "RK": ("custom_rank", True),
+    "PLAYER": ("player", True),
+    "POS": ("position", True),
+    "ADP": ("consensus_adp", True),
+    "TIER": ("tier", True),
+    "SCORE": ("peter_score", False),
+    "PROJ": ("proj_pts", False),
+    "AVG": ("proj_avg", False),
+    "RUSH": ("rush_yds", False),
+    "REC": ("rec_yds", False),
+    "PASS": ("pass_yds", False),
+    "BYE": ("bye", True),
+    "VAL": ("_fs_value_sort", False),
+}
+
+
+def set_player_sort(column: str) -> None:
+    """Toggle active player-table sorting without resetting the tray."""
+    ensure_draft_filters()
+    column = str(column).upper()
+    if column not in PLAYER_SORT_CONFIG:
+        return
+
+    current = str(st.session_state.player_sort_column).upper()
+    if current == column:
+        st.session_state.player_sort_ascending = not bool(
+            st.session_state.player_sort_ascending
+        )
+    else:
+        st.session_state.player_sort_column = column
+        st.session_state.player_sort_ascending = PLAYER_SORT_CONFIG[column][1]
+
+
+def sort_player_pool(pool: pd.DataFrame, current_idx: int) -> pd.DataFrame:
+    """Sort the filtered draft pool by the active user-selected column."""
+    ensure_draft_filters()
+    result = pool.copy()
+
+    # VAL is live value vs the current overall pick.
+    adp_numeric = pd.to_numeric(
+        result.get("consensus_adp"),
+        errors="coerce",
+    )
+    current_pick = int(st.session_state.picks.loc[current_idx, "overall"])
+    result["_fs_value_sort"] = current_pick - adp_numeric
+
+    column = str(st.session_state.player_sort_column).upper()
+    field, default_ascending = PLAYER_SORT_CONFIG.get(
+        column,
+        ("custom_rank", True),
+    )
+    ascending = bool(
+        st.session_state.get(
+            "player_sort_ascending",
+            default_ascending,
+        )
+    )
+
+    if field not in result.columns:
+        field = "custom_rank"
+        ascending = True
+
+    numeric_fields = {
+        "custom_rank",
+        "consensus_adp",
+        "peter_score",
+        "proj_pts",
+        "proj_avg",
+        "rush_yds",
+        "rec_yds",
+        "pass_yds",
+        "bye",
+        "_fs_value_sort",
+    }
+
+    if field in numeric_fields:
+        result["_fs_active_sort"] = pd.to_numeric(
+            result[field],
+            errors="coerce",
+        )
+        result = result.sort_values(
+            ["_fs_active_sort", "custom_rank"],
+            ascending=[ascending, True],
+            na_position="last",
+            kind="stable",
+        )
+    else:
+        result["_fs_active_sort"] = (
+            result[field].fillna("").astype(str).str.casefold()
+        )
+        result = result.sort_values(
+            ["_fs_active_sort", "custom_rank"],
+            ascending=[ascending, True],
+            na_position="last",
+            kind="stable",
+        )
+
+    return result.drop(
+        columns=["_fs_active_sort", "_fs_value_sort"],
+        errors="ignore",
+    )
+
 
 def render_position_filter():
     positions = ["ALL", "QB", "RB", "WR", "TE"]
@@ -1454,24 +1564,13 @@ def render_v53_header(current_idx: Optional[int]):
 
 
 def render_v61_player_toolbar():
+    """Compact tray toolbar: search + always-visible position filters."""
     ensure_draft_filters()
 
-    tabs_col, search_col, filter_col = st.columns(
-        [2.15, 2.65, 4.9],
+    search_col, filter_col = st.columns(
+        [2.65, 7.35],
         gap="small",
     )
-
-    with tabs_col:
-        st.markdown(
-            """
-            <div class="v61-inline-tabs">
-                <span class="v61-inline-tab active">PLAYERS</span>
-                <span class="v61-inline-tab">QUEUE</span>
-                <span class="v61-inline-tab">WATCHLIST</span>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
 
     with search_col:
         st.text_input(
@@ -1787,11 +1886,15 @@ def render_player_picker_table(
     list_height_override: Optional[int] = None,
 ):
     clean_player_queue()
+    ensure_draft_filters()
+
     pool = filtered_draft_pool()
 
     if pool.empty:
         st.warning("No available players match this filter.")
         return
+
+    pool = sort_player_pool(pool, current_idx)
 
     headers = [
         "",
@@ -1828,19 +1931,34 @@ def render_player_picker_table(
         0.48,
     ]
 
+    active_sort = str(st.session_state.player_sort_column).upper()
+    active_ascending = bool(st.session_state.player_sort_ascending)
+
     header_cols = st.columns(widths)
-    for col, label in zip(header_cols, headers):
-        col.markdown(
-            f"<div class='player-table-header2'>{label}</div>",
-            unsafe_allow_html=True,
-        )
+    for index, (col, label) in enumerate(zip(header_cols, headers)):
+        if not label:
+            col.markdown(
+                "<div class='player-table-header2'></div>",
+                unsafe_allow_html=True,
+            )
+            continue
 
-    st.markdown(
-        '<div class="player-header-divider"></div>',
-        unsafe_allow_html=True,
-    )
+        indicator = ""
+        if label == active_sort:
+            indicator = " ▲" if active_ascending else " ▼"
 
-    shown = pool.head(60).reset_index(drop=True)
+        with col:
+            if st.button(
+                f"{label}{indicator}",
+                key=f"v730_sort_{label}",
+                help=f"Sort by {label}",
+                use_container_width=True,
+                type="secondary",
+            ):
+                set_player_sort(label)
+                st.rerun()
+
+    shown = pool.head(100).reset_index(drop=True)
     list_height = (
         int(list_height_override)
         if list_height_override is not None
@@ -1949,12 +2067,6 @@ def render_player_picker_table(
                 """,
                 unsafe_allow_html=True,
             )
-
-            st.markdown(
-                '<div class="player-row-divider"></div>',
-                unsafe_allow_html=True,
-            )
-
 
 
 

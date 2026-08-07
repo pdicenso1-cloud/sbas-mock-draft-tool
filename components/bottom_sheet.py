@@ -677,6 +677,286 @@ def _render_sheet_css(level: int) -> None:
             overflow: visible !important;
         }}
 
+
+        /* ============================================================
+           v7.3.0 Tray UX: compact rows + sortable controls + folder tabs
+           ============================================================ */
+
+        /* Search and ALL/QB/RB/WR/TE share one fixed toolbar row. */
+        .st-key-v61_player_toolbar {{
+            flex: 0 0 38px !important;
+            min-height: 38px !important;
+            height: 38px !important;
+            max-height: 38px !important;
+            overflow: visible !important;
+            z-index: 10060 !important;
+        }}
+
+        .st-key-v61_player_toolbar
+            > div
+            > div
+            > [data-testid="stVerticalBlock"],
+        .st-key-v61_player_toolbar
+            [data-testid="stHorizontalBlock"] {{
+            min-height: 36px !important;
+            height: 36px !important;
+            max-height: 36px !important;
+            overflow: visible !important;
+            align-items: center !important;
+        }}
+
+        .st-key-v61_player_toolbar [data-testid="stTextInput"] {{
+            height: 32px !important;
+            min-height: 32px !important;
+        }}
+
+        .st-key-v61_player_toolbar [data-testid="stTextInputRootElement"] {{
+            height: 32px !important;
+            min-height: 32px !important;
+            border-radius: 7px !important;
+        }}
+
+        .st-key-draft_pos_ALL,
+        .st-key-draft_pos_QB,
+        .st-key-draft_pos_RB,
+        .st-key-draft_pos_WR,
+        .st-key-draft_pos_TE {{
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            min-width: 0 !important;
+            overflow: visible !important;
+        }}
+
+        .st-key-draft_pos_ALL button,
+        .st-key-draft_pos_QB button,
+        .st-key-draft_pos_RB button,
+        .st-key-draft_pos_WR button,
+        .st-key-draft_pos_TE button {{
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            height: 30px !important;
+            min-height: 30px !important;
+            padding: 0 9px !important;
+            border-radius: 999px !important;
+            background: #1B293D !important;
+            border: 1px solid #40526C !important;
+            color: #E7EEF8 !important;
+            -webkit-text-fill-color: #E7EEF8 !important;
+            font-size: .58rem !important;
+            font-weight: 820 !important;
+        }}
+
+        .st-key-draft_pos_ALL button[kind="primary"],
+        .st-key-draft_pos_QB button[kind="primary"],
+        .st-key-draft_pos_RB button[kind="primary"],
+        .st-key-draft_pos_WR button[kind="primary"],
+        .st-key-draft_pos_TE button[kind="primary"] {{
+            background: #2E68D4 !important;
+            border-color: #74A3FF !important;
+            color: #FFFFFF !important;
+            -webkit-text-fill-color: #FFFFFF !important;
+        }}
+
+        /*
+         * Sort header buttons are intentionally tiny; player list starts
+         * immediately beneath them.
+         */
+        .st-key-v63_player_side
+            > div
+            > div
+            > [data-testid="stVerticalBlock"]
+            > [data-testid="stHorizontalBlock"]:not(:first-child) {{
+            flex: 0 0 auto !important;
+        }}
+
+        .st-key-v63_player_side button[key^="v730_sort_"],
+        .st-key-v63_player_side [data-testid="stButton"] button {{
+            text-overflow: ellipsis !important;
+        }}
+
+        /* Streamlit keys create wrapper classes: style each sortable header. */
+        .st-key-v730_sort_RK button,
+        .st-key-v730_sort_PLAYER button,
+        .st-key-v730_sort_POS button,
+        .st-key-v730_sort_ADP button,
+        .st-key-v730_sort_TIER button,
+        .st-key-v730_sort_SCORE button,
+        .st-key-v730_sort_PROJ button,
+        .st-key-v730_sort_AVG button,
+        .st-key-v730_sort_RUSH button,
+        .st-key-v730_sort_REC button,
+        .st-key-v730_sort_PASS button,
+        .st-key-v730_sort_BYE button,
+        .st-key-v730_sort_VAL button {{
+            height: 24px !important;
+            min-height: 24px !important;
+            padding: 0 2px !important;
+            border: 0 !important;
+            border-radius: 4px !important;
+            background: transparent !important;
+            color: #9FAFC5 !important;
+            -webkit-text-fill-color: #9FAFC5 !important;
+            font-size: .47rem !important;
+            font-weight: 820 !important;
+            line-height: 1 !important;
+            box-shadow: none !important;
+        }}
+
+        .st-key-v730_sort_RK button:hover,
+        .st-key-v730_sort_PLAYER button:hover,
+        .st-key-v730_sort_POS button:hover,
+        .st-key-v730_sort_ADP button:hover,
+        .st-key-v730_sort_TIER button:hover,
+        .st-key-v730_sort_SCORE button:hover,
+        .st-key-v730_sort_PROJ button:hover,
+        .st-key-v730_sort_AVG button:hover,
+        .st-key-v730_sort_RUSH button:hover,
+        .st-key-v730_sort_REC button:hover,
+        .st-key-v730_sort_PASS button:hover,
+        .st-key-v730_sort_BYE button:hover,
+        .st-key-v730_sort_VAL button:hover {{
+            background: #1C2A3E !important;
+            color: #FFFFFF !important;
+            -webkit-text-fill-color: #FFFFFF !important;
+        }}
+
+        /*
+         * Dense player rows. At the 238px expanded list viewport this targets
+         * 6–7 visible players before scrolling.
+         */
+        .st-key-v660_tray
+            .st-key-war_player_list
+            [data-testid="stVerticalBlock"] {{
+            gap: 0 !important;
+        }}
+
+        .st-key-v660_tray
+            .st-key-war_player_list
+            [data-testid="stHorizontalBlock"] {{
+            min-height: 31px !important;
+            height: 31px !important;
+            max-height: 31px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            gap: .18rem !important;
+            align-items: center !important;
+            border-bottom: 1px solid rgba(118,139,169,.10) !important;
+            overflow: hidden !important;
+        }}
+
+        .st-key-v660_tray
+            .st-key-war_player_list
+            [data-testid="stColumn"] {{
+            min-height: 31px !important;
+            height: 31px !important;
+            max-height: 31px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+        }}
+
+        .st-key-v660_tray
+            .st-key-war_player_list button {{
+            width: 22px !important;
+            min-width: 22px !important;
+            max-width: 22px !important;
+            height: 22px !important;
+            min-height: 22px !important;
+            max-height: 22px !important;
+            padding: 0 !important;
+            border-radius: 6px !important;
+            font-size: .64rem !important;
+            line-height: 1 !important;
+        }}
+
+        .st-key-v660_tray .player-name2 {{
+            font-size: .64rem !important;
+            line-height: 1 !important;
+            font-weight: 790 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }}
+
+        .st-key-v660_tray .player-sub2 {{
+            font-size: .44rem !important;
+            line-height: 1 !important;
+            margin: 2px 0 0 !important;
+            padding: 0 !important;
+        }}
+
+        .st-key-v660_tray .rank2,
+        .st-key-v660_tray .stat2 {{
+            font-size: .52rem !important;
+            line-height: 1 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }}
+
+        .st-key-v660_tray .value-badge {{
+            min-width: 24px !important;
+            height: 18px !important;
+            min-height: 18px !important;
+            padding: 0 4px !important;
+            font-size: .45rem !important;
+            line-height: 18px !important;
+        }}
+
+        /*
+         * Queue / Roster mirror the top file-folder navigation treatment.
+         */
+        .st-key-v63_utility_side
+            [data-testid="stHorizontalBlock"]:first-of-type {{
+            flex: 0 0 34px !important;
+            min-height: 34px !important;
+            height: 34px !important;
+            gap: 0 !important;
+            align-items: flex-end !important;
+            border-bottom: 1px solid rgba(104,128,165,.34) !important;
+            overflow: visible !important;
+            padding: 0 0 1px !important;
+        }}
+
+        .st-key-v632_queue_view,
+        .st-key-v632_roster_view {{
+            overflow: visible !important;
+            z-index: 2 !important;
+        }}
+
+        .st-key-v632_queue_view button,
+        .st-key-v632_roster_view button {{
+            position: relative !important;
+            min-height: 32px !important;
+            height: 32px !important;
+            margin: 0 -5px 0 0 !important;
+            padding: 0 18px 0 12px !important;
+            border-radius: 7px 7px 0 0 !important;
+            border: 1px solid #3E4E67 !important;
+            background: linear-gradient(180deg, #273348 0%, #1C2738 100%) !important;
+            clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 100%, 0 100%) !important;
+            color: #C5D0E1 !important;
+            -webkit-text-fill-color: #C5D0E1 !important;
+            font-size: .53rem !important;
+            font-weight: 820 !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.05) !important;
+        }}
+
+        .st-key-v632_queue_view button[kind="primary"],
+        .st-key-v632_roster_view button[kind="primary"] {{
+            min-height: 35px !important;
+            height: 35px !important;
+            margin-top: -3px !important;
+            background: linear-gradient(180deg, #347DF0 0%, #245DC8 100%) !important;
+            border-color: #68A0FF !important;
+            color: #FFFFFF !important;
+            -webkit-text-fill-color: #FFFFFF !important;
+            box-shadow:
+                inset 0 1px 0 rgba(255,255,255,.18),
+                0 -2px 10px rgba(51,122,241,.24) !important;
+            z-index: 4 !important;
+        }}
+
         /* Ensure every obsolete drag/control implementation stays retired. */
         .st-key-v648_drag_handle,
         .st-key-v647_tray_controls,
@@ -755,7 +1035,7 @@ def _render_utility_side(
 
         with queue_col:
             st.button(
-                f"QUEUE ({len(st.session_state.player_queue)})",
+                f"Queue  {len(st.session_state.player_queue)}",
                 key="v632_queue_view",
                 type=(
                     "primary"
@@ -769,7 +1049,7 @@ def _render_utility_side(
 
         with roster_col:
             st.button(
-                "ROSTER",
+                "Roster",
                 key="v632_roster_view",
                 type=(
                     "primary"
