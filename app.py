@@ -4782,7 +4782,87 @@ def render_dynamic_dock_css():
             font-weight: 900 !important;
             border-radius: 7px !important;
         }}
-        </style>
+        
+/* ============================================================
+   FantasySync v6.7.1 — Full-width snake board + round.pick labels
+   ============================================================ */
+
+/* Force the Streamlit page shell to use the browser width, regardless of
+   older max-width rules retained from pre-v6.7 sidebar builds. */
+[data-testid="stMain"],
+[data-testid="stMainBlockContainer"],
+[data-testid="stAppViewContainer"] .main,
+.main,
+.main .block-container {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    min-width: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    box-sizing: border-box !important;
+}
+
+/* Navigation/header stay comfortably inset while the board itself uses nearly
+   the full viewport. */
+.st-key-v670_top_nav,
+.st-key-v640_header,
+.st-key-v63_draft_message {
+    width: calc(100vw - 28px) !important;
+    max-width: calc(100vw - 28px) !important;
+    margin-left: 14px !important;
+    margin-right: 14px !important;
+    box-sizing: border-box !important;
+}
+
+/* The draft grid is intentionally wider than the ordinary content column. */
+.st-key-v63_board_region {
+    width: calc(100vw - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+    margin-left: 8px !important;
+    margin-right: 8px !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    box-sizing: border-box !important;
+}
+
+.st-key-v63_board_region .v643-board-scroll,
+.st-key-v63_board_region .v643-board-content,
+.st-key-v63_board_region .snake-board-wrap,
+.st-key-v63_board_region .snake-board-shell,
+.st-key-v63_board_region .snake-board-grid,
+.st-key-v63_board_region .snake-draft-grid {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box !important;
+}
+
+/* Round labels no longer exist; prevent stale CSS from reserving space if a
+   browser keeps an old DOM fragment during a rerun. */
+.st-key-v63_board_region .snake-round-label {
+    display: none !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+}
+
+/* Pick notation is now the useful orientation cue, so make it a touch easier
+   to read without competing with the player name. */
+.st-key-v63_board_region .snake-pick {
+    font-size: .52rem !important;
+    font-weight: 780 !important;
+    letter-spacing: .01em !important;
+    opacity: .78 !important;
+}
+
+</style>
         """,
         unsafe_allow_html=True,
     )
@@ -5284,12 +5364,10 @@ def snake_board_html() -> str:
 
     html = ['<div style="width:100%;">']
     html.append(
-        '<div style="display:grid;'
-        'grid-template-columns:38px repeat(10,minmax(0,1fr));'
+        '<div class="snake-draft-grid" style="display:grid;'
+        'grid-template-columns:repeat(10,minmax(0,1fr));'
         'gap:2px;width:100%;">'
     )
-
-    html.append('<div></div>')
 
     for slot in range(1, 11):
         team = team_by_slot.get(
@@ -5313,10 +5391,6 @@ def snake_board_html() -> str:
         )
 
     for rnd in range(1, int(st.session_state.rounds) + 1):
-        html.append(
-            f'<div class="snake-cell snake-round-label">R{rnd}</div>'
-        )
-
         round_rows = st.session_state.picks[
             st.session_state.picks["round"] == rnd
         ]
@@ -5363,9 +5437,14 @@ def snake_board_html() -> str:
             keeper_star = " ⭐" if source == "Keeper" else ""
             waiting = "Waiting…" if player == "—" else player
 
+            # Sleeper-style snake notation keeps team columns fixed while
+            # showing the actual pick sequence within each round.
+            pick_in_round = slot if rnd % 2 == 1 else 11 - slot
+            pick_label = f"{rnd}.{pick_in_round}"
+
             html.append(
                 f'<div class="{" ".join(classes)}">'
-                f'<div class="snake-pick">#{int(r.overall)}{keeper_star}</div>'
+                f'<div class="snake-pick">{pick_label}{keeper_star}</div>'
                 f'<div class="snake-player" title="{player}">{waiting}</div>'
                 f'<div>{badge}</div>'
                 f'<div class="tile-owner" title="{owner}">{owner}</div>'
