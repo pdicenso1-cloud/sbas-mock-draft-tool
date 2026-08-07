@@ -979,14 +979,14 @@ def _render_sheet_css(level: int) -> None:
         .st-key-v730_sort_REC,
         .st-key-v730_sort_PASS,
         .st-key-v730_sort_BYE,
-        .st-key-v730_sort_VAL {
+        .st-key-v730_sort_VAL {{
             min-height: 17px !important;
             height: 17px !important;
             max-height: 17px !important;
             margin: 0 !important;
             padding: 0 !important;
             overflow: visible !important;
-        }
+        }}
 
         .st-key-v730_sort_RK [data-testid="stButton"],
         .st-key-v730_sort_PLAYER [data-testid="stButton"],
@@ -1000,13 +1000,13 @@ def _render_sheet_css(level: int) -> None:
         .st-key-v730_sort_REC [data-testid="stButton"],
         .st-key-v730_sort_PASS [data-testid="stButton"],
         .st-key-v730_sort_BYE [data-testid="stButton"],
-        .st-key-v730_sort_VAL [data-testid="stButton"] {
+        .st-key-v730_sort_VAL [data-testid="stButton"] {{
             min-height: 17px !important;
             height: 17px !important;
             max-height: 17px !important;
             margin: 0 !important;
             padding: 0 !important;
-        }
+        }}
 
         .st-key-v730_sort_RK button,
         .st-key-v730_sort_PLAYER button,
@@ -1020,7 +1020,7 @@ def _render_sheet_css(level: int) -> None:
         .st-key-v730_sort_REC button,
         .st-key-v730_sort_PASS button,
         .st-key-v730_sort_BYE button,
-        .st-key-v730_sort_VAL button {
+        .st-key-v730_sort_VAL button {{
             width: auto !important;
             min-width: 0 !important;
             max-width: 100% !important;
@@ -1041,7 +1041,7 @@ def _render_sheet_css(level: int) -> None:
             letter-spacing: .01em !important;
             text-align: center !important;
             cursor: pointer !important;
-        }
+        }}
 
         .st-key-v730_sort_RK button:hover,
         .st-key-v730_sort_PLAYER button:hover,
@@ -1055,7 +1055,7 @@ def _render_sheet_css(level: int) -> None:
         .st-key-v730_sort_REC button:hover,
         .st-key-v730_sort_PASS button:hover,
         .st-key-v730_sort_BYE button:hover,
-        .st-key-v730_sort_VAL button:hover {
+        .st-key-v730_sort_VAL button:hover {{
             background: transparent !important;
             color: #EAF2FF !important;
             -webkit-text-fill-color: #EAF2FF !important;
@@ -1063,7 +1063,7 @@ def _render_sheet_css(level: int) -> None:
             text-underline-offset: 2px !important;
             box-shadow: none !important;
             transform: none !important;
-        }
+        }}
 
         .st-key-v730_sort_RK button:focus,
         .st-key-v730_sort_PLAYER button:focus,
@@ -1077,10 +1077,10 @@ def _render_sheet_css(level: int) -> None:
         .st-key-v730_sort_REC button:focus,
         .st-key-v730_sort_PASS button:focus,
         .st-key-v730_sort_BYE button:focus,
-        .st-key-v730_sort_VAL button:focus {
+        .st-key-v730_sort_VAL button:focus {{
             outline: none !important;
             box-shadow: none !important;
-        }
+        }}
 
         /*
          * Dense player rows:
@@ -1088,7 +1088,7 @@ def _render_sheet_css(level: int) -> None:
          */
         .st-key-v660_tray
             .st-key-war_player_list
-            [data-testid="stHorizontalBlock"] {
+            [data-testid="stHorizontalBlock"] {{
             min-height: 24px !important;
             height: 24px !important;
             max-height: 24px !important;
@@ -1097,20 +1097,20 @@ def _render_sheet_css(level: int) -> None:
             gap: .12rem !important;
             align-items: center !important;
             border-bottom: 1px solid rgba(118,139,169,.075) !important;
-        }
+        }}
 
         .st-key-v660_tray
             .st-key-war_player_list
-            [data-testid="stColumn"] {
+            [data-testid="stColumn"] {{
             min-height: 24px !important;
             height: 24px !important;
             max-height: 24px !important;
             margin: 0 !important;
             padding: 0 !important;
-        }
+        }}
 
         .st-key-v660_tray
-            .st-key-war_player_list button {
+            .st-key-war_player_list button {{
             width: 19px !important;
             min-width: 19px !important;
             max-width: 19px !important;
@@ -1121,39 +1121,39 @@ def _render_sheet_css(level: int) -> None:
             border-radius: 5px !important;
             font-size: .56rem !important;
             line-height: 1 !important;
-        }
+        }}
 
-        .st-key-v660_tray .player-name2 {
+        .st-key-v660_tray .player-name2 {{
             font-size: .57rem !important;
             line-height: .95 !important;
             font-weight: 800 !important;
             margin: 0 !important;
             padding: 0 !important;
-        }
+        }}
 
-        .st-key-v660_tray .player-sub2 {
+        .st-key-v660_tray .player-sub2 {{
             font-size: .37rem !important;
             line-height: .95 !important;
             margin: 1px 0 0 !important;
             padding: 0 !important;
-        }
+        }}
 
         .st-key-v660_tray .rank2,
-        .st-key-v660_tray .stat2 {
+        .st-key-v660_tray .stat2 {{
             font-size: .46rem !important;
             line-height: 1 !important;
             margin: 0 !important;
             padding: 0 !important;
-        }
+        }}
 
-        .st-key-v660_tray .value-badge {
+        .st-key-v660_tray .value-badge {{
             min-width: 21px !important;
             height: 16px !important;
             min-height: 16px !important;
             padding: 0 3px !important;
             font-size: .39rem !important;
             line-height: 16px !important;
-        }
+        }}
 
         /* Ensure every obsolete drag/control implementation stays retired. */
         .st-key-v648_drag_handle,
