@@ -1,23 +1,12 @@
-# FantasySync v7.1.0 — Folder Navigation Only
+# FantasySync v7.2.1
 
-This is a CSS-only navigation update based on the working v7.0.3 startup build.
+Replace only:
 
-## Replace exactly one production file
+`components/bottom_sheet.py`
 
-```text
-styles/legacy.css
-```
-
-## Intentionally unchanged
-
-- app.py
-- fantasysync/entrypoint.py
-- fantasysync/runtime.py
-- fantasysync/navigation.py
-- components/draft_board.py
-- components/bottom_sheet.py
-- player tray functionality
-- Queue / Roster functionality
-- CPU timing and draft logic
-
-The existing top-navigation radio controls keep their current behavior; only their visual appearance is changed to matte overlapping file-folder tabs.
+Changes:
+- Compact tray reduced from 146 px to 58 px.
+- Compact state shows only the slim tray bar and arrow controls.
+- Draft height remains 236 px.
+- Expanded height remains 332 px.
+- Draft board is untouched.

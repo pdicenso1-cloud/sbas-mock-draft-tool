@@ -13,9 +13,9 @@ TRAY_LEVELS = {
     # Tuned to leave roughly five board rows visible on a typical laptop.
     0: {
         "name": "Compact",
-        "height": 146,
-        "player_height": 62,
-        "utility_height": 78,
+        "height": 58,
+        "player_height": 0,
+        "utility_height": 0,
     },
     # Balanced drafting state.
     1: {
@@ -815,23 +815,30 @@ def render_bottom_sheet(
     _render_tray_controls(level)
 
     with st.container(key="v660_tray"):
-        player_col, utility_col = st.columns(
-            [6.65, 2.35],
-            gap="small",
-        )
-
-        with player_col:
-            _render_player_side(
-                deps,
-                current_index,
-                user_turn,
-                int(settings["player_height"]),
+        if level == 0:
+            # Fully compact = low-profile bar only.
+            st.markdown(
+                '<div class="v721-compact-tray-spacer"></div>',
+                unsafe_allow_html=True,
+            )
+        else:
+            player_col, utility_col = st.columns(
+                [6.65, 2.35],
+                gap="small",
             )
 
-        with utility_col:
-            _render_utility_side(
-                deps,
-                current_index,
-                user_turn,
-                int(settings["utility_height"]),
-            )
+            with player_col:
+                _render_player_side(
+                    deps,
+                    current_index,
+                    user_turn,
+                    int(settings["player_height"]),
+                )
+
+            with utility_col:
+                _render_utility_side(
+                    deps,
+                    current_index,
+                    user_turn,
+                    int(settings["utility_height"]),
+                )
