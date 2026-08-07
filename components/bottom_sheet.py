@@ -524,10 +524,18 @@ def _render_sheet_css(level: int) -> None:
          * container's own root element - a stable, public behavior) and
          * ALSO to the older wrapper pattern as a harmless no-op fallback in
          * case a future release reintroduces it.
+         *
+         * Confirmed via browser console (getComputedStyle) that a different
+         * rule elsewhere in this file was winning the overflow-y property
+         * with higher CSS specificity, leaving this list stuck at
+         * overflow-y: hidden even though this rule also used !important.
+         * The class is repeated below to artificially raise this selector's
+         * specificity above any realistic competing rule in this file,
+         * rather than tracking down and re-balancing every other selector.
          */
-        .st-key-v660_tray .st-key-war_player_list,
+        .st-key-v660_tray .st-key-war_player_list.st-key-war_player_list.st-key-war_player_list,
         .st-key-v660_tray
-            .st-key-war_player_list
+            .st-key-war_player_list.st-key-war_player_list.st-key-war_player_list
             [data-testid="stVerticalBlockBorderWrapper"] {{
             flex: 1 1 auto !important;
             height: 100% !important;
@@ -655,10 +663,11 @@ def _render_sheet_css(level: int) -> None:
          * Streamlit DOM change can't silently turn "scrolls" into "clips".
          * Applied directly to .st-key-v632_utility_content itself (confirmed
          * via devtools to be the real stVerticalBlock in current Streamlit),
-         * with the older wrapper selector kept as a harmless fallback.
+         * with the older wrapper selector kept as a harmless fallback. Class
+         * repeated to win any specificity conflict, same as the player list.
          */
-        .st-key-v632_utility_content,
-        .st-key-v632_utility_content
+        .st-key-v632_utility_content.st-key-v632_utility_content.st-key-v632_utility_content,
+        .st-key-v632_utility_content.st-key-v632_utility_content.st-key-v632_utility_content
             [data-testid="stVerticalBlockBorderWrapper"] {{
             flex: 1 1 auto !important;
             height: 100% !important;
