@@ -4332,27 +4332,13 @@ body:has(section[data-testid="stSidebar"][aria-expanded="true"])
 }
 
 
-/* ============================================================
-   FantasySync v6.5.1 — Live tray fill and player scrolling
-   ============================================================ */
-
-.st-key-v650_tray_content {
-    padding-bottom: 0 !important;
-    border-bottom: 0 !important;
-}
-
+/* FantasySync v6.5.2 tray content safeguards */
 .st-key-v650_tray_content .player-row-divider,
 .st-key-v650_tray_content .player-header-divider {
     display: none !important;
     height: 0 !important;
     margin: 0 !important;
     border: 0 !important;
-    background: transparent !important;
-}
-
-.st-key-v650_tray_content .st-key-war_player_list {
-    margin-bottom: 0 !important;
-    padding-bottom: 0 !important;
 }
 
 </style>
@@ -6479,7 +6465,7 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v6.5.1</div>',
+        '<div class="sidebar-version">FantasySync · v6.5.2</div>',
         unsafe_allow_html=True,
     )
 
