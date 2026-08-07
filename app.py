@@ -35,7 +35,7 @@ ADP_COLUMNS = {
     "WalterPicks": "walterpicks_adp",
 }
 
-st.set_page_config(page_title="Susan Boyles Ass Sweat — Mock Draft Tool", page_icon="🏈", layout="wide")
+st.set_page_config(page_title="Susan Boyles Ass Sweat — Mock Draft Tool", page_icon="🏈", layout="wide", initial_sidebar_state="collapsed")
 
 st.markdown("""
 <style>
@@ -4370,6 +4370,193 @@ body:has(section[data-testid="stSidebar"][aria-expanded="true"])
     border: 0 !important;
 }
 
+
+/* ============================================================
+   FantasySync v6.7.0 — Sidebar-free top navigation shell
+   ============================================================ */
+
+/* Remove Streamlit's sidebar and its collapse/expand control completely. */
+section[data-testid="stSidebar"],
+[data-testid="stSidebarCollapsedControl"],
+[data-testid="collapsedControl"] {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+}
+
+/* One stable viewport width for every page. */
+[data-testid="stAppViewContainer"] .main,
+[data-testid="stMain"],
+.main {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.main .block-container {
+    width: calc(100vw - 28px) !important;
+    max-width: calc(100vw - 28px) !important;
+    min-width: 0 !important;
+    margin: 0 14px !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-top: .20rem !important;
+    box-sizing: border-box !important;
+}
+
+/* Top navigation strip. */
+.st-key-v670_top_nav {
+    width: 100% !important;
+    min-height: 42px !important;
+    margin: 0 0 5px !important;
+    padding: 3px 6px !important;
+    border: 1px solid rgba(148,163,184,.16) !important;
+    border-radius: 9px !important;
+    background: rgba(13,25,42,.92) !important;
+    box-shadow: 0 3px 12px rgba(0,0,0,.15) !important;
+    overflow: hidden !important;
+}
+
+.st-key-v670_top_nav > div,
+.st-key-v670_top_nav > div > div,
+.st-key-v670_top_nav [data-testid="stHorizontalBlock"] {
+    min-height: 34px !important;
+    height: auto !important;
+    align-items: center !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Horizontal radio behaves like compact application tabs. */
+.st-key-v670_top_nav [data-testid="stRadio"] {
+    width: 100% !important;
+    min-width: 0 !important;
+}
+
+.st-key-v670_top_nav [data-testid="stRadio"] > div {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 3px !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: none !important;
+    padding: 0 !important;
+}
+
+.st-key-v670_top_nav [data-testid="stRadio"] > div::-webkit-scrollbar {
+    display: none !important;
+}
+
+.st-key-v670_top_nav [data-testid="stRadio"] label {
+    flex: 0 0 auto !important;
+    min-height: 30px !important;
+    height: 30px !important;
+    margin: 0 !important;
+    padding: 0 10px !important;
+    border: 1px solid transparent !important;
+    border-radius: 7px !important;
+    background: transparent !important;
+    transition: background .12s ease, border-color .12s ease !important;
+}
+
+.st-key-v670_top_nav [data-testid="stRadio"] label:hover {
+    background: rgba(67,91,130,.23) !important;
+    border-color: rgba(111,139,183,.22) !important;
+}
+
+.st-key-v670_top_nav [data-testid="stRadio"] label:has(input:checked) {
+    background: #263B62 !important;
+    border-color: #4775B8 !important;
+    box-shadow: inset 0 -2px 0 #5B8CFF !important;
+}
+
+.st-key-v670_top_nav [data-testid="stRadio"] label > div:first-child {
+    display: none !important;
+}
+
+.st-key-v670_top_nav [data-testid="stRadio"] label p {
+    margin: 0 !important;
+    color: #B7C3D6 !important;
+    -webkit-text-fill-color: #B7C3D6 !important;
+    font-size: .58rem !important;
+    font-weight: 760 !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+}
+
+.st-key-v670_top_nav [data-testid="stRadio"] label:has(input:checked) p {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+
+/* Compact utility controls at the far right. */
+.st-key-v670_top_nav button,
+.st-key-v670_top_nav [data-testid="stDownloadButton"] button {
+    min-height: 30px !important;
+    height: 30px !important;
+    padding: 0 8px !important;
+    border-radius: 7px !important;
+    border: 1px solid #35445C !important;
+    background: #121E30 !important;
+    color: #E8EEF7 !important;
+    -webkit-text-fill-color: #E8EEF7 !important;
+    font-size: .54rem !important;
+    font-weight: 760 !important;
+    box-shadow: none !important;
+}
+
+.st-key-v670_top_nav button:hover,
+.st-key-v670_top_nav [data-testid="stDownloadButton"] button:hover {
+    background: #1B2A41 !important;
+    border-color: #536A8E !important;
+}
+
+/* Draft Room and tray now use the same fixed full-width coordinate system. */
+.st-key-v640_header,
+.st-key-v63_draft_message,
+.st-key-v63_board_region,
+.v643-board-scroll,
+.v643-board-content,
+.snake-board-wrap,
+.snake-board-shell,
+.snake-board-grid {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+.st-key-v660_tray {
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+}
+
+.st-key-v648_drag_handle {
+    left: 50% !important;
+}
+
+@media (max-width: 1180px) {
+    .st-key-v670_top_nav [data-testid="stRadio"] label {
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+    }
+
+    .st-key-v670_top_nav [data-testid="stRadio"] label p {
+        font-size: .54rem !important;
+    }
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -6395,108 +6582,81 @@ if auto_pick_user_if_expired():
 
 # The Draft Room renders its own compact v5.3 header.
 
-with st.sidebar:
-    st.markdown(
-        """
-        <div class="sidebar-brand">
-            <div class="sidebar-brand-icon">🏈</div>
-            <div class="sidebar-brand-name">FantasySync</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+# -----------------------------------------------------------------------------
+# v6.7.0 — Top navigation shell
+# -----------------------------------------------------------------------------
+# The application now opens directly to Draft Room and no longer renders a
+# left sidebar. All former navigation destinations live in a compact top row.
+
+page_options = [
+    "Draft Room",
+    "Rankings",
+    "Recommendations",
+    "Draft Grades",
+    "Data Status",
+    "League History",
+    "Settings",
+    "Import / Export",
+    "Help & Docs",
+]
+
+if "top_navigation" not in st.session_state:
+    st.session_state.top_navigation = "Draft Room"
+
+with st.container(key="v670_top_nav"):
+    nav_col, reset_col, download_col = st.columns(
+        [8.9, 0.72, 0.92],
+        gap="small",
     )
 
-    st.markdown(
-        '<div class="sidebar-section-label">NAVIGATION</div>',
-        unsafe_allow_html=True,
-    )
-
-    page_options = [
-        "▣  Draft Room",
-        "▥  Rankings",
-        "★  Recommendations",
-        "♜  Draft Grades",
-        "▥  Data Status",
-        "◴  League History",
-        "⚙  Settings",
-        "⇩  Import / Export",
-        "?  Help & Docs",
-    ]
-
-    selected_nav = st.radio(
-        "Navigation",
-        page_options,
-        key="sidebar_navigation",
-        label_visibility="collapsed",
-    )
-
-    selected_page = {
-        "▣  Draft Room": "Draft Room",
-        "▥  Rankings": "Rankings & ADP",
-        "★  Recommendations": "Recommendations",
-        "♜  Draft Grades": "League History",
-        "▥  Data Status": "Available Players",
-        "◴  League History": "League History",
-        "⚙  Settings": "Settings",
-        "⇩  Import / Export": "Keepers & Picks",
-        "?  Help & Docs": "League Setup",
-    }[selected_nav]
-
-    team_count = len(st.session_state.teams)
-    st.markdown(
-        f"""
-        <div class="sidebar-league-card">
-            <div class="sidebar-league-name">
-                Susan Boyles Ass Sweat
-            </div>
-            <div class="sidebar-league-meta">
-                <span>Teams</span>
-                <strong>{team_count}</strong>
-            </div>
-            <div class="sidebar-league-meta">
-                <span>Rounds</span>
-                <strong>{int(st.session_state.rounds)}</strong>
-            </div>
-            <div class="sidebar-league-meta">
-                <span>Pick Clock</span>
-                <strong>{int(st.session_state.pick_clock_seconds)}s</strong>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.markdown(
-        '<div class="sidebar-section-label">DRAFT UTILITIES</div>',
-        unsafe_allow_html=True,
-    )
-
-    if st.button(
-        "↺ Reset Draft",
-        use_container_width=True,
-        key="sidebar_reset_draft",
-    ):
-        rebuild_draft()
-        st.session_state.draft_active = False
-        st.session_state.clock_running = False
-        st.session_state.draft_message = (
-            "Draft reset. Select a team and press Start Draft."
+    with nav_col:
+        selected_nav = st.radio(
+            "FantasySync Navigation",
+            page_options,
+            key="top_navigation",
+            horizontal=True,
+            label_visibility="collapsed",
         )
-        st.rerun()
 
-    state_json = json.dumps(serializable_state(), indent=2)
-    st.download_button(
-        "⬇ Download Draft State",
-        data=state_json,
-        file_name="sbas_mock_draft_state.json",
-        mime="application/json",
-        use_container_width=True,
-    )
+    with reset_col:
+        if st.button(
+            "↺ Reset",
+            use_container_width=True,
+            key="top_reset_draft",
+            help="Reset the current mock draft",
+        ):
+            rebuild_draft()
+            st.session_state.draft_active = False
+            st.session_state.clock_running = False
+            st.session_state.draft_message = (
+                "Draft reset. Select a team and press Start Draft."
+            )
+            st.rerun()
 
-    st.markdown(
-        '<div class="sidebar-version">FantasySync · v6.6.0</div>',
-        unsafe_allow_html=True,
-    )
+    with download_col:
+        state_json = json.dumps(serializable_state(), indent=2)
+        st.download_button(
+            "⇩ State",
+            data=state_json,
+            file_name="sbas_mock_draft_state.json",
+            mime="application/json",
+            use_container_width=True,
+            key="top_download_draft_state",
+            help="Download the current draft state",
+        )
+
+selected_page = {
+    "Draft Room": "Draft Room",
+    "Rankings": "Rankings & ADP",
+    "Recommendations": "Recommendations",
+    # Preserve the existing page routes while the UI is moved out of sidebar.
+    "Draft Grades": "League History",
+    "Data Status": "Available Players",
+    "League History": "League History",
+    "Settings": "Settings",
+    "Import / Export": "Keepers & Picks",
+    "Help & Docs": "League Setup",
+}[selected_nav]
 
 if selected_page == "Draft Room":
     render_draft_room(

@@ -276,7 +276,7 @@ def _render_sheet_css(level: int) -> None:
         f"""
         <style>
         :root {{
-            --fs-sidebar-width: 13.7rem;
+            --fs-sidebar-width: 0rem;
             --fs-live-sheet-height: {sheet_height}px;
         }}
 
@@ -325,7 +325,7 @@ def _render_sheet_css(level: int) -> None:
         .st-key-v660_tray {{
             display: block !important;
             position: fixed !important;
-            left: var(--fs-sidebar-width) !important;
+            left: 0 !important;
             right: 0 !important;
             bottom: 0 !important;
             z-index: 10010 !important;
