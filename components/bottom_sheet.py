@@ -305,10 +305,10 @@ def _render_sheet_css(level: int) -> None:
             left: 55% !important;
             transform: translateX(-50%) !important;
             z-index: 10100 !important;
-            width: 96px !important;
-            height: 28px !important;
-            min-height: 28px !important;
-            max-height: 28px !important;
+            width: 72px !important;
+            height: 22px !important;
+            min-height: 22px !important;
+            max-height: 22px !important;
             margin: 0 !important;
             padding: 0 !important;
             border: 0 !important;
@@ -318,9 +318,9 @@ def _render_sheet_css(level: int) -> None:
         }}
 
         .st-key-v648_drag_handle iframe {{
-            width: 96px !important;
-            height: 28px !important;
-            min-height: 28px !important;
+            width: 72px !important;
+            height: 22px !important;
+            min-height: 22px !important;
             border: 0 !important;
             background: transparent !important;
             overflow: visible !important;
@@ -344,13 +344,14 @@ def _render_sheet_css(level: int) -> None:
             min-height: 52px !important;
             max-height: min(560px, calc(100vh - 150px)) !important;
             margin: 0 !important;
-            padding: 10px 12px 12px !important;
+            padding: 6px 12px 0 !important;
             box-sizing: border-box !important;
             overflow: hidden !important;
             background: #0B1625 !important;
             isolation: isolate !important;
-            border-top: 1px solid rgba(148,163,184,.25) !important;
-            box-shadow: 0 -8px 24px rgba(0,0,0,.28) !important;
+            border-top: 1px solid rgba(124,92,224,.75) !important;
+            border-bottom: 0 !important;
+            box-shadow: 0 -5px 16px rgba(0,0,0,.22) !important;
         }}
 
         body:has(
@@ -359,15 +360,31 @@ def _render_sheet_css(level: int) -> None:
             left: 0 !important;
         }}
 
+        .st-key-v650_tray_content.fs-tray-compact
+            > div
+            > div
+            > [data-testid="stVerticalBlock"]
+            > [data-testid="stHorizontalBlock"] {{
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }}
+
         /*
          * Keep Streamlit's tray content in normal top-down flow. The old
          * forced 100% descendant heights anchored the widgets at the bottom.
          */
+        /*
+         * The complete Streamlit tray tree fills the live dragged height.
+         * Only the root wrappers are constrained, avoiding the old bottom-
+         * anchoring problem while eliminating unused space beneath the list.
+         */
         .st-key-v650_tray_content > div,
         .st-key-v650_tray_content > div > div {{
-            height: auto !important;
-            max-height: none !important;
+            height: 100% !important;
+            max-height: 100% !important;
             min-height: 0 !important;
+            overflow: hidden !important;
         }}
 
         .st-key-v650_tray_content
@@ -378,8 +395,8 @@ def _render_sheet_css(level: int) -> None:
             flex-direction: column !important;
             justify-content: flex-start !important;
             align-items: stretch !important;
-            height: auto !important;
-            max-height: none !important;
+            height: 100% !important;
+            max-height: 100% !important;
             min-height: 0 !important;
             gap: 0 !important;
             overflow: hidden !important;
@@ -390,25 +407,48 @@ def _render_sheet_css(level: int) -> None:
             > div
             > [data-testid="stVerticalBlock"]
             > [data-testid="stHorizontalBlock"] {{
-            flex: 0 0 auto !important;
+            flex: 1 1 auto !important;
             width: 100% !important;
-            height: auto !important;
-            max-height: none !important;
+            height: 100% !important;
+            max-height: 100% !important;
             min-height: 0 !important;
             align-items: stretch !important;
             gap: .65rem !important;
+            overflow: hidden !important;
         }}
 
         .st-key-v650_tray_content
             [data-testid="stColumn"] {{
+            height: 100% !important;
+            max-height: 100% !important;
             min-height: 0 !important;
             overflow: hidden !important;
         }}
 
         .st-key-v63_player_side,
         .st-key-v63_utility_side {{
-            height: calc(var(--fs-live-sheet-height, {sheet_height}px) - 22px) !important;
-            max-height: calc(var(--fs-live-sheet-height, {sheet_height}px) - 22px) !important;
+            height: 100% !important;
+            max-height: 100% !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+        }}
+
+        .st-key-v63_player_side > div,
+        .st-key-v63_player_side > div > div,
+        .st-key-v63_utility_side > div,
+        .st-key-v63_utility_side > div > div {{
+            height: 100% !important;
+            max-height: 100% !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+        }}
+
+        .st-key-v63_player_side
+            [data-testid="stVerticalBlock"],
+        .st-key-v63_utility_side
+            [data-testid="stVerticalBlock"] {{
+            height: 100% !important;
+            max-height: 100% !important;
             min-height: 0 !important;
             overflow: hidden !important;
         }}
@@ -424,11 +464,71 @@ def _render_sheet_css(level: int) -> None:
             background: #101D2E !important;
         }}
 
+        /*
+         * Player list consumes all space below toolbar + table header.
+         * The native bounded-wrapper owns scrolling through every available
+         * player whenever the tray is not fully compact.
+         */
         .st-key-v650_tray_content .st-key-war_player_list {{
-            height: max(92px, calc(var(--fs-live-sheet-height, {sheet_height}px) - 126px)) !important;
-            max-height: max(92px, calc(var(--fs-live-sheet-height, {sheet_height}px) - 126px)) !important;
+            height: max(72px, calc(var(--fs-live-sheet-height, {sheet_height}px) - 112px)) !important;
+            max-height: max(72px, calc(var(--fs-live-sheet-height, {sheet_height}px) - 112px)) !important;
+            min-height: 0 !important;
+            overflow: visible !important;
+            padding-bottom: 0 !important;
+            margin-bottom: 0 !important;
+        }}
+
+        .st-key-v650_tray_content
+            .st-key-war_player_list
+            [data-testid="stVerticalBlockBorderWrapper"] {{
+            height: 100% !important;
+            max-height: 100% !important;
             min-height: 0 !important;
             overflow-y: auto !important;
+            overflow-x: hidden !important;
+            overscroll-behavior: contain !important;
+            scrollbar-gutter: stable !important;
+            -webkit-overflow-scrolling: touch !important;
+            scrollbar-width: thin !important;
+            scrollbar-color: #53647F #0B1625 !important;
+            padding-bottom: 0 !important;
+        }}
+
+        .st-key-v650_tray_content
+            .st-key-war_player_list
+            [data-testid="stVerticalBlockBorderWrapper"]
+            > div,
+        .st-key-v650_tray_content
+            .st-key-war_player_list
+            [data-testid="stVerticalBlock"] {{
+            height: auto !important;
+            max-height: none !important;
+            min-height: max-content !important;
+            overflow: visible !important;
+            padding-bottom: 0 !important;
+            margin-bottom: 0 !important;
+        }}
+
+        .st-key-v650_tray_content
+            .st-key-war_player_list
+            [data-testid="stVerticalBlockBorderWrapper"]
+            ::-webkit-scrollbar {{
+            width: 7px !important;
+        }}
+
+        .st-key-v650_tray_content
+            .st-key-war_player_list
+            [data-testid="stVerticalBlockBorderWrapper"]
+            ::-webkit-scrollbar-track {{
+            background: #0B1625 !important;
+        }}
+
+        .st-key-v650_tray_content
+            .st-key-war_player_list
+            [data-testid="stVerticalBlockBorderWrapper"]
+            ::-webkit-scrollbar-thumb {{
+            background: #53647F !important;
+            border-radius: 999px !important;
         }}
 
         /*
@@ -503,9 +603,31 @@ def _render_sheet_css(level: int) -> None:
             font-size: .49rem !important;
         }}
 
-        .st-key-v650_tray_content .player-row-divider {{
+        /*
+         * Remove explicit row dividers. They were overlapping compact rows and
+         * appearing as white lines through player names.
+         */
+        .st-key-v650_tray_content .player-row-divider,
+        .st-key-v650_tray_content .player-header-divider,
+        .st-key-v650_tray_content hr,
+        .st-key-v650_tray_content [data-testid="stMarkdownContainer"]
+            > div:has(> .player-row-divider) {{
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            min-height: 0 !important;
+            max-height: 0 !important;
             margin: 0 !important;
-            background: rgba(148,163,184,.12) !important;
+            padding: 0 !important;
+            border: 0 !important;
+            background: transparent !important;
+        }}
+
+        .st-key-v650_tray_content
+            .st-key-war_player_list
+            [data-testid="stHorizontalBlock"] {{
+            border: 0 !important;
+            box-shadow: none !important;
         }}
 
         .st-key-v650_tray_content .player-table-header2 {{
@@ -574,10 +696,12 @@ def _render_sheet_css(level: int) -> None:
          * complete roster to be inspected without scrolling the page or board.
          */
         .st-key-v632_utility_content {{
-            height: max(92px, calc(var(--fs-live-sheet-height, {sheet_height}px) - 82px)) !important;
-            max-height: max(92px, calc(var(--fs-live-sheet-height, {sheet_height}px) - 82px)) !important;
+            height: max(72px, calc(var(--fs-live-sheet-height, {sheet_height}px) - 58px)) !important;
+            max-height: max(72px, calc(var(--fs-live-sheet-height, {sheet_height}px) - 58px)) !important;
             min-height: 0 !important;
             overflow: visible !important;
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
         }}
 
         .st-key-v632_utility_content
@@ -745,7 +869,7 @@ def _render_drag_handle(initial_height: int) -> None:
           user-select: none; -webkit-user-select: none;
         }}
         #grip {{
-          width: 84px; height: 20px; margin: 4px auto 0;
+          width: 62px; height: 14px; margin: 3px auto 0;
           display: flex; align-items: center; justify-content: center;
           cursor: ns-resize;
           border: 1px solid rgba(143,158,184,.48);
@@ -759,11 +883,11 @@ def _render_drag_handle(initial_height: int) -> None:
         }}
         #grip::before {{
           content: '';
-          width: 32px; height: 4px;
+          width: 26px; height: 3px;
           border-radius: 999px;
           background: rgba(204,215,232,.78);
-          box-shadow: 0 -5px 0 rgba(204,215,232,.28),
-                      0 5px 0 rgba(204,215,232,.28);
+          box-shadow: 0 -4px 0 rgba(204,215,232,.24),
+                      0 4px 0 rgba(204,215,232,.24);
         }}
         #grip:hover {{
           background: rgba(58,75,101,.96);
@@ -807,6 +931,7 @@ def _render_drag_handle(initial_height: int) -> None:
               `${{Math.min(560, parentWin.innerHeight - 150)}}px`,
               'important'
             );
+            sheet.classList.toggle('fs-tray-compact', safe <= 64);
           }}
           const handle = parentDoc.querySelector('.st-key-v648_drag_handle');
           if (handle) {{
@@ -875,7 +1000,7 @@ def _render_drag_handle(initial_height: int) -> None:
     with st.container(key="v648_drag_handle"):
         components.html(
             drag_html,
-            height=28,
+            height=22,
             scrolling=False,
         )
 
