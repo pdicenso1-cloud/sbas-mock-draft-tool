@@ -4277,17 +4277,18 @@ body:has(section[data-testid="stSidebar"][aria-expanded="true"])
 
 
 
+
 /* ============================================================
-   FantasySync v6.4.7 — Persistent tray arrow dock
+   FantasySync v6.4.8 — Manual draggable player tray
    ============================================================ */
 
-.st-key-v647_tray_controls,
-.st-key-v647_tray_controls button {
-    z-index: 10080 !important;
+.st-key-v648_drag_handle {
+    z-index: 10100 !important;
     pointer-events: auto !important;
 }
 
-/* Legacy control containers must not reserve space. */
+/* Remove every legacy arrow/control implementation. */
+.st-key-v647_tray_controls,
 .st-key-v646_floating_tray_controls,
 .st-key-v63_sheet_handle,
 .st-key-v62_tray_controls {
@@ -6424,7 +6425,7 @@ with st.sidebar:
     )
 
     st.markdown(
-        '<div class="sidebar-version">FantasySync · v6.4.7</div>',
+        '<div class="sidebar-version">FantasySync · v6.4.8</div>',
         unsafe_allow_html=True,
     )
 
