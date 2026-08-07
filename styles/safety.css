@@ -1,0 +1,24 @@
+/* FantasySync v7.0.3 visibility safeguard.
+   This file intentionally contains no design rules. It only prevents stale
+   legacy selectors from blanking the Streamlit application shell. */
+
+html,
+body,
+[data-testid="stAppViewContainer"],
+[data-testid="stMain"],
+[data-testid="stMainBlockContainer"],
+.main,
+.main .block-container {
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+[data-testid="stAppViewContainer"],
+[data-testid="stMain"],
+.main {
+    display: block !important;
+}
+
+.main .block-container {
+    display: block !important;
+}

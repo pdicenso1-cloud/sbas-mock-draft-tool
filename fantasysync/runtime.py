@@ -26,8 +26,6 @@ from styles.loader import inject_css
 # Compatibility alias retained for older functions that reference APP_DIR.
 APP_DIR = PROJECT_ROOT
 
-st.set_page_config(page_title="Susan Boyles Ass Sweat — Mock Draft Tool", page_icon="🏈", layout="wide", initial_sidebar_state="collapsed")
-
 # v7.0.1 startup preflight runs before application CSS. This prevents a missing
 # data/style file from presenting as an unexplained black page.
 _REQUIRED_STARTUP_FILES = [
@@ -43,9 +41,6 @@ if _missing_startup_files:
     for _missing_path in _missing_startup_files:
         st.code(str(_missing_path))
     st.stop()
-
-inject_css(PROJECT_ROOT / "styles" / "legacy.css")
-
 
 
 def clean(value) -> str:
