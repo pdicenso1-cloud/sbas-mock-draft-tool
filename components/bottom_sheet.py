@@ -21,7 +21,7 @@ TRAY_LEVELS = {
     1: {
         "name": "Draft",
         "height": 236,
-        "player_height": 146,
+        "player_height": 154,
         "utility_height": 168,
     },
     # Player-focused state.
@@ -956,6 +956,204 @@ def _render_sheet_css(level: int) -> None:
                 0 -2px 10px rgba(51,122,241,.24) !important;
             z-index: 4 !important;
         }}
+
+
+        /* ============================================================
+           v7.3.1 — compact text-only sorting + six-row default list
+           Search and position-filter styling/functions are untouched.
+           ============================================================ */
+
+        /*
+         * Sort controls remain Streamlit controls for reliable reruns,
+         * but visually render as lightweight clickable table text.
+         */
+        .st-key-v730_sort_RK,
+        .st-key-v730_sort_PLAYER,
+        .st-key-v730_sort_POS,
+        .st-key-v730_sort_ADP,
+        .st-key-v730_sort_TIER,
+        .st-key-v730_sort_SCORE,
+        .st-key-v730_sort_PROJ,
+        .st-key-v730_sort_AVG,
+        .st-key-v730_sort_RUSH,
+        .st-key-v730_sort_REC,
+        .st-key-v730_sort_PASS,
+        .st-key-v730_sort_BYE,
+        .st-key-v730_sort_VAL {
+            min-height: 17px !important;
+            height: 17px !important;
+            max-height: 17px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
+        }
+
+        .st-key-v730_sort_RK [data-testid="stButton"],
+        .st-key-v730_sort_PLAYER [data-testid="stButton"],
+        .st-key-v730_sort_POS [data-testid="stButton"],
+        .st-key-v730_sort_ADP [data-testid="stButton"],
+        .st-key-v730_sort_TIER [data-testid="stButton"],
+        .st-key-v730_sort_SCORE [data-testid="stButton"],
+        .st-key-v730_sort_PROJ [data-testid="stButton"],
+        .st-key-v730_sort_AVG [data-testid="stButton"],
+        .st-key-v730_sort_RUSH [data-testid="stButton"],
+        .st-key-v730_sort_REC [data-testid="stButton"],
+        .st-key-v730_sort_PASS [data-testid="stButton"],
+        .st-key-v730_sort_BYE [data-testid="stButton"],
+        .st-key-v730_sort_VAL [data-testid="stButton"] {
+            min-height: 17px !important;
+            height: 17px !important;
+            max-height: 17px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .st-key-v730_sort_RK button,
+        .st-key-v730_sort_PLAYER button,
+        .st-key-v730_sort_POS button,
+        .st-key-v730_sort_ADP button,
+        .st-key-v730_sort_TIER button,
+        .st-key-v730_sort_SCORE button,
+        .st-key-v730_sort_PROJ button,
+        .st-key-v730_sort_AVG button,
+        .st-key-v730_sort_RUSH button,
+        .st-key-v730_sort_REC button,
+        .st-key-v730_sort_PASS button,
+        .st-key-v730_sort_BYE button,
+        .st-key-v730_sort_VAL button {
+            width: auto !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            min-height: 17px !important;
+            height: 17px !important;
+            max-height: 17px !important;
+            margin: 0 !important;
+            padding: 0 1px !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            color: #8FA1B9 !important;
+            -webkit-text-fill-color: #8FA1B9 !important;
+            font-size: .45rem !important;
+            font-weight: 820 !important;
+            line-height: 17px !important;
+            letter-spacing: .01em !important;
+            text-align: center !important;
+            cursor: pointer !important;
+        }
+
+        .st-key-v730_sort_RK button:hover,
+        .st-key-v730_sort_PLAYER button:hover,
+        .st-key-v730_sort_POS button:hover,
+        .st-key-v730_sort_ADP button:hover,
+        .st-key-v730_sort_TIER button:hover,
+        .st-key-v730_sort_SCORE button:hover,
+        .st-key-v730_sort_PROJ button:hover,
+        .st-key-v730_sort_AVG button:hover,
+        .st-key-v730_sort_RUSH button:hover,
+        .st-key-v730_sort_REC button:hover,
+        .st-key-v730_sort_PASS button:hover,
+        .st-key-v730_sort_BYE button:hover,
+        .st-key-v730_sort_VAL button:hover {
+            background: transparent !important;
+            color: #EAF2FF !important;
+            -webkit-text-fill-color: #EAF2FF !important;
+            text-decoration: underline !important;
+            text-underline-offset: 2px !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+
+        .st-key-v730_sort_RK button:focus,
+        .st-key-v730_sort_PLAYER button:focus,
+        .st-key-v730_sort_POS button:focus,
+        .st-key-v730_sort_ADP button:focus,
+        .st-key-v730_sort_TIER button:focus,
+        .st-key-v730_sort_SCORE button:focus,
+        .st-key-v730_sort_PROJ button:focus,
+        .st-key-v730_sort_AVG button:focus,
+        .st-key-v730_sort_RUSH button:focus,
+        .st-key-v730_sort_REC button:focus,
+        .st-key-v730_sort_PASS button:focus,
+        .st-key-v730_sort_BYE button:focus,
+        .st-key-v730_sort_VAL button:focus {
+            outline: none !important;
+            box-shadow: none !important;
+        }
+
+        /*
+         * Dense player rows:
+         * 154px default viewport / 24px rows = 6+ visible players.
+         */
+        .st-key-v660_tray
+            .st-key-war_player_list
+            [data-testid="stHorizontalBlock"] {
+            min-height: 24px !important;
+            height: 24px !important;
+            max-height: 24px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            gap: .12rem !important;
+            align-items: center !important;
+            border-bottom: 1px solid rgba(118,139,169,.075) !important;
+        }
+
+        .st-key-v660_tray
+            .st-key-war_player_list
+            [data-testid="stColumn"] {
+            min-height: 24px !important;
+            height: 24px !important;
+            max-height: 24px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .st-key-v660_tray
+            .st-key-war_player_list button {
+            width: 19px !important;
+            min-width: 19px !important;
+            max-width: 19px !important;
+            height: 19px !important;
+            min-height: 19px !important;
+            max-height: 19px !important;
+            padding: 0 !important;
+            border-radius: 5px !important;
+            font-size: .56rem !important;
+            line-height: 1 !important;
+        }
+
+        .st-key-v660_tray .player-name2 {
+            font-size: .57rem !important;
+            line-height: .95 !important;
+            font-weight: 800 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .st-key-v660_tray .player-sub2 {
+            font-size: .37rem !important;
+            line-height: .95 !important;
+            margin: 1px 0 0 !important;
+            padding: 0 !important;
+        }
+
+        .st-key-v660_tray .rank2,
+        .st-key-v660_tray .stat2 {
+            font-size: .46rem !important;
+            line-height: 1 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .st-key-v660_tray .value-badge {
+            min-width: 21px !important;
+            height: 16px !important;
+            min-height: 16px !important;
+            padding: 0 3px !important;
+            font-size: .39rem !important;
+            line-height: 16px !important;
+        }
 
         /* Ensure every obsolete drag/control implementation stays retired. */
         .st-key-v648_drag_handle,
