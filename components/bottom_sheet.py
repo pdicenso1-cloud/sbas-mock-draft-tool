@@ -511,32 +511,30 @@ def _render_sheet_css(level: int) -> None:
         }}
 
         /*
-         * Player list owns its own scroll viewport. Overflow is intentionally
-         * not forced to hidden here: the inner
-         * [data-testid="stVerticalBlockBorderWrapper"] selector below sets
-         * overflow-y: auto on Streamlit's native height-bound container. If a
-         * future Streamlit release changes that internal DOM structure and
-         * the inner selector stops matching, leaving this outer wrapper
-         * transparent to overflow (rather than hidden) means the list still
-         * scrolls via Streamlit's own default behavior instead of silently
-         * clipping content.
+         * Player list owns its own scroll viewport.
+         *
+         * Streamlit's internal DOM for st.container(height=...) has changed
+         * across versions: older releases wrapped the bordered container in
+         * a separate [data-testid="stVerticalBlockBorderWrapper"] element;
+         * confirmed via browser devtools inspection, current Streamlit
+         * applies the st-key-* class directly onto the stVerticalBlock
+         * itself, with no separate wrapper. Rather than depend on either
+         * shape, scroll behavior is applied directly to .st-key-war_player_list
+         * (the key class Streamlit is documented to attach to the
+         * container's own root element - a stable, public behavior) and
+         * ALSO to the older wrapper pattern as a harmless no-op fallback in
+         * case a future release reintroduces it.
          */
-        .st-key-v660_tray .st-key-war_player_list {{
-            flex: 1 1 auto !important;
-            min-height: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            pointer-events: auto !important;
-        }}
-
+        .st-key-v660_tray .st-key-war_player_list,
         .st-key-v660_tray
             .st-key-war_player_list
             [data-testid="stVerticalBlockBorderWrapper"] {{
+            flex: 1 1 auto !important;
             height: 100% !important;
             max-height: 100% !important;
             min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
             overflow-y: auto !important;
             overflow-x: hidden !important;
             overscroll-behavior: contain !important;
@@ -544,6 +542,8 @@ def _render_sheet_css(level: int) -> None:
             -webkit-overflow-scrolling: touch !important;
             scrollbar-width: thin !important;
             scrollbar-color: #53647F #0B1625 !important;
+            visibility: visible !important;
+            opacity: 1 !important;
             pointer-events: auto !important;
         }}
 
@@ -653,22 +653,19 @@ def _render_sheet_css(level: int) -> None:
          * Same reasoning as the player list above: overflow is left
          * transparent here rather than forced to hidden, so a future
          * Streamlit DOM change can't silently turn "scrolls" into "clips".
+         * Applied directly to .st-key-v632_utility_content itself (confirmed
+         * via devtools to be the real stVerticalBlock in current Streamlit),
+         * with the older wrapper selector kept as a harmless fallback.
          */
-        .st-key-v632_utility_content {{
-            flex: 1 1 auto !important;
-            min-height: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            pointer-events: auto !important;
-        }}
-
+        .st-key-v632_utility_content,
         .st-key-v632_utility_content
             [data-testid="stVerticalBlockBorderWrapper"] {{
+            flex: 1 1 auto !important;
             height: 100% !important;
             max-height: 100% !important;
             min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
             overflow-y: auto !important;
             overflow-x: hidden !important;
             overscroll-behavior: contain !important;
@@ -676,6 +673,8 @@ def _render_sheet_css(level: int) -> None:
             -webkit-overflow-scrolling: touch !important;
             scrollbar-width: thin !important;
             scrollbar-color: #60728F #101D2E !important;
+            visibility: visible !important;
+            opacity: 1 !important;
             pointer-events: auto !important;
         }}
 
