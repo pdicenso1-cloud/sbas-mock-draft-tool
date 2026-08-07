@@ -33,3 +33,7 @@ Examples:
 ## Compatibility runtime
 
 The historical draft/session functions remain in `fantasysync/runtime.py` in v7.0.0 to minimize behavior risk. They can be migrated incrementally into dedicated `logic/` modules in later releases without ever touching `app.py`.
+
+
+## v7.0.1 startup rule
+`data/` is part of the required application package. Startup validation occurs before global CSS injection so missing files remain visible.
