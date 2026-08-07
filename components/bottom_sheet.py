@@ -2349,4 +2349,3 @@ elif selected_page == "Settings":
             "Additional color, font, and accessibility settings "
             "will be added here during the UI polish pass."
         )
-
