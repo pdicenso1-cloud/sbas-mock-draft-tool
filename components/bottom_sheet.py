@@ -314,13 +314,16 @@ def _render_sheet_css(level: int) -> None:
         }}
 
         /*
-         * Floating ▲ / ▼ controls. They occupy no layout row and remain
-         * centered on the tray's upper edge.
+         * Floating ▲ / ▼ controls, sitting just above the tray's top edge.
+         * These used to intentionally straddle 17px into the tray's own
+         * content area; that overlapped the toolbar row once the tray's
+         * internal spacing was tightened, so the control now sits fully
+         * above the tray instead of overlapping it.
          */
         .st-key-v720_tray_controls {{
             position: fixed !important;
             left: 50% !important;
-            bottom: {max(0, sheet_height - 17)}px !important;
+            bottom: {sheet_height + 4}px !important;
             transform: translateX(-50%) !important;
             z-index: 10120 !important;
             width: 92px !important;
@@ -458,11 +461,7 @@ def _render_sheet_css(level: int) -> None:
                header rows, and the player list; Streamlit's default 16px
                flex gap between them is the bulk of the tray's dead space. */
             gap: 3px !important;
-            /* The floating tray up/down seam control (.st-key-v720_tray_controls)
-               is fixed-positioned over the tray's top edge; without this the
-               tightened toolbar row sits directly underneath it and gets
-               partially covered. */
-            padding-top: 14px !important;
+            padding-top: 4px !important;
         }}
 
         .st-key-v63_utility_side {{
@@ -473,7 +472,7 @@ def _render_sheet_css(level: int) -> None:
         }}
 
         .st-key-v63_player_side > div,
-        .st-key-v63_player_side > div > div,
+        .st-key-v63_player_side > div > div:not(.st-key-v61_player_toolbar):not(.st-key-v731_group_header):not(.st-key-v732_column_header),
         .st-key-v63_utility_side > div,
         .st-key-v63_utility_side > div > div {{
             height: 100% !important;
@@ -712,12 +711,27 @@ def _render_sheet_css(level: int) -> None:
            v7.3.0 Tray UX: compact rows + sortable controls + folder tabs
            ============================================================ */
 
-        /* Search and ALL/QB/RB/WR/TE share one fixed toolbar row. */
-        .st-key-v61_player_toolbar {{
-            flex: 0 0 38px !important;
-            min-height: 38px !important;
-            height: 38px !important;
-            max-height: 38px !important;
+        /*
+         * Search and ALL/QB/RB/WR/TE share one fixed toolbar row. This must
+         * be at least as tall as the position-filter bar actually renders
+         * (42px, not the 38px this used to be capped at) - overflow:visible
+         * only lets taller content paint outside an undersized box, it does
+         * not stop the flex layout from positioning the next row as if the
+         * box were still only 38px, which overlapped the row below it.
+         *
+         * The class is repeated to out-specificity
+         * ".st-key-v63_player_side > div > div" (1 class + 2 type
+         * selectors), which otherwise silently wins over a plain
+         * ".st-key-v61_player_toolbar" rule and forces height/overflow
+         * back to that earlier rule's values regardless of !important or
+         * source order - confirmed by walking the live matched CSSOM rules
+         * for this element in the browser.
+         */
+        .st-key-v61_player_toolbar.st-key-v61_player_toolbar {{
+            flex: 0 0 44px !important;
+            min-height: 44px !important;
+            height: 44px !important;
+            max-height: 44px !important;
             overflow: visible !important;
             z-index: 10060 !important;
         }}
@@ -728,9 +742,9 @@ def _render_sheet_css(level: int) -> None:
             > [data-testid="stVerticalBlock"],
         .st-key-v61_player_toolbar
             [data-testid="stHorizontalBlock"] {{
-            min-height: 36px !important;
-            height: 36px !important;
-            max-height: 36px !important;
+            min-height: 42px !important;
+            height: 42px !important;
+            max-height: 42px !important;
             overflow: visible !important;
             align-items: center !important;
         }}
@@ -767,6 +781,13 @@ def _render_sheet_css(level: int) -> None:
         .st-key-v612_position_filter_bar [data-testid="stHorizontalBlock"] {{
             gap: 1px !important;
             width: 100% !important;
+            /* Overrides the broader .st-key-v61_player_toolbar
+               [data-testid="stHorizontalBlock"] rule above, which also
+               matches this nested row and would otherwise force it to that
+               rule's height and inflate this bar past its own 32px. */
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
         }}
 
         .st-key-draft_pos_ALL,
@@ -901,12 +922,39 @@ def _render_sheet_css(level: int) -> None:
          * sortable sub-column row, with a thin vertical divider marking
          * each stat group and a bottom border separating headers from rows.
          */
-        .st-key-v731_group_header,
-        .st-key-v732_column_header {{
+        /*
+         * ".st-key-v63_player_side > div > div" (defined above, for the
+         * generic wrapper divs Streamlit inserts around the tray's content)
+         * also matches these two header rows, since they sit at that same
+         * nesting depth - it forces height:100%/overflow:hidden onto them,
+         * which collapses them into whatever sits above. Classes repeated
+         * to outweigh that rule's specificity (1 class + 2 type selectors),
+         * same technique used for .st-key-v61_player_toolbar above.
+         */
+        .st-key-v732_column_header.st-key-v732_column_header {{
             flex: 0 0 auto !important;
+            height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
         }}
 
-        .st-key-v731_group_header {{
+        /*
+         * height:auto does not reliably resolve here the way it does for
+         * .st-key-v732_column_header just above: that row's children are
+         * real Streamlit widgets (st.button) with their own robust sizing,
+         * while this row's children are raw st.markdown() HTML - the
+         * intermediate Streamlit wrapper divs between this container and
+         * the actual .player-table-group2 content have no sizing of their
+         * own to propagate, and auto-height collapses to 0 through that
+         * chain. Confirmed by forcing an explicit height on the live
+         * element in devtools, which fixed it instantly. 18px covers the
+         * 13px label content plus its margin-top below.
+         */
+        .st-key-v731_group_header.st-key-v731_group_header {{
+            flex: 0 0 26px !important;
+            height: 26px !important;
+            max-height: 26px !important;
+            overflow: visible !important;
             margin-top: 2px !important;
         }}
 
