@@ -472,7 +472,7 @@ def _render_sheet_css(level: int) -> None:
         }}
 
         .st-key-v63_player_side > div,
-        .st-key-v63_player_side > div > div:not(.st-key-v61_player_toolbar):not(.st-key-v731_group_header):not(.st-key-v732_column_header),
+        .st-key-v63_player_side > div > div:not(.st-key-v61_player_toolbar):not(.st-key-v731_group_header):not(.st-key-v732_column_header):not(.st-key-war_player_list),
         .st-key-v63_utility_side > div,
         .st-key-v63_utility_side > div > div {{
             height: 100% !important;
