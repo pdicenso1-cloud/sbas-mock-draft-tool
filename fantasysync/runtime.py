@@ -1,452 +1,673 @@
+"""Core draft logic: picks, CPU behavior, the pick clock, queue, rosters,
+and recommendations.
+
+Split out of the former monolithic runtime.py. This module has no
+Streamlit-rendering (no st.markdown/st.button UI) except where session
+state itself is the natural place for it (e.g. draft_message).
+"""
 from __future__ import annotations
 
-import json
+import math
+import random
+import time
+from typing import Dict, Optional
 
 import pandas as pd
 import streamlit as st
-from streamlit_autorefresh import st_autorefresh
-from components.draft_room import (
-    DraftRoomDependencies,
-    render_draft_room,
-)
-from components.draft_room_widgets import (
-    current_user_roster,
-    render_live_roster_header,
-    render_live_roster_rows,
-    render_player_picker_table,
-    render_queue_panel,
-    render_v53_header,
-    render_v61_player_toolbar,
-)
 
-from fantasysync.app_state import (
-    clean,
-    init_state,
-    move_player_tray,
-    player_tray_settings,
-    render_dynamic_dock_css,
-    render_player_tray_css,
-)
-from fantasysync.config import ADP_COLUMNS
-from fantasysync.draft_engine import (
-    auto_pick_user_if_expired,
-    available_players,
-    build_team_roster,
-    current_open_index,
-    initialize_cpu_variance,
-    load_state_data,
-    next_user_pick,
-    pause_pick_clock,
-    rebuild_draft,
-    recommendations,
-    remaining_pick_time,
-    reset_pick_clock,
-    roster_position_counts,
-    run_one_cpu_pick,
-    serializable_state,
-    snake_board_html,
-    start_pick_clock,
-)
-from fantasysync.navigation import render_top_navigation
-from fantasysync.paths import DATA_DIR, PROJECT_ROOT
-from fantasysync.player_pool import apply_team_query_selection
-
-# v7.0.1 startup preflight runs before application CSS. This prevents a missing
-# data/style file from presenting as an unexplained black page.
-_REQUIRED_STARTUP_FILES = [
-    DATA_DIR / "players.csv",
-    DATA_DIR / "teams.csv",
-    DATA_DIR / "keepers.csv",
-    PROJECT_ROOT / "styles" / "legacy.css",
-]
-_missing_startup_files = [p for p in _REQUIRED_STARTUP_FILES if not p.exists()]
-if _missing_startup_files:
-    st.error("FantasySync installation is incomplete.")
-    st.write("Missing required files:")
-    for _missing_path in _missing_startup_files:
-        st.code(str(_missing_path))
-    st.stop()
+from fantasysync.app_state import assign_keepers, clean, numeric, snake_order
+from fantasysync.config import STARTER_TARGETS
 
 
-init_state()
-initialize_cpu_variance()
-apply_team_query_selection()
-render_dynamic_dock_css()
-render_player_tray_css()
+def player_map() -> Dict[str, dict]:
+    result = {}
+    for row in st.session_state.players.itertuples():
+        result[clean(row.player)] = {
+            "position": clean(row.position),
+            "nfl_team": clean(row.nfl_team),
+            "rank": int(row.rank),
+            "custom_rank": int(row.custom_rank),
+            "tier": clean(row.tier),
+            "consensus_adp": numeric(getattr(row, "consensus_adp", None)),
+            "peter_score": numeric(getattr(row, "peter_score", None)),
+        }
+    return result
 
-# Only CPU turns use full-page refreshes.
-# User turns rely on the browser-side clock, so player clicks stay responsive.
-_current_idx = current_open_index()
-_current_owner = None
 
-if _current_idx is not None:
-    _current_owner = clean(
-        st.session_state.picks.loc[_current_idx, "current_owner"]
-    )
+def unavailable_players() -> set:
+    return {clean(v) for v in st.session_state.picks["selected_player"].tolist() if clean(v)}
 
-_cpu_turn_active = (
-    st.session_state.draft_active
-    and _current_idx is not None
-    and _current_owner != clean(st.session_state.user_team)
-)
 
-if _cpu_turn_active:
-    # Mount the autorefresh component inside a dedicated hidden container.
-    # This keeps its blank iframe from creating the wide gray bar above the app.
-    current_pick_number = int(
-        st.session_state.picks.loc[_current_idx, "overall"]
-    )
+def available_players() -> pd.DataFrame:
+    unavailable = unavailable_players()
+    df = st.session_state.players.copy()
+    return df[~df["player"].map(clean).isin(unavailable)].sort_values(["custom_rank", "rank"])
 
-    with st.container(key="cpu_autorefresh_mount"):
-        st_autorefresh(
-            interval=180,
-            limit=None,
-            key=f"cpu_pick_tick_{current_pick_number}",
+
+def current_open_index() -> Optional[int]:
+    for idx, row in st.session_state.picks.iterrows():
+        if not clean(row["selected_player"]):
+            return idx
+    return None
+
+
+
+def initialize_cpu_variance():
+    """
+    Choose one CPU behavior mode for the entire mock draft.
+
+    Roughly 25% of drafts use mild top-five variance.
+    The remaining drafts use strict best available.
+    """
+    if st.session_state.cpu_variance_enabled is None:
+        seed = random.SystemRandom().randint(1, 2_147_483_647)
+        st.session_state.cpu_variance_seed = seed
+        rng = random.Random(seed)
+        st.session_state.cpu_variance_enabled = rng.random() < 0.25
+
+
+def reset_cpu_variance():
+    """Choose a fresh CPU behavior mode for a newly reset draft."""
+    st.session_state.cpu_variance_enabled = None
+    st.session_state.cpu_variance_seed = None
+    initialize_cpu_variance()
+
+
+def cpu_best_available() -> Optional[str]:
+    """
+    Select the CPU player.
+
+    Normal drafts take the best available player.
+    Variance drafts choose among the top five with a strong top-heavy bias.
+    """
+    df = available_players()
+    if df.empty:
+        return None
+
+    initialize_cpu_variance()
+
+    if not st.session_state.cpu_variance_enabled:
+        return clean(df.iloc[0]["player"])
+
+    candidates = df.head(5).reset_index(drop=True)
+    weights = [45, 25, 15, 10, 5][: len(candidates)]
+
+    idx = current_open_index()
+    overall_pick = 0
+    if idx is not None:
+        overall_pick = int(
+            st.session_state.picks.loc[idx, "overall"]
         )
 
-    run_one_cpu_pick()
+    seed = int(st.session_state.cpu_variance_seed or 0)
+    rng = random.Random(seed + overall_pick * 10_007)
 
-# Enforce the user's pick clock only on user-controlled turns.
-if auto_pick_user_if_expired():
-    st.rerun()
+    selected_index = rng.choices(
+        range(len(candidates)),
+        weights=weights,
+        k=1,
+    )[0]
 
-# The Draft Room renders its own compact v5.3 header.
+    return clean(candidates.iloc[selected_index]["player"])
 
-# -----------------------------------------------------------------------------
-# v7.0.0 — Navigation lives in fantasysync/navigation.py
-# -----------------------------------------------------------------------------
-selected_page = render_top_navigation(
-    rebuild_draft=rebuild_draft,
-    serializable_state=serializable_state,
-)
 
-if selected_page == "Draft Room":
-    render_draft_room(
-        DraftRoomDependencies(
-            current_open_index=current_open_index,
-            render_player_tray_css=render_player_tray_css,
-            render_header=render_v53_header,
-            clean=clean,
-            remaining_pick_time=remaining_pick_time,
-            pause_pick_clock=pause_pick_clock,
-            start_pick_clock=start_pick_clock,
-            current_user_roster=current_user_roster,
-            player_tray_settings=player_tray_settings,
-            snake_board_html=snake_board_html,
-            move_player_tray=move_player_tray,
-            render_player_toolbar=render_v61_player_toolbar,
-            render_player_picker=render_player_picker_table,
-            render_queue=render_queue_panel,
-            render_roster_header=render_live_roster_header,
-            render_roster_rows=render_live_roster_rows,
-        )
+
+def best_available() -> Optional[str]:
+    df = available_players()
+    return None if df.empty else clean(df.iloc[0]["player"])
+
+
+def make_pick(idx: int, player: str, source: str):
+    if not player:
+        return
+    if player in unavailable_players():
+        st.error(f"{player} is already unavailable.")
+        return
+    st.session_state.picks.at[idx, "selected_player"] = player
+    st.session_state.picks.at[idx, "source"] = source
+    remove_from_queue(player)
+
+
+
+
+
+def clean_player_queue():
+    """Remove drafted, unavailable, missing, and duplicate players."""
+    available = set(available_players()["player"].map(clean))
+    cleaned_queue = []
+    seen = set()
+
+    for player in st.session_state.get("player_queue", []):
+        player = clean(player)
+        if player and player in available and player not in seen:
+            cleaned_queue.append(player)
+            seen.add(player)
+
+    st.session_state.player_queue = cleaned_queue
+
+
+def add_to_queue(player: str):
+    clean_player_queue()
+    player = clean(player)
+    if player and player not in st.session_state.player_queue:
+        st.session_state.player_queue.append(player)
+
+
+def remove_from_queue(player: str):
+    player = clean(player)
+    st.session_state.player_queue = [
+        queued
+        for queued in st.session_state.get("player_queue", [])
+        if clean(queued) != player
+    ]
+
+
+def move_queue_player(player: str, direction: int):
+    clean_player_queue()
+    player = clean(player)
+    queue = list(st.session_state.player_queue)
+
+    if player not in queue:
+        return
+
+    current_index = queue.index(player)
+    target_index = max(
+        0,
+        min(len(queue) - 1, current_index + direction),
     )
 
+    if current_index == target_index:
+        return
+
+    queue[current_index], queue[target_index] = (
+        queue[target_index],
+        queue[current_index],
+    )
+    st.session_state.player_queue = queue
 
 
-elif selected_page == "Recommendations":
-    st.subheader("Team-Aware Recommendations")
+def clear_player_queue():
+    st.session_state.player_queue = []
+
+
+def top_queue_player() -> Optional[str]:
+    clean_player_queue()
+    if not st.session_state.player_queue:
+        return None
+    return clean(st.session_state.player_queue[0])
+
+
+def draft_top_queue_player():
+    player = top_queue_player()
+    if not player:
+        st.session_state.draft_message = "Your queue is empty."
+        return
+    handle_user_draft_click(player)
+
+
+def player_value_number(
+    row: pd.Series,
+    current_idx: int,
+) -> Optional[int]:
+    """Positive value means the player has fallen beyond ADP."""
+    adp = numeric(row.get("consensus_adp"), None)
+    if adp is None:
+        return None
+
+    current_pick = int(
+        st.session_state.picks.loc[current_idx, "overall"]
+    )
+    return int(round(current_pick - adp))
+
+
+def player_value_badge(
+    row: pd.Series,
+    current_idx: int,
+) -> tuple[str, str]:
+    value = player_value_number(row, current_idx)
+
+    if value is None:
+        return "—", "value-fair"
+    if value >= 5:
+        return f"+{value}", "value-steal"
+    if value <= -5:
+        return str(value), "value-reach"
+    return "0", "value-fair"
+
+
+
+def handle_user_draft_click(player: str):
+    """Process a draft-button click before Streamlit's next rerun."""
+    idx = current_open_index()
+
+    if idx is None:
+        st.session_state.draft_message = "The draft is already complete."
+        return
+
+    owner = clean(st.session_state.picks.loc[idx, "current_owner"])
+    user_team = clean(st.session_state.user_team)
+
+    if owner != user_team:
+        st.session_state.draft_message = (
+            f"It is currently {owner}'s turn."
+        )
+        return
+
+    if player in unavailable_players():
+        st.session_state.draft_message = (
+            f"{player} is already unavailable."
+        )
+        return
+
+    make_pick(idx, player, "User")
+    st.session_state.draft_message = (
+        f"{player} drafted by {user_team}."
+    )
+    reset_pick_clock()
+    st.session_state.draft_active = True
+    st.session_state.clock_running = True
+
+
+
+def run_one_cpu_pick() -> bool:
+    idx = current_open_index()
+
+    if idx is None:
+        st.session_state.draft_message = "The mock draft is complete."
+        return False
+
+    row = st.session_state.picks.loc[idx]
+    owner = clean(row["current_owner"])
+
+    if owner == clean(st.session_state.user_team):
+        return False
+
+    player = cpu_best_available()
+    if not player:
+        st.session_state.draft_message = "No available players remain."
+        return False
+
+    make_pick(idx, player, "CPU")
+    st.session_state.draft_message = (
+        f"CPU drafted {player} for {owner} at pick "
+        f"{int(row['overall'])}."
+    )
+    return True
+
+
+
+def selected_for_team(team_name: str) -> pd.DataFrame:
+    return st.session_state.picks[
+        (st.session_state.picks["current_owner"].map(clean) == clean(team_name))
+        & (st.session_state.picks["selected_player"].map(clean) != "")
+    ].sort_values("overall")
+
+
+def roster_position_counts(team_name: str) -> Dict[str, int]:
+    pmap = player_map()
+    counts = {"QB": 0, "RB": 0, "WR": 0, "TE": 0}
+    for player in selected_for_team(team_name)["selected_player"]:
+        pos = pmap.get(clean(player), {}).get("position", "")
+        if pos in counts:
+            counts[pos] += 1
+    return counts
+
+
+def build_team_roster(team_name: str) -> pd.DataFrame:
+    pmap = player_map()
+    drafted = []
+    for row in selected_for_team(team_name).itertuples():
+        player = clean(row.selected_player)
+        meta = pmap.get(player, {})
+        drafted.append({"player": player, "position": meta.get("position", ""), "overall": int(row.overall)})
+
+    starters = {"QB": None, "RB1": None, "RB2": None, "WR1": None, "WR2": None, "TE": None}
+    bench = []
+    for item in drafted:
+        pos = item["position"]
+        if pos == "QB" and starters["QB"] is None:
+            starters["QB"] = item
+        elif pos == "RB" and starters["RB1"] is None:
+            starters["RB1"] = item
+        elif pos == "RB" and starters["RB2"] is None:
+            starters["RB2"] = item
+        elif pos == "WR" and starters["WR1"] is None:
+            starters["WR1"] = item
+        elif pos == "WR" and starters["WR2"] is None:
+            starters["WR2"] = item
+        elif pos == "TE" and starters["TE"] is None:
+            starters["TE"] = item
+        else:
+            bench.append(item)
+
+    rows = []
+    for slot in ["QB", "RB1", "RB2", "WR1", "WR2", "TE"]:
+        item = starters[slot]
+        rows.append({"Slot": slot, "Player": item["player"] if item else "", "Pos": item["position"] if item else ""})
+    for i in range(10):
+        item = bench[i] if i < len(bench) else None
+        rows.append({"Slot": f"BN{i+1}", "Player": item["player"] if item else "", "Pos": item["position"] if item else ""})
+    return pd.DataFrame(rows)
+
+
+def next_user_pick(after_overall: int) -> Optional[int]:
+    candidates = st.session_state.picks[
+        (st.session_state.picks["overall"] > after_overall)
+        & (st.session_state.picks["current_owner"].map(clean) == clean(st.session_state.user_team))
+        & (st.session_state.picks["selected_player"].map(clean) == "")
+    ]
+    if candidates.empty:
+        return None
+    return int(candidates.iloc[0]["overall"])
+
+
+def estimated_return_probability(adp: Optional[float], next_pick: Optional[int]) -> Optional[float]:
+    if adp is None or next_pick is None:
+        return None
+    # Smooth heuristic: ADP well after next pick => likely to return.
+    delta = adp - next_pick
+    return max(0.01, min(0.99, 1.0 / (1.0 + math.exp(-delta / 5.5))))
+
+
+def team_need_score(position: str, counts: Dict[str, int]) -> float:
+    target = STARTER_TARGETS.get(position, 0)
+    current = counts.get(position, 0)
+    if current < target:
+        return 28.0 - (current * 5)
+    depth_targets = {"QB": 1, "RB": 5, "WR": 6, "TE": 2}
+    if current < depth_targets.get(position, target):
+        return 8.0
+    return 0.0
+
+
+def recommendations(limit=5) -> pd.DataFrame:
     idx = current_open_index()
     if idx is None:
-        st.success("Draft complete.")
-    else:
-        current = st.session_state.picks.loc[idx]
-        counts = roster_position_counts(st.session_state.user_team)
-        next_pick = next_user_pick(int(current["overall"]))
-        c1, c2, c3, c4, c5 = st.columns(5)
-        c1.metric("QB", counts["QB"])
-        c2.metric("RB", counts["RB"])
-        c3.metric("WR", counts["WR"])
-        c4.metric("TE", counts["TE"])
-        c5.metric("Next User Pick", next_pick or "—")
-        recs = recommendations(8)
-        st.dataframe(recs, hide_index=True, use_container_width=True)
-        st.caption(
-            "Chance Back is a heuristic derived from consensus ADP versus your next open pick. "
-            "It is directional—not a guarantee."
-        )
+        return pd.DataFrame()
+    current = st.session_state.picks.loc[idx]
+    overall = int(current["overall"])
+    next_pick = next_user_pick(overall)
+    counts = roster_position_counts(st.session_state.user_team)
+    avail = available_players().head(35).copy()
+    rows = []
+    for row in avail.itertuples():
+        pos = clean(row.position)
+        rank = int(row.custom_rank)
+        adp = numeric(getattr(row, "consensus_adp", None))
+        return_prob = estimated_return_probability(adp, next_pick)
+        need = team_need_score(pos, counts)
+        rank_component = max(0.0, 55.0 - rank * 0.65)
+        urgency = 0.0 if return_prob is None else (1.0 - return_prob) * 20.0
+        score = rank_component + need + urgency
+        if return_prob is None:
+            return_text = "Unknown"
+        else:
+            return_text = f"{return_prob:.0%}"
+        reason_bits = []
+        if need >= 20:
+            reason_bits.append(f"fills a starting {pos} need")
+        elif need > 0:
+            reason_bits.append(f"adds useful {pos} depth")
+        else:
+            reason_bits.append("best-player value")
+        if return_prob is not None:
+            if return_prob < 0.30:
+                reason_bits.append("unlikely to reach your next pick")
+            elif return_prob > 0.70:
+                reason_bits.append("reasonable chance to wait")
+            else:
+                reason_bits.append("borderline next-pick availability")
+        rows.append({
+            "Player": clean(row.player),
+            "Pos": pos,
+            "Rank": rank,
+            "ADP": adp,
+            "Need Score": round(need, 1),
+            "Chance Back": return_text,
+            "Recommendation Score": round(score, 1),
+            "Why": "; ".join(reason_bits),
+        })
+    return pd.DataFrame(rows).sort_values(
+        ["Recommendation Score", "Rank"], ascending=[False, True]
+    ).head(limit)
 
-elif selected_page == "Rankings & ADP":
-    st.subheader("Player Rankings & ADP Comparison")
-    df = st.session_state.players.copy()
-    pos_options = ["All"] + sorted([p for p in df["position"].dropna().unique().tolist() if p])
-    c1, c2 = st.columns([1, 2])
-    with c1:
-        pos = st.selectbox("Position filter", pos_options, key="ranking_pos")
-    with c2:
-        query = st.text_input("Search player", key="ranking_search")
-    if pos != "All":
-        df = df[df["position"] == pos]
-    if query:
-        df = df[df["player"].str.contains(query, case=False, na=False)]
 
-    display_cols = [
-        "rank", "player", "position", "nfl_team", "custom_rank", "market_rank",
-        "consensus_adp", "underdog_adp", "nfl_adp", "sleeper_adp", "yahoo_adp",
-        "espn_adp", "fantasypros_adp", "walterpicks_adp", "tier", "peter_score"
-    ]
-    labels = {
-        "rank": "Board Rank", "player": "Player", "position": "Pos", "nfl_team": "NFL",
-        "custom_rank": "Custom Rank", "market_rank": "Market Rank",
-        "consensus_adp": "Consensus ADP", "underdog_adp": "Underdog",
-        "nfl_adp": "NFL.com", "sleeper_adp": "Sleeper", "yahoo_adp": "Yahoo",
-        "espn_adp": "ESPN", "fantasypros_adp": "FantasyPros",
-        "walterpicks_adp": "WalterPicks", "tier": "Tier", "peter_score": "Peter Score"
+def rebuild_draft():
+    st.session_state.draft_active = False
+    st.session_state.picks = assign_keepers(
+        snake_order(st.session_state.teams, int(st.session_state.rounds)),
+        st.session_state.keepers,
+        st.session_state.teams,
+    )
+    reset_cpu_variance()
+    st.session_state.draft_message = (
+        "Draft reset with current teams, keepers, and draft order."
+    )
+    reset_pick_clock()
+
+
+def serializable_state():
+    return {
+        "rounds": int(st.session_state.rounds),
+        "user_team": clean(st.session_state.user_team),
+        "teams": st.session_state.teams.to_dict(orient="records"),
+        "keepers": st.session_state.keepers.fillna("").to_dict(orient="records"),
+        "picks": st.session_state.picks.fillna("").to_dict(orient="records"),
+        "player_queue": list(st.session_state.player_queue),
+        "queue_auto_draft": bool(st.session_state.queue_auto_draft),
     }
-    ranking_table = df[display_cols].rename(columns=labels)
-    st.dataframe(ranking_table, hide_index=True, use_container_width=True, height=650)
 
-    st.markdown("#### Add or update site ADP data")
-    st.caption(
-        "Your workbook currently contains Consensus and Underdog ADP. "
-        "The remaining site columns are ready for CSV imports as those datasets become available."
-    )
-    template = st.session_state.players[["player"]].copy()
-    for site, col in ADP_COLUMNS.items():
-        template[col] = st.session_state.players[col] if col in st.session_state.players else ""
-    st.download_button(
-        "Download ADP import template",
-        template.to_csv(index=False).encode("utf-8"),
-        file_name="fantasysync_adp_template.csv",
-        mime="text/csv",
-    )
-    uploaded = st.file_uploader("Upload completed ADP CSV", type=["csv"])
-    if uploaded is not None:
-        incoming = pd.read_csv(uploaded)
-        if "player" not in incoming.columns:
-            st.error("The CSV must contain a player column.")
-        else:
-            merged = st.session_state.players.drop(
-                columns=[c for c in ADP_COLUMNS.values() if c in st.session_state.players.columns],
-                errors="ignore"
-            ).merge(incoming, on="player", how="left")
-            for col in ADP_COLUMNS.values():
-                if col not in merged:
-                    merged[col] = pd.NA
-                merged[col] = pd.to_numeric(merged[col], errors="coerce")
-            st.session_state.players = merged
-            st.success("ADP comparison data loaded for this session.")
-            st.rerun()
 
-elif selected_page == "Available Players":
-    avail = available_players().copy()
-    pos_options = ["All"] + sorted([p for p in avail["position"].dropna().unique().tolist() if p])
-    pos = st.selectbox("Position", pos_options)
-    query = st.text_input("Search player")
-    if pos != "All":
-        avail = avail[avail["position"] == pos]
-    if query:
-        avail = avail[avail["player"].str.contains(query, case=False, na=False)]
-    st.dataframe(
-        avail[["rank", "player", "position", "nfl_team", "consensus_adp", "underdog_adp", "tier", "peter_score"]],
-        use_container_width=True, hide_index=True, height=650,
+
+def load_state_data(data):
+    st.session_state.rounds = int(data["rounds"])
+    st.session_state.user_team = clean(data["user_team"])
+    st.session_state.teams = pd.DataFrame(data["teams"])
+    st.session_state.keepers = pd.DataFrame(data["keepers"])
+    st.session_state.picks = pd.DataFrame(data["picks"])
+    st.session_state.player_queue = [
+        clean(player)
+        for player in data.get("player_queue", [])
+    ]
+    st.session_state.queue_auto_draft = bool(
+        data.get("queue_auto_draft", False)
+    )
+    clean_player_queue()
+    reset_pick_clock()
+
+
+def snake_board_html() -> str:
+    teams = st.session_state.teams.sort_values("draft_slot")
+    pmap = player_map()
+
+    html = ['<div style="width:100%;">']
+    html.append(
+        '<div class="snake-draft-grid" style="display:grid;'
+        'grid-template-columns:repeat(10,minmax(0,1fr));'
+        'gap:2px;width:100%;">'
     )
 
-elif selected_page == "Team Rosters":
-    team_names = st.session_state.teams.sort_values("draft_slot")["team_name"].tolist()
-    for start in range(0, len(team_names), 2):
-        cols = st.columns(2)
-        for j, team_name in enumerate(team_names[start:start+2]):
-            with cols[j]:
-                roster = build_team_roster(team_name)
-                count = int((roster["Player"] != "").sum())
-                st.subheader(team_name)
-                st.caption(f"Rostered: {count} / 16")
-                st.dataframe(roster, hide_index=True, use_container_width=True, height=610)
-
-elif selected_page == "League Setup":
-    st.subheader("Teams and Draft Slots")
-    edited_teams = st.data_editor(
-        st.session_state.teams, use_container_width=True, hide_index=True, num_rows="fixed",
-        column_config={
-            "team_id": st.column_config.NumberColumn("Team ID", disabled=True),
-            "team_name": st.column_config.TextColumn("Team Name", required=True),
-            "draft_slot": st.column_config.NumberColumn("Draft Slot", min_value=1, max_value=10, step=1),
-        }, key="team_editor",
-    )
-    if st.button("Apply team setup"):
-        if len(set(edited_teams["draft_slot"])) != len(edited_teams):
-            st.error("Each draft slot must be unique.")
-        elif len(set(edited_teams["team_name"].map(clean))) != len(edited_teams):
-            st.error("Each team name must be unique.")
-        else:
-            old_names = dict(zip(st.session_state.teams["team_id"], st.session_state.teams["team_name"]))
-            new_names = dict(zip(edited_teams["team_id"], edited_teams["team_name"]))
-            st.session_state.teams = edited_teams.copy()
-            for team_id, old_name in old_names.items():
-                new_name = new_names[team_id]
-                st.session_state.picks.loc[
-                    st.session_state.picks["original_team_id"] == team_id, "original_owner"
-                ] = new_name
-                st.session_state.picks.loc[
-                    st.session_state.picks["current_owner"] == old_name, "current_owner"
-                ] = new_name
-            st.success("Team setup applied. Reset the draft to regenerate the snake order.")
-
-elif selected_page == "Keepers & Picks":
-    st.subheader("Keeper Manager")
-    player_choices = st.session_state.players["player"].tolist()
-    team_ids = st.session_state.teams["team_id"].tolist()
-    edited_keepers = st.data_editor(
-        st.session_state.keepers, use_container_width=True, hide_index=True, num_rows="dynamic",
-        column_config={
-            "team_id": st.column_config.SelectboxColumn("Team ID", options=team_ids, required=True),
-            "player": st.column_config.SelectboxColumn("Player", options=player_choices, required=True),
-            "keeper_round": st.column_config.NumberColumn("Keeper Round", min_value=1, max_value=20, step=1),
-            "exact_pick_override": st.column_config.NumberColumn("Exact Pick Override", min_value=1, max_value=200, step=1),
-        }, key="keeper_editor",
-    )
-    if st.button("Apply keepers"):
-        st.session_state.keepers = edited_keepers.copy()
-        rebuild_draft()
-        st.success("Keepers applied and draft reset.")
-        st.rerun()
-
-    st.divider()
-    st.subheader("Draft Pick Ownership")
-    st.caption("Change Current Owner to represent a traded pick.")
-    owners = st.session_state.teams["team_name"].tolist()
-    edited_picks = st.data_editor(
-        st.session_state.picks[[
-            "overall", "round", "slot", "original_owner", "current_owner", "keeper_player", "selected_player"
-        ]],
-        use_container_width=True, hide_index=True, num_rows="fixed",
-        column_config={
-            "overall": st.column_config.NumberColumn(disabled=True),
-            "round": st.column_config.NumberColumn(disabled=True),
-            "slot": st.column_config.NumberColumn(disabled=True),
-            "original_owner": st.column_config.TextColumn(disabled=True),
-            "current_owner": st.column_config.SelectboxColumn(options=owners),
-            "keeper_player": st.column_config.TextColumn(disabled=True),
-            "selected_player": st.column_config.TextColumn(disabled=True),
-        }, key="pick_owner_editor",
-    )
-    if st.button("Apply pick trades"):
-        st.session_state.picks["current_owner"] = edited_picks["current_owner"].tolist()
-        st.success("Pick ownership updated.")
-        st.rerun()
-
-elif selected_page == "League History":
-    st.subheader("League History")
-    st.caption(
-        "Saved drafts and season history will appear here in a future update."
-    )
-
-    completed = st.session_state.picks[
-        st.session_state.picks["selected_player"].map(clean) != ""
-    ].copy()
-
-    if completed.empty:
-        st.info(
-            "Complete or import a draft to begin building league history."
-        )
-    else:
-        history_display = completed[
-            [
-                "overall",
-                "round",
-                "current_owner",
-                "selected_player",
-                "source",
-            ]
-        ].copy()
-        history_display.columns = [
-            "Pick",
-            "Round",
-            "Team",
-            "Player",
-            "Source",
+    for rnd in range(1, int(st.session_state.rounds) + 1):
+        round_rows = st.session_state.picks[
+            st.session_state.picks["round"] == rnd
         ]
-        st.dataframe(
-            history_display,
-            hide_index=True,
-            use_container_width=True,
-            height=650,
-        )
+        by_slot = {int(r.slot): r for r in round_rows.itertuples()}
 
+        for slot in range(1, 11):
+            r = by_slot.get(slot)
 
-elif selected_page == "Settings":
-    st.subheader("Application Settings")
-    st.caption(
-        "These settings were previously shown in the left sidebar."
-    )
+            if not r:
+                html.append('<div class="snake-cell"></div>')
+                continue
 
-    settings_left, settings_right = st.columns(2)
+            player = clean(r.selected_player) or "—"
+            pos = pmap.get(player, {}).get("position", "")
+            source = clean(r.source)
+            owner = clean(r.current_owner)
+            tag = " K" if source == "Keeper" else ""
 
-    with settings_left:
-        new_rounds = st.number_input(
-            "Draft rounds",
-            min_value=1,
-            max_value=20,
-            value=int(st.session_state.rounds),
-            key="settings_rounds",
-        )
+            classes = ["snake-cell"]
+            if player == "—":
+                classes.append("empty-pick")
+            elif pos in {"QB", "RB", "WR", "TE"}:
+                classes.append(f"pos-{pos.lower()}")
+            if source == "Keeper":
+                classes.append("keeper-pick")
+            if owner == clean(st.session_state.user_team):
+                classes.append("user-pick")
+            current_idx = current_open_index()
+            if current_idx is not None:
+                current_overall = int(st.session_state.picks.loc[current_idx, "overall"])
+                if int(r.overall) == current_overall:
+                    classes.append("current-pick")
 
-        new_clock = st.number_input(
-            "Pick clock length (seconds)",
-            min_value=15,
-            max_value=300,
-            value=int(st.session_state.pick_clock_seconds),
-            step=15,
-            key="settings_pick_clock",
-        )
-
-        if st.button(
-            "Apply Draft Settings",
-            type="primary",
-            use_container_width=True,
-        ):
-            rounds_changed = int(new_rounds) != int(
-                st.session_state.rounds
-            )
-            st.session_state.rounds = int(new_rounds)
-            st.session_state.pick_clock_seconds = int(new_clock)
-
-            if rounds_changed:
-                rebuild_draft()
-                st.session_state.clock_running = False
-
-            reset_pick_clock()
-            st.success("Draft settings updated.")
-            st.rerun()
-
-    with settings_right:
-        st.markdown("#### Import Draft State")
-        uploaded_state = st.file_uploader(
-            "Upload a saved draft-state JSON file",
-            type=["json"],
-            key="settings_draft_state_uploader",
-        )
-
-        if uploaded_state is not None:
-            if st.button(
-                "Apply Uploaded State",
-                use_container_width=True,
-            ):
-                try:
-                    load_state_data(json.load(uploaded_state))
-                    st.success("Draft state loaded.")
-                    st.rerun()
-                except Exception as exc:
-                    st.error(
-                        f"Could not load draft state: {exc}"
+            badge = ""
+            nfl = ""
+            if player != "—":
+                nfl = pmap.get(player, {}).get("nfl_team", "")
+                if pos in {"QB", "RB", "WR", "TE"}:
+                    badge = (
+                        f'<span class="player-tile-badge badge-{pos.lower()}">{pos}</span>'
+                        f'<span class="tile-nfl">{nfl}</span>'
                     )
 
-        st.markdown("#### CPU Draft Behavior")
-        variance_status = (
-            "Mild top-five variance"
-            if st.session_state.cpu_variance_enabled
-            else "Strict best available"
-        )
-        st.info(
-            f"Current draft mode: **{variance_status}**. "
-            "A fresh mode is chosen whenever the draft is reset. "
-            "About one out of every four drafts uses mild variance."
-        )
+            keeper_star = " ⭐" if source == "Keeper" else ""
+            waiting = "Waiting…" if player == "—" else player
 
-        st.markdown("#### Display")
-        st.info(
-            "Additional color, font, and accessibility settings "
-            "will be added here during the UI polish pass."
+            # Sleeper-style snake notation keeps team columns fixed while
+            # showing the actual pick sequence within each round.
+            pick_in_round = slot if rnd % 2 == 1 else 11 - slot
+            pick_label = f"{rnd}.{pick_in_round}"
+
+            html.append(
+                f'<div class="{" ".join(classes)}">'
+                f'<div class="snake-pick">{pick_label}{keeper_star}</div>'
+                f'<div class="snake-player" title="{player}">{waiting}</div>'
+                f'<div>{badge}</div>'
+                f'<div class="tile-owner" title="{owner}">{owner}</div>'
+                f'</div>'
+            )
+
+    html.append("</div></div>")
+    return "".join(html)
+
+
+
+
+
+def sync_user_turn_clock():
+    idx = current_open_index()
+
+    if idx is None:
+        st.session_state.turn_started_at = None
+        st.session_state.turn_pick_overall = None
+        st.session_state.clock_running = False
+        st.session_state.draft_active = False
+        st.session_state.clock_paused_remaining = int(st.session_state.pick_clock_seconds)
+        return
+
+    row = st.session_state.picks.loc[idx]
+    owner = clean(row["current_owner"])
+    overall = int(row["overall"])
+
+    if owner != clean(st.session_state.user_team):
+        st.session_state.turn_started_at = None
+        st.session_state.turn_pick_overall = None
+        st.session_state.clock_running = False
+        st.session_state.clock_paused_remaining = int(st.session_state.pick_clock_seconds)
+        return
+
+    if st.session_state.turn_pick_overall != overall:
+        st.session_state.turn_pick_overall = overall
+        st.session_state.clock_paused_remaining = int(
+            st.session_state.pick_clock_seconds
         )
+        if st.session_state.clock_running:
+            st.session_state.turn_started_at = time.time()
+        else:
+            st.session_state.turn_started_at = None
+
+
+def remaining_pick_time() -> int:
+    sync_user_turn_clock()
+
+    if not st.session_state.clock_running:
+        return max(0, int(st.session_state.clock_paused_remaining))
+
+    if st.session_state.turn_started_at is None:
+        st.session_state.turn_started_at = time.time()
+
+    elapsed = int(time.time() - st.session_state.turn_started_at)
+    return max(0, int(st.session_state.clock_paused_remaining) - elapsed)
+
+
+def start_pick_clock():
+    sync_user_turn_clock()
+    if st.session_state.clock_running:
+        return
+    if int(st.session_state.clock_paused_remaining) <= 0:
+        st.session_state.clock_paused_remaining = int(st.session_state.pick_clock_seconds)
+    st.session_state.turn_started_at = time.time()
+    st.session_state.clock_running = True
+
+
+def pause_pick_clock():
+    if not st.session_state.clock_running:
+        return
+
+    idx = current_open_index()
+    if idx is not None:
+        owner = clean(st.session_state.picks.loc[idx, "current_owner"])
+        if owner == clean(st.session_state.user_team):
+            st.session_state.clock_paused_remaining = remaining_pick_time()
+
+    st.session_state.turn_started_at = None
+    st.session_state.clock_running = False
+
+
+def reset_pick_clock():
+    st.session_state.turn_started_at = None
+    st.session_state.clock_running = False
+    st.session_state.clock_paused_remaining = int(st.session_state.pick_clock_seconds)
+
+
+def auto_pick_user_if_expired():
+    idx = current_open_index()
+    if idx is None or not st.session_state.clock_running:
+        return False
+
+    row = st.session_state.picks.loc[idx]
+    if clean(row["current_owner"]) != clean(st.session_state.user_team):
+        return False
+
+    if remaining_pick_time() > 0:
+        return False
+
+    player = None
+    source = "User Auto"
+
+    if st.session_state.queue_auto_draft:
+        player = top_queue_player()
+        if player:
+            source = "Queue Auto"
+
+    if not player:
+        player = best_available()
+
+    if not player:
+        st.session_state.draft_message = (
+            "Pick clock expired, but no available player remained."
+        )
+        return False
+
+    make_pick(idx, player, source)
+    st.session_state.draft_message = (
+        f"Pick clock expired. {player} was auto-selected for "
+        f"{st.session_state.user_team}."
+    )
+    reset_pick_clock()
+    st.session_state.clock_running = True
+    return True
+
+
 
