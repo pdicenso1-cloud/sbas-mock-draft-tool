@@ -2722,22 +2722,22 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked
 }
 
 .snake-cell {
-    min-height: 66px !important;
-    padding: 5px 7px !important;
+    min-height: 50px !important;
+    padding: 3px 5px !important;
 }
 
 .snake-round-label {
-    min-height: 66px !important;
+    min-height: 50px !important;
     font-size: .66rem !important;
 }
 
 .snake-player {
-    font-size: .64rem !important;
-    line-height: 1.12 !important;
+    font-size: .56rem !important;
+    line-height: 1.1 !important;
 }
 
 .snake-pick {
-    font-size: .49rem !important;
+    font-size: .44rem !important;
 }
 
 /* Compact roster rows to align with the larger five-round board. */
@@ -3832,9 +3832,9 @@ body:has(section[data-testid="stSidebar"][aria-expanded="false"])
 }
 
 .st-key-v640_header {
-    min-height: 54px !important;
-    height: 54px !important;
-    margin: 0 !important;
+    min-height: 60px !important;
+    height: 60px !important;
+    margin: -12px 0 0 !important;
     padding: 0 0 3px !important;
     border-bottom: 1px solid rgba(148,163,184,.16) !important;
 }
@@ -3842,8 +3842,8 @@ body:has(section[data-testid="stSidebar"][aria-expanded="false"])
 .st-key-v640_header > div,
 .st-key-v640_header > div > div,
 .st-key-v640_header [data-testid="stHorizontalBlock"] {
-    min-height: 50px !important;
-    height: 50px !important;
+    min-height: 56px !important;
+    height: 56px !important;
     margin: 0 !important;
     padding: 0 !important;
     align-items: center !important;
@@ -3898,7 +3898,7 @@ body:has(section[data-testid="stSidebar"][aria-expanded="false"])
 .v640-clock {
     width: 48px;
     height: 48px;
-    margin: 0 auto;
+    margin: 0 auto 8px !important;
     border: 2px solid #3B82F6;
     border-radius: 50%;
     display: flex;
@@ -4525,7 +4525,7 @@ section[data-testid="stSidebar"],
 .st-key-v670_top_nav {
     position: relative !important;
     min-height: 50px !important;
-    margin: 0 0 7px !important;
+    margin: 0 0 4px !important;
     padding: 8px 7px 0 !important;
     border: 0 !important;
     border-radius: 0 !important;
@@ -4700,4 +4700,32 @@ section[data-testid="stSidebar"],
     .st-key-v670_top_nav [data-testid="stRadio"] label p {
         font-size: .54rem !important;
     }
+}
+
+/* ============================================================
+   Team selector: matte purple, fully filled, team name only.
+   ============================================================ */
+
+.st-key-v670_team_selector button {
+    background: #6D28D9 !important;
+    border: 1px solid #6D28D9 !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    font-weight: 800 !important;
+    box-shadow: none !important;
+}
+
+.st-key-v670_team_selector button:hover:not(:disabled) {
+    background: #7C3AED !important;
+    border-color: #7C3AED !important;
+}
+
+.st-key-v670_team_selector button:disabled {
+    /* The active/selected team button is rendered disabled; keep it filled
+       and readable instead of Streamlit's default greyed-out disabled look. */
+    background: #4C1D95 !important;
+    border: 1px solid #C4B5FD !important;
+    color: #F5F3FF !important;
+    -webkit-text-fill-color: #F5F3FF !important;
+    opacity: 1 !important;
 }
