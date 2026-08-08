@@ -129,21 +129,24 @@ def sort_player_pool(pool: pd.DataFrame, current_idx: int) -> pd.DataFrame:
     )
 
 
+FLEX_POSITIONS = {"RB", "WR", "TE"}
+
+
 def render_position_filter():
-    positions = ["ALL", "QB", "RB", "WR", "TE"]
-    labels = {"ALL": "ALL", "QB": "QB", "RB": "RB", "WR": "WR", "TE": "TE"}
-    cols = st.columns(len(positions))
-    for i, pos in enumerate(positions):
-        active = st.session_state.draft_position_filter == pos
-        button_type = "primary" if active else "secondary"
-        if cols[i].button(
-            labels[pos],
-            key=f"draft_pos_{pos}",
-            use_container_width=True,
-            type=button_type,
-        ):
-            st.session_state.draft_position_filter = pos
-            st.rerun()
+    positions = ["ALL", "QB", "RB", "WR", "TE", "FLEX"]
+    with st.container(key="v612_position_filter_bar"):
+        cols = st.columns(len(positions))
+        for i, pos in enumerate(positions):
+            active = st.session_state.draft_position_filter == pos
+            button_type = "primary" if active else "secondary"
+            if cols[i].button(
+                pos,
+                key=f"draft_pos_{pos}",
+                use_container_width=True,
+                type=button_type,
+            ):
+                st.session_state.draft_position_filter = pos
+                st.rerun()
 
 
 
@@ -151,7 +154,9 @@ def render_position_filter():
 def filtered_draft_pool() -> pd.DataFrame:
     pool = available_players().copy()
     selected_pos = st.session_state.draft_position_filter
-    if selected_pos != "ALL":
+    if selected_pos == "FLEX":
+        pool = pool[pool["position"].isin(FLEX_POSITIONS)]
+    elif selected_pos != "ALL":
         pool = pool[pool["position"] == selected_pos]
     query = clean(st.session_state.draft_search)
     if query:
