@@ -1,15 +1,10 @@
 """Stable FantasySync entrypoint.
 
-v7.1.2 fixes Streamlit reruns while keeping app.py frozen.
-
-Why this is required:
-Streamlit reruns app.py after widget interaction and state changes. A normal
-Python import executes fantasysync.runtime only once per process because Python
-caches imported modules. On later Streamlit reruns, import_module() returned the
-cached runtime without executing its UI code again, leaving the page empty.
-
-This entrypoint explicitly reloads the runtime on every subsequent Streamlit
-rerun so the full interface renders every time.
+Streamlit re-executes this file's `run()` on every rerun (widget interaction,
+autorefresh tick, etc.), so calling `fantasysync.runtime.render_app()`
+explicitly here draws the full interface every time. `fantasysync.runtime` is
+imported once and cached like any normal module; only `render_app()` itself
+needs to run on each rerun, so there is no need to force-reload the module.
 """
 from __future__ import annotations
 
@@ -28,10 +23,10 @@ RUNTIME_MODULE = "fantasysync.runtime"
 
 def _render_runtime() -> None:
     """Execute the FantasySync runtime on every Streamlit script run."""
-    if RUNTIME_MODULE in sys.modules:
-        importlib.reload(sys.modules[RUNTIME_MODULE])
-    else:
-        importlib.import_module(RUNTIME_MODULE)
+    module = sys.modules.get(RUNTIME_MODULE)
+    if module is None:
+        module = importlib.import_module(RUNTIME_MODULE)
+    module.render_app()
 
 
 def run() -> None:
