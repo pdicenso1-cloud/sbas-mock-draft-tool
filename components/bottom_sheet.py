@@ -454,6 +454,15 @@ def _render_sheet_css(level: int) -> None:
 
         .st-key-v63_player_side {{
             padding-right: 3px !important;
+            /* This container's direct children are the toolbar, the two
+               header rows, and the player list; Streamlit's default 16px
+               flex gap between them is the bulk of the tray's dead space. */
+            gap: 3px !important;
+            /* The floating tray up/down seam control (.st-key-v720_tray_controls)
+               is fixed-positioned over the tray's top edge; without this the
+               tightened toolbar row sits directly underneath it and gets
+               partially covered. */
+            padding-top: 14px !important;
         }}
 
         .st-key-v63_utility_side {{
@@ -737,11 +746,35 @@ def _render_sheet_css(level: int) -> None:
             border-radius: 7px !important;
         }}
 
+        /*
+         * Position filters live inside one bounded, pill-shaped bar (a
+         * single bordered container), with only the active position
+         * rendered as a filled pill inside it - matching Sleeper's
+         * ALL/QB/RB/WR/TE/FLEX toolbar.
+         */
+        .st-key-v612_position_filter_bar {{
+            display: flex !important;
+            align-items: center !important;
+            height: 32px !important;
+            min-height: 32px !important;
+            border: 1px solid #40526C !important;
+            border-radius: 999px !important;
+            background: #131D2E !important;
+            padding: 2px !important;
+            overflow: hidden !important;
+        }}
+
+        .st-key-v612_position_filter_bar [data-testid="stHorizontalBlock"] {{
+            gap: 1px !important;
+            width: 100% !important;
+        }}
+
         .st-key-draft_pos_ALL,
         .st-key-draft_pos_QB,
         .st-key-draft_pos_RB,
         .st-key-draft_pos_WR,
-        .st-key-draft_pos_TE {{
+        .st-key-draft_pos_TE,
+        .st-key-draft_pos_FLEX {{
             display: block !important;
             visibility: visible !important;
             opacity: 1 !important;
@@ -753,29 +786,45 @@ def _render_sheet_css(level: int) -> None:
         .st-key-draft_pos_QB button,
         .st-key-draft_pos_RB button,
         .st-key-draft_pos_WR button,
-        .st-key-draft_pos_TE button {{
+        .st-key-draft_pos_TE button,
+        .st-key-draft_pos_FLEX button {{
             display: flex !important;
             visibility: visible !important;
             opacity: 1 !important;
-            height: 30px !important;
-            min-height: 30px !important;
-            padding: 0 9px !important;
+            height: 26px !important;
+            min-height: 26px !important;
+            padding: 0 4px !important;
             border-radius: 999px !important;
-            background: #1B293D !important;
-            border: 1px solid #40526C !important;
-            color: #E7EEF8 !important;
-            -webkit-text-fill-color: #E7EEF8 !important;
-            font-size: .58rem !important;
+            background: transparent !important;
+            border: 0 !important;
+            color: #9FB0C8 !important;
+            -webkit-text-fill-color: #9FB0C8 !important;
+            font-size: .52rem !important;
             font-weight: 820 !important;
+            box-shadow: none !important;
+            white-space: nowrap !important;
+            justify-content: center !important;
+        }}
+
+        .st-key-draft_pos_ALL button:hover,
+        .st-key-draft_pos_QB button:hover,
+        .st-key-draft_pos_RB button:hover,
+        .st-key-draft_pos_WR button:hover,
+        .st-key-draft_pos_TE button:hover,
+        .st-key-draft_pos_FLEX button:hover {{
+            background: rgba(255,255,255,.06) !important;
+            color: #FFFFFF !important;
+            -webkit-text-fill-color: #FFFFFF !important;
         }}
 
         .st-key-draft_pos_ALL button[kind="primary"],
         .st-key-draft_pos_QB button[kind="primary"],
         .st-key-draft_pos_RB button[kind="primary"],
         .st-key-draft_pos_WR button[kind="primary"],
-        .st-key-draft_pos_TE button[kind="primary"] {{
+        .st-key-draft_pos_TE button[kind="primary"],
+        .st-key-draft_pos_FLEX button[kind="primary"] {{
             background: #2E68D4 !important;
-            border-color: #74A3FF !important;
+            border: 0 !important;
             color: #FFFFFF !important;
             -webkit-text-fill-color: #FFFFFF !important;
         }}
