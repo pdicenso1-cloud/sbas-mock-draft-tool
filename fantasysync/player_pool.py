@@ -29,7 +29,6 @@ def ensure_draft_filters():
 PLAYER_SORT_CONFIG = {
     "RK": ("custom_rank", True),
     "PLAYER": ("player", True),
-    "POS": ("position", True),
     "ADP": ("consensus_adp", True),
     "TIER": ("tier", True),
     "SCORE": ("peter_score", False),
