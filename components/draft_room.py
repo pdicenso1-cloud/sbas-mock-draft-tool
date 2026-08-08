@@ -79,7 +79,7 @@ def _render_team_selector(deps: DraftRoomDependencies) -> None:
 
             with col:
                 if st.button(
-                    f"{slot}. {team_name}",
+                    team_name,
                     key=f"v670_team_select_{slot}",
                     use_container_width=True,
                     type="primary" if active else "secondary",
