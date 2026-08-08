@@ -1,4 +1,22 @@
 .block-container {padding-top: 1.1rem; padding-bottom: 2rem;}
+
+/* render_app() runs exactly three CSS-only st.markdown() calls, in this
+   fixed order, before anything visible renders: legacy.css, safety.css,
+   then the dock CSS. Each still renders as an empty flex child and eats a
+   full flex gap in the page's top-level layout despite having zero visible
+   height - stacking up as ~48px of dead space above the top navigation
+   bar. They are reliably the first 3 element-containers on the page, so
+   they're targeted by position rather than by content: an earlier attempt
+   to detect "contains only a <style> tag" via :has(style) also matched the
+   draft board, which legitimately bundles a <style> tag alongside its real
+   content in the same markdown call, and hid the entire board.
+   A <style> tag applies its rules regardless of its ancestor's display, so
+   it's safe to remove these first 3 containers from layout entirely. */
+[data-testid="stMainBlockContainer"]
+    > [data-testid="stVerticalBlock"]
+    > [data-testid="stElementContainer"]:nth-child(-n+3) {
+    display: none !important;
+}
 [data-testid="stMetricValue"] {font-size: 1.35rem;}
 .fs-card {border:1px solid rgba(128,128,128,.28); border-radius:12px; padding:14px; margin-bottom:10px;}
 .snake-cell {border:1px solid rgba(128,128,128,.30); border-radius:6px; padding:5px; min-height:58px; margin:1px; overflow:hidden;}
@@ -4713,6 +4731,61 @@ section[data-testid="stSidebar"],
     -webkit-text-fill-color: #FFFFFF !important;
     font-weight: 800 !important;
     box-shadow: none !important;
+    /* Team names vary wildly in length ("Kodi Lee" vs "Mr. Macombers
+       wedding ring"), which used to make buttons wrap to anywhere from
+       1 to 4 lines and stick out of the row. Fix every button to the same
+       height and clamp long names to 2 lines with an ellipsis instead. */
+    height: 50px !important;
+    min-height: 50px !important;
+    max-height: 50px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    padding: 4px 8px !important;
+}
+
+/*
+ * Line the team-selector row up with the draft board's grid directly
+ * beneath it, so each button sits over its team's column and the row
+ * reads as the board's header. The board is raw HTML using a CSS grid
+ * (.snake-draft-grid, gap:2px, inside .st-key-v63_board_region which is
+ * width:calc(100vw - 16px) with 8px side margins, plus a further 3px
+ * inset from .v643-board-scroll's own padding-right), while this row is
+ * real st.columns(10) widgets - two different layout systems that need
+ * their outer width/margins and column gap matched explicitly to line up,
+ * since nothing here makes that automatic.
+ */
+.st-key-v670_team_selector {
+    width: calc(100vw - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+    margin-left: 8px !important;
+    margin-right: 8px !important;
+    padding-right: 3px !important;
+    box-sizing: border-box !important;
+}
+
+.st-key-v670_team_selector [data-testid="stHorizontalBlock"] {
+    gap: 4px !important;
+}
+
+/* Cancels the page's default flex gap between this row and the board
+   region right below it, so the buttons sit directly on row 1 instead of
+   floating above it with a visible gap. */
+.st-key-v63_board_region.st-key-v63_board_region {
+    margin-top: -16px !important;
+}
+
+.st-key-v670_team_selector button p {
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical !important;
+    -webkit-line-clamp: 2 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    text-align: center !important;
+    line-height: 1.15 !important;
+    margin: 0 !important;
+    white-space: normal !important;
 }
 
 .st-key-v670_team_selector button:hover:not(:disabled) {
