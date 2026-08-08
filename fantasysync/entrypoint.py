@@ -40,12 +40,16 @@ def run() -> None:
     project_root = Path(__file__).resolve().parents[1]
 
     try:
-        # Important: this MUST execute on every Streamlit rerun.
-        _render_runtime()
-
-        # Load design CSS only after the application UI has rendered.
+        # Load design CSS before rendering so the page never flashes
+        # Streamlit's unstyled default look on a rerun. If rendering throws,
+        # the except block below forces its own visibility styles regardless
+        # of what legacy.css did, so error visibility does not depend on this
+        # ordering.
         inject_css(project_root / "styles" / "legacy.css")
         inject_css(project_root / "styles" / "safety.css")
+
+        # Important: this MUST execute on every Streamlit rerun.
+        _render_runtime()
 
     except Exception as exc:
         # Native visible failure surface; do not allow application CSS to hide it.
