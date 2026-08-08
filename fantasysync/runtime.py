@@ -44,37 +44,50 @@ from fantasysync.draft_engine import (
 from fantasysync.navigation import render_top_navigation
 from fantasysync.player_pool import apply_team_query_selection
 
-# Safety cap so a data/logic bug can never hang the app in an infinite loop.
-_MAX_CPU_PICKS_PER_RERUN = 500
+# Milliseconds between each revealed CPU pick, for the ticker effect.
+_CPU_TICKER_INTERVAL_MS = 900
 
 
-def _advance_cpu_picks() -> None:
-    """Resolve CPU-owned picks in order until it is the user's turn.
+def _tick_cpu_draft() -> None:
+    """Reveal CPU-owned picks one at a time, ticker-style.
 
-    A 10-team snake draft spends most picks on CPU teams; those must resolve
-    automatically or the draft can never progress past the first user pick.
+    A 10-team snake draft spends most picks on CPU teams. Resolving all of
+    them in a single instant batch felt jarring, so this reveals exactly one
+    CPU pick per rerun and, if more CPU picks remain before the user's next
+    turn, schedules a quick autorefresh to reveal the next one. Once the open
+    pick belongs to the user, it starts their pick clock and stops ticking.
     """
     if not st.session_state.draft_active:
         return
 
-    for _ in range(_MAX_CPU_PICKS_PER_RERUN):
-        idx = current_open_index()
-        if idx is None:
-            st.session_state.draft_active = False
-            return
+    idx = current_open_index()
+    if idx is None:
+        st.session_state.draft_active = False
+        return
 
-        owner = clean(st.session_state.picks.loc[idx, "current_owner"])
-        if owner == clean(st.session_state.user_team):
-            start_pick_clock()
-            return
+    owner = clean(st.session_state.picks.loc[idx, "current_owner"])
+    if owner == clean(st.session_state.user_team):
+        start_pick_clock()
+        return
 
-        if not run_one_cpu_pick():
-            return
+    run_one_cpu_pick()
+
+    next_idx = current_open_index()
+    if next_idx is None:
+        st.session_state.draft_active = False
+        return
+
+    next_owner = clean(st.session_state.picks.loc[next_idx, "current_owner"])
+    if next_owner == clean(st.session_state.user_team):
+        start_pick_clock()
+    else:
+        with st.container(key="cpu_autorefresh_mount"):
+            st_autorefresh(interval=_CPU_TICKER_INTERVAL_MS, limit=None, key="cpu_ticker")
 
 
 def _render_draft_room_page() -> None:
     apply_team_query_selection()
-    _advance_cpu_picks()
+    _tick_cpu_draft()
 
     idx = current_open_index()
     user_is_up = idx is not None and clean(
@@ -87,7 +100,8 @@ def _render_draft_room_page() -> None:
         # widget-heavy (a ~100-row player table), so a full rerender is not
         # cheap - refresh every few seconds rather than every second to keep
         # the tab responsive.
-        st_autorefresh(interval=3000, limit=None, key="pick_clock_tick")
+        with st.container(key="cpu_autorefresh_mount"):
+            st_autorefresh(interval=3000, limit=None, key="pick_clock_tick")
         if auto_pick_user_if_expired():
             st.rerun()
 
