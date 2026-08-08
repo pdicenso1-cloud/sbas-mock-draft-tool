@@ -794,13 +794,14 @@ def _render_sheet_css(level: int) -> None:
 
         .st-key-v63_player_side button[key^="v730_sort_"],
         .st-key-v63_player_side [data-testid="stButton"] button {{
+            white-space: nowrap !important;
+            overflow: hidden !important;
             text-overflow: ellipsis !important;
         }}
 
         /* Streamlit keys create wrapper classes: style each sortable header. */
         .st-key-v730_sort_RK button,
         .st-key-v730_sort_PLAYER button,
-        .st-key-v730_sort_POS button,
         .st-key-v730_sort_ADP button,
         .st-key-v730_sort_TIER button,
         .st-key-v730_sort_SCORE button,
@@ -828,7 +829,6 @@ def _render_sheet_css(level: int) -> None:
 
         .st-key-v730_sort_RK button:hover,
         .st-key-v730_sort_PLAYER button:hover,
-        .st-key-v730_sort_POS button:hover,
         .st-key-v730_sort_ADP button:hover,
         .st-key-v730_sort_TIER button:hover,
         .st-key-v730_sort_SCORE button:hover,
@@ -844,6 +844,48 @@ def _render_sheet_css(level: int) -> None:
             -webkit-text-fill-color: #FFFFFF !important;
             text-decoration: underline !important;
             text-underline-offset: 2px !important;
+        }}
+
+        /*
+         * Sleeper-style two-tier player table header: a muted, uppercase
+         * group row (PROJ / RUSHING / RECEIVING / PASSING) above the
+         * sortable sub-column row, with a thin vertical divider marking
+         * each stat group and a bottom border separating headers from rows.
+         */
+        .st-key-v731_group_header,
+        .st-key-v732_column_header {{
+            flex: 0 0 auto !important;
+        }}
+
+        .st-key-v731_group_header {{
+            margin-top: 2px !important;
+        }}
+
+        .player-table-group2 {{
+            height: 13px !important;
+            line-height: 13px !important;
+            font-size: .38rem !important;
+            font-weight: 800 !important;
+            letter-spacing: .05em !important;
+            text-transform: uppercase !important;
+            color: #7C8AA3 !important;
+            -webkit-text-fill-color: #7C8AA3 !important;
+            text-align: center !important;
+            white-space: nowrap !important;
+        }}
+
+        .player-table-group2-divider,
+        .st-key-v730_sort_PROJ,
+        .st-key-v730_sort_RUSH,
+        .st-key-v730_sort_REC,
+        .st-key-v730_sort_PASS {{
+            border-left: 1px solid rgba(124,138,163,.22) !important;
+        }}
+
+        .st-key-v732_column_header {{
+            border-bottom: 1px solid rgba(124,138,163,.24) !important;
+            padding-bottom: 2px !important;
+            margin-bottom: 2px !important;
         }}
 
         /*
