@@ -478,13 +478,6 @@ def load_state_data(data):
 
 def snake_board_html() -> str:
     teams = st.session_state.teams.sort_values("draft_slot")
-    team_by_slot = {
-        int(row.draft_slot): {
-            "team_id": int(row.team_id),
-            "team_name": clean(row.team_name),
-        }
-        for row in teams.itertuples()
-    }
     pmap = player_map()
 
     html = ['<div style="width:100%;">']
@@ -493,27 +486,6 @@ def snake_board_html() -> str:
         'grid-template-columns:repeat(10,minmax(0,1fr));'
         'gap:2px;width:100%;">'
     )
-
-    for slot in range(1, 11):
-        team = team_by_slot.get(
-            slot,
-            {"team_id": slot, "team_name": f"Team {slot}"}
-        )
-        team_name = team["team_name"]
-        team_id = team["team_id"]
-        active = team_name == clean(st.session_state.user_team)
-        active_class = " active" if active else ""
-        check = "✓ " if active else ""
-
-        html.append(
-            f'<a href="?team={team_id}" target="_self" '
-            f'style="text-decoration:none;color:inherit;">'
-            f'<div class="snake-team-select{active_class}">'
-            f'<div class="slot-num">{slot}</div>'
-            f'<div class="team-label" title="{team_name}">'
-            f'{check}{team_name}</div>'
-            f'</div></a>'
-        )
 
     for rnd in range(1, int(st.session_state.rounds) + 1):
         round_rows = st.session_state.picks[
