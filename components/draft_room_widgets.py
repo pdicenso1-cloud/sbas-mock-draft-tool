@@ -199,21 +199,22 @@ def render_v61_player_toolbar():
     """Compact tray toolbar: search + always-visible position filters."""
     ensure_draft_filters()
 
-    search_col, filter_col = st.columns(
-        [2.65, 7.35],
-        gap="small",
-    )
-
-    with search_col:
-        st.text_input(
-            "Search players",
-            key="draft_search",
-            placeholder="⌕  Search players...",
-            label_visibility="collapsed",
+    with st.container(key="v61_player_toolbar"):
+        search_col, filter_col = st.columns(
+            [2.65, 7.35],
+            gap="small",
         )
 
-    with filter_col:
-        render_position_filter()
+        with search_col:
+            st.text_input(
+                "Search players",
+                key="draft_search",
+                placeholder="⌕  Search players...",
+                label_visibility="collapsed",
+            )
+
+        with filter_col:
+            render_position_filter()
 
 
 def render_player_picker_table(
