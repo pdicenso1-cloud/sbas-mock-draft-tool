@@ -27,6 +27,7 @@ class DraftRoomDependencies:
     remaining_pick_time: Callable[[], int]
     pause_pick_clock: Callable[[], None]
     start_pick_clock: Callable[[], None]
+    reset_pick_clock: Callable[[], None]
     current_user_roster: Callable[[], Any]
     player_tray_settings: Callable[[], dict]
     snake_board_html: Callable[[], str]
@@ -52,6 +53,41 @@ def _is_user_turn(
         ]
     )
     return current_owner == deps.clean(st.session_state.user_team)
+
+
+def _render_team_selector(deps: DraftRoomDependencies) -> None:
+    """
+    Render team selection as real Streamlit buttons.
+
+    Team selection used to be implemented as raw HTML <a href="?team=..">
+    links embedded in the draft board's HTML. Clicking a real <a href> link
+    is a genuine browser page navigation, not a Streamlit rerun - it
+    reloaded the entire page (every stylesheet and script from scratch) on
+    every single click, which is what caused the "whole page refreshes"
+    flash when selecting a team. Real st.button widgets trigger Streamlit's
+    normal in-place rerun instead, with no page navigation at all.
+    """
+    teams = st.session_state.teams.sort_values("draft_slot")
+
+    with st.container(key="v670_team_selector"):
+        cols = st.columns(10, gap="small")
+
+        for col, row in zip(cols, teams.itertuples()):
+            slot = int(row.draft_slot)
+            team_name = deps.clean(row.team_name)
+            active = team_name == deps.clean(st.session_state.user_team)
+
+            with col:
+                if st.button(
+                    f"{slot}. {team_name}",
+                    key=f"v670_team_select_{slot}",
+                    use_container_width=True,
+                    type="primary" if active else "secondary",
+                    disabled=active,
+                ):
+                    st.session_state.user_team = team_name
+                    deps.reset_pick_clock()
+                    st.rerun()
 
 
 def render_draft_room(
@@ -81,6 +117,8 @@ def render_draft_room(
             st.caption(st.session_state.draft_message)
 
     user_turn = _is_user_turn(deps, current_index)
+
+    _render_team_selector(deps)
 
     render_draft_board(deps.snake_board_html)
 
