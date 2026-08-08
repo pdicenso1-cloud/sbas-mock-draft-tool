@@ -232,21 +232,26 @@ def render_player_picker_table(
 
     pool = sort_player_pool(pool, current_idx)
 
+    # Sleeper-style two-tier header: a group row (PROJ / RUSHING /
+    # RECEIVING / PASSING) sits above the sortable sub-columns. Both rows
+    # reuse this same `widths` list so their column boundaries line up
+    # exactly. Each stat group only has one populated sub-column today
+    # (e.g. RUSHING -> RUSH yards only, no attempts/TDs yet), but the
+    # structure is ready for more columns per group later.
     headers = [
         "",
         "",
         "RK",
         "PLAYER",
-        "POS",
-        "ADP",
         "TIER",
         "SCORE",
+        "ADP",
+        "BYE",
         "PROJ",
         "AVG",
         "RUSH",
         "REC",
         "PASS",
-        "BYE",
         "VAL",
     ]
     widths = [
@@ -254,45 +259,63 @@ def render_player_picker_table(
         0.36,
         0.40,
         1.65,
-        0.46,
-        0.50,
         0.48,
         0.54,
+        0.50,
+        0.46,
         0.56,
         0.54,
         0.54,
         0.54,
         0.54,
-        0.46,
         0.48,
     ]
+    group_labels = {
+        "PROJ": "PROJ",
+        "RUSH": "RUSHING",
+        "REC": "RECEIVING",
+        "PASS": "PASSING",
+    }
+
+    with st.container(key="v731_group_header"):
+        group_cols = st.columns(widths)
+        for col, label in zip(group_cols, headers):
+            group_text = group_labels.get(label, "")
+            css_class = "player-table-group2"
+            if label in group_labels:
+                css_class += " player-table-group2-divider"
+            col.markdown(
+                f"<div class='{css_class}'>{group_text}</div>",
+                unsafe_allow_html=True,
+            )
 
     active_sort = str(st.session_state.player_sort_column).upper()
     active_ascending = bool(st.session_state.player_sort_ascending)
 
-    header_cols = st.columns(widths)
-    for index, (col, label) in enumerate(zip(header_cols, headers)):
-        if not label:
-            col.markdown(
-                "<div class='player-table-header2'></div>",
-                unsafe_allow_html=True,
-            )
-            continue
+    with st.container(key="v732_column_header"):
+        header_cols = st.columns(widths)
+        for index, (col, label) in enumerate(zip(header_cols, headers)):
+            if not label:
+                col.markdown(
+                    "<div class='player-table-header2'></div>",
+                    unsafe_allow_html=True,
+                )
+                continue
 
-        indicator = ""
-        if label == active_sort:
-            indicator = " ▲" if active_ascending else " ▼"
+            indicator = ""
+            if label == active_sort:
+                indicator = " ▲" if active_ascending else " ▼"
 
-        with col:
-            if st.button(
-                f"{label}{indicator}",
-                key=f"v730_sort_{label}",
-                help=f"Sort by {label}",
-                use_container_width=True,
-                type="secondary",
-            ):
-                set_player_sort(label)
-                st.rerun()
+            with col:
+                if st.button(
+                    f"{label}{indicator}",
+                    key=f"v730_sort_{label}",
+                    help=f"Sort by {label}",
+                    use_container_width=True,
+                    type="secondary",
+                ):
+                    set_player_sort(label)
+                    st.rerun()
 
     shown = pool.head(100).reset_index(drop=True)
     list_height = (
@@ -377,25 +400,24 @@ def render_player_picker_table(
             )
 
             values = [
-                pos,
-                adp_text,
                 tier or "—",
                 score_text,
+                adp_text,
+                bye_text,
                 proj_text,
                 avg_text,
                 rush_text,
                 rec_text,
                 pass_text,
-                bye_text,
             ]
 
-            for col, value in zip(cols[4:14], values):
+            for col, value in zip(cols[4:13], values):
                 col.markdown(
                     f"<div class='stat2'>{value}</div>",
                     unsafe_allow_html=True,
                 )
 
-            cols[14].markdown(
+            cols[13].markdown(
                 f"""
                 <div class="value-badge {value_class}">
                     {value_text}
