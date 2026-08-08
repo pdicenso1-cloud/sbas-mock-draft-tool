@@ -83,8 +83,11 @@ def _render_draft_room_page() -> None:
 
     if st.session_state.draft_active and user_is_up and st.session_state.clock_running:
         # Ticks the pick clock and re-checks for an expired timer even if the
-        # user never interacts with a widget during their turn.
-        st_autorefresh(interval=1000, limit=None, key="pick_clock_tick")
+        # user never interacts with a widget during their turn. This page is
+        # widget-heavy (a ~100-row player table), so a full rerender is not
+        # cheap - refresh every few seconds rather than every second to keep
+        # the tab responsive.
+        st_autorefresh(interval=3000, limit=None, key="pick_clock_tick")
         if auto_pick_user_if_expired():
             st.rerun()
 
@@ -132,6 +135,3 @@ def render_app() -> None:
         _render_draft_room_page()
     else:
         _render_placeholder_page(route)
-
-
-render_app()
