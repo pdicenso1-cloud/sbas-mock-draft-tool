@@ -10,7 +10,7 @@ import pandas as pd
 import streamlit as st
 
 from fantasysync.paths import DATA_DIR
-from fantasysync.rankings_sources import LIVE_DATA_TTL, enrich_players_with_live_data
+from fantasysync.rankings_sources import enrich_players_with_live_data
 
 
 def clean(value) -> str:
@@ -28,8 +28,10 @@ def numeric(value, fallback=None):
         return fallback
 
 
-@st.cache_data(ttl=LIVE_DATA_TTL)
-def load_defaults():
+@st.cache_data
+def _load_static_csvs():
+    """The on-disk roster only changes on a redeploy, so this can cache
+    indefinitely for the life of the process - no ttl needed."""
     players = pd.read_csv(DATA_DIR / "players.csv")
     teams = pd.read_csv(DATA_DIR / "teams.csv")
     keepers = pd.read_csv(DATA_DIR / "keepers.csv")
@@ -49,9 +51,27 @@ def load_defaults():
         keepers["team_id"] = pd.to_numeric(keepers["team_id"], errors="coerce").fillna(0).astype(int)
         keepers["keeper_round"] = pd.to_numeric(keepers["keeper_round"], errors="coerce").fillna(0).astype(int)
 
-    # Live-data enrichment (ADP, bye weeks, and - once a FantasyPros API key
-    # is configured - projections) refreshes on its own cache TTL; a fetch
-    # failure or missing key just leaves the static CSV values in place.
+    return players, teams, keepers
+
+
+def load_defaults():
+    """Deliberately NOT cached itself - only st.cache_data-wraps the cheap,
+    rarely-changing static CSV read above. The actual live-data fetches
+    (fantasysync.rankings_sources) are each cached independently with their
+    own ttl, which is what should govern freshness; wrapping this whole
+    function in an outer cache too created a bug where a code change to a
+    helper in another file (rankings_sources.py) wasn't picked up because
+    Streamlit only hashes the source of the function it directly decorates,
+    not of other modules that function calls into - the outer cache kept
+    serving results computed before the change. init_state() only calls
+    this once per session regardless, so there's no repeated-fetch cost."""
+    players, teams, keepers = _load_static_csvs()
+    players = players.copy()
+
+    # Live-data enrichment (ADP, bye weeks, historical stats, and - once a
+    # FantasyPros API key is configured - projections) refreshes on each
+    # source's own cache ttl; a fetch failure or missing key just leaves
+    # the static CSV values in place.
     players = enrich_players_with_live_data(players, num_teams=len(teams))
 
     return players, teams, keepers
