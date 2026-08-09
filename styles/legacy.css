@@ -4767,12 +4767,19 @@ section[data-testid="stSidebar"],
     max-width: calc(100vw - 16px) !important;
     margin-left: 8px !important;
     margin-right: 8px !important;
+    /* Matches .v643-board-scroll's own 3px padding-right exactly, so the
+       button row's content width equals the board grid's content width
+       (measured directly - a wider scrollbar-gutter guess here previously
+       overcorrected in the other direction). */
     padding-right: 3px !important;
     box-sizing: border-box !important;
 }
 
 .st-key-v670_team_selector [data-testid="stHorizontalBlock"] {
-    gap: 4px !important;
+    /* Matches .snake-draft-grid's own gap:2px exactly, rather than an
+       approximate 4px, so both 10-column layouts compute identical column
+       widths instead of drifting apart across the row. */
+    gap: 2px !important;
 }
 
 /* Cancels the page's default flex gap between this row and the board
