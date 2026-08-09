@@ -53,6 +53,9 @@ def fetch_ffcalculator_adp(teams: int = 10, scoring: str = "ppr") -> Optional[pd
 
         df = pd.DataFrame(players)[["name", "position", "team", "adp", "bye"]]
         df["_match_key"] = (df["name"].map(normalize_name) + "|" + df["position"])
+        # set_index() below requires a unique index; two players sharing a
+        # normalized name+position (rare, but not impossible) would raise.
+        df = df.drop_duplicates(subset="_match_key", keep="first")
         return df
     except (requests.RequestException, ValueError, KeyError):
         return None
@@ -95,6 +98,7 @@ def fetch_fantasypros_consensus(
             return None
         df = df[keep]
         df["_match_key"] = (df["name"].map(normalize_name) + "|" + df["position"])
+        df = df.drop_duplicates(subset="_match_key", keep="first")
         return df
     except (requests.RequestException, ValueError, KeyError):
         return None
@@ -145,6 +149,7 @@ def fetch_fantasypros_projections(
             return None
         df = df[keep]
         df["_match_key"] = (df["name"].map(normalize_name) + "|" + df["position"])
+        df = df.drop_duplicates(subset="_match_key", keep="first")
         return df
     except (requests.RequestException, ValueError, KeyError):
         return None
@@ -157,7 +162,25 @@ def enrich_players_with_live_data(
 ) -> pd.DataFrame:
     """Overlay live ADP/bye/projections onto the static player roster.
 
-    Matches by normalized-name + position. Any player not found in a live
+    The individual fetch functions already swallow their own network
+    errors, but the merge/matching logic itself can still fail in ways
+    those try/excepts don't cover (unexpected data shapes, missing
+    columns). This wrapper guarantees the promise made throughout this
+    module - a live-data problem degrades to "keep the static CSV as-is,"
+    never crashes the app - by catching anything unexpected here too.
+    """
+    try:
+        return _merge_live_data(players, num_teams=num_teams, season=season)
+    except Exception:
+        return players
+
+
+def _merge_live_data(
+    players: pd.DataFrame,
+    num_teams: int,
+    season: int,
+) -> pd.DataFrame:
+    """Matches by normalized-name + position. Any player not found in a live
     source, or any source that's unavailable (no key, network failure),
     just keeps whatever was already in the static CSV - this never removes
     or blanks out existing data, only fills in/updates when a live match
