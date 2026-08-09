@@ -9,11 +9,11 @@ import streamlit.components.v1 as components
 
 
 TRAY_LEVELS = {
-    # Compact draft-board-first state.
-    # Tuned to leave roughly five board rows visible on a typical laptop.
+    # Fully compact state - just the floating seam arrows, essentially no
+    # visible tray bar beneath them.
     0: {
         "name": "Compact",
-        "height": 58,
+        "height": 10,
         "player_height": 0,
         "utility_height": 0,
     },
@@ -277,6 +277,9 @@ def set_utility_view(view: str) -> None:
 def _render_sheet_css(level: int) -> None:
     settings = TRAY_LEVELS[level]
     sheet_height = int(settings["height"])
+    # The compact level's whole point is to be barely there - the normal
+    # 8px/6px top/bottom padding alone would exceed its 10px bar height.
+    tray_padding = "2px 12px 2px" if level == 0 else "8px 12px 6px"
 
     st.markdown(
         f"""
@@ -302,7 +305,7 @@ def _render_sheet_css(level: int) -> None:
             min-height: {sheet_height}px !important;
             max-height: {sheet_height}px !important;
             margin: 0 !important;
-            padding: 8px 12px 6px !important;
+            padding: {tray_padding} !important;
             box-sizing: border-box !important;
             overflow: hidden !important;
             background: #0B1625 !important;
