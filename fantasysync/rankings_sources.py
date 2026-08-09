@@ -1,11 +1,16 @@
-"""Live ADP/projections enrichment from public fantasy-data APIs.
+"""Live ADP/stats/projections enrichment from public fantasy-data APIs.
 
-Two sources today:
+Three sources today:
 - Fantasy Football Calculator: free, no API key, real ADP + bye weeks.
-- FantasyPros: consensus rankings + full-stat projections, needs an API key
-  (st.secrets["FANTASYPROS_API_KEY"]). Silently skipped if no key is
-  configured, so the app works fine without one and picks it up
-  automatically the moment a key is added.
+- nflverse: free, no API key, real final stats from the most recently
+  completed season (rush/rec/pass yards, receptions, fantasy points).
+  Populates rush_yds/rec_yds/pass_yds as a baseline.
+- FantasyPros: consensus rankings + full-stat *projections*, needs an API
+  key (st.secrets["FANTASYPROS_API_KEY"]). Silently skipped if no key is
+  configured. When a key is present, its forward-looking projections
+  overwrite the nflverse historical baseline in rush_yds/rec_yds/pass_yds -
+  last season's real stats today, this season's projections automatically
+  once a key is added, rather than two parallel sets of similar columns.
 
 Every fetch function returns None on any failure (network error, bad
 response, timeout) instead of raising - a live-data outage should degrade
@@ -22,6 +27,10 @@ import streamlit as st
 
 FANTASYPROS_BASE = "https://api.fantasypros.com/public/v2/json"
 FFCALCULATOR_BASE = "https://fantasyfootballcalculator.com/api/v1/adp"
+NFLVERSE_SEASON_STATS_URL = (
+    "https://github.com/nflverse/nflverse-data/releases/download/"
+    "player_stats/player_stats_season.csv"
+)
 REQUEST_TIMEOUT = 10
 LIVE_DATA_TTL = "6h"
 
@@ -56,6 +65,47 @@ def fetch_ffcalculator_adp(teams: int = 10, scoring: str = "ppr") -> Optional[pd
         # set_index() below requires a unique index; two players sharing a
         # normalized name+position (rare, but not impossible) would raise.
         df = df.drop_duplicates(subset="_match_key", keep="first")
+        return df
+    except (requests.RequestException, ValueError, KeyError):
+        return None
+
+
+@st.cache_data(ttl=LIVE_DATA_TTL, show_spinner=False)
+def fetch_nflverse_season_stats() -> Optional[pd.DataFrame]:
+    """Real final stats from the most recently completed NFL season.
+
+    Free, no API key - a community-maintained CSV of season-total stats
+    published by the nflverse project. Automatically finds the latest
+    season present in the file rather than a hardcoded year, so it keeps
+    working once next season's stats are published without a code change.
+    """
+    try:
+        resp = requests.get(NFLVERSE_SEASON_STATS_URL, timeout=REQUEST_TIMEOUT)
+        resp.raise_for_status()
+        from io import StringIO
+
+        df = pd.read_csv(StringIO(resp.text), low_memory=False)
+        df = df[df["season_type"] == "REG"]
+        if df.empty:
+            return None
+
+        latest_season = int(df["season"].max())
+        df = df[df["season"] == latest_season]
+
+        rename_map = {
+            "player_display_name": "name",
+            "recent_team": "team",
+            "rushing_yards": "rush_yds",
+            "receiving_yards": "rec_yds",
+            "passing_yards": "pass_yds",
+            "fantasy_points_ppr": "fantasy_pts",
+        }
+        df = df.rename(columns=rename_map)
+        keep = [c for c in ["name", "position", "team", "rush_yds", "rec_yds", "pass_yds", "receptions", "fantasy_pts"] if c in df.columns]
+        df = df[keep]
+        df["_match_key"] = (df["name"].map(normalize_name) + "|" + df["position"])
+        df = df.drop_duplicates(subset="_match_key", keep="first")
+        df.attrs["season"] = latest_season
         return df
     except (requests.RequestException, ValueError, KeyError):
         return None
@@ -175,6 +225,16 @@ def enrich_players_with_live_data(
         return players
 
 
+def get_stats_season_label() -> Optional[int]:
+    """Which season the nflverse historical stats baseline is from, for
+    display purposes (e.g. "2024 season stats"). None if unavailable."""
+    try:
+        history = fetch_nflverse_season_stats()
+        return None if history is None else history.attrs.get("season")
+    except Exception:
+        return None
+
+
 def _merge_live_data(
     players: pd.DataFrame,
     num_teams: int,
@@ -198,6 +258,27 @@ def _merge_live_data(
             players["bye"] = pd.NA
         matched_bye = players["_match_key"].map(lookup["bye"])
         players["bye"] = matched_bye.combine_first(players["bye"])
+
+    # Last-completed-season real stats as a baseline for rush/rec/pass yards
+    # and points - the FantasyPros block below overwrites these with
+    # forward-looking projections once an API key is configured, since
+    # projections are more useful for drafting than last year's stats once
+    # available. Until then, real history beats an empty column.
+    history = fetch_nflverse_season_stats()
+    if history is not None:
+        lookup = history.set_index("_match_key")
+        for source_col, target_col in [
+            ("rush_yds", "rush_yds"),
+            ("rec_yds", "rec_yds"),
+            ("pass_yds", "pass_yds"),
+            ("fantasy_pts", "proj_pts"),
+        ]:
+            if source_col not in lookup.columns:
+                continue
+            if target_col not in players.columns:
+                players[target_col] = pd.NA
+            matched = players["_match_key"].map(lookup[source_col])
+            players[target_col] = matched.combine_first(players[target_col])
 
     try:
         api_key = st.secrets.get("FANTASYPROS_API_KEY", "")
