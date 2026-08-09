@@ -128,6 +128,66 @@ def _render_draft_room_page() -> None:
     )
 
 
+def _render_rankings_page() -> None:
+    """Full player list with live ADP/bye - the same st.session_state.players
+    the Draft Room's player tray reads from, so the two pages can never show
+    inconsistent data within a session."""
+    st.header("Rankings & ADP")
+    st.caption(
+        "ADP and bye weeks refresh automatically every few hours. "
+        "Live ADP via [Fantasy Football Calculator](https://fantasyfootballcalculator.com/adp)."
+    )
+
+    players = st.session_state.players.copy()
+
+    search_col, pos_col = st.columns([2, 3])
+    with search_col:
+        query = st.text_input(
+            "Search players",
+            key="rankings_search",
+            placeholder="Search players...",
+            label_visibility="collapsed",
+        )
+    with pos_col:
+        selected_pos = st.radio(
+            "Position",
+            ["ALL", "QB", "RB", "WR", "TE"],
+            key="rankings_position_filter",
+            horizontal=True,
+            label_visibility="collapsed",
+        )
+
+    if query:
+        players = players[players["player"].str.contains(query, case=False, na=False)]
+    if selected_pos != "ALL":
+        players = players[players["position"] == selected_pos]
+
+    players = players.sort_values(["custom_rank", "rank"])
+
+    display = players[["custom_rank", "player", "position", "nfl_team", "tier", "consensus_adp"]].rename(
+        columns={
+            "custom_rank": "Rank",
+            "player": "Player",
+            "position": "Pos",
+            "nfl_team": "Team",
+            "tier": "Tier",
+            "consensus_adp": "ADP",
+        }
+    )
+    if "bye" in players.columns:
+        display["Bye"] = players["bye"]
+    for col, label in [
+        ("proj_pts", "Proj Pts"),
+        ("rush_yds", "Rush Yds"),
+        ("rec_yds", "Rec Yds"),
+        ("pass_yds", "Pass Yds"),
+    ]:
+        if col in players.columns and players[col].notna().any():
+            display[label] = players[col]
+
+    st.dataframe(display, width="stretch", hide_index=True, height=600)
+
+
 def _render_placeholder_page(route: str) -> None:
     st.header(route)
     st.info(
@@ -147,5 +207,7 @@ def render_app() -> None:
 
     if route == "Draft Room":
         _render_draft_room_page()
+    elif route == "Rankings & ADP":
+        _render_rankings_page()
     else:
         _render_placeholder_page(route)
