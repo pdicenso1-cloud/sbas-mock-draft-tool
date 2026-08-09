@@ -10,6 +10,7 @@ import pandas as pd
 import streamlit as st
 
 from fantasysync.paths import DATA_DIR
+from fantasysync.rankings_sources import LIVE_DATA_TTL, enrich_players_with_live_data
 
 
 def clean(value) -> str:
@@ -27,7 +28,7 @@ def numeric(value, fallback=None):
         return fallback
 
 
-@st.cache_data
+@st.cache_data(ttl=LIVE_DATA_TTL)
 def load_defaults():
     players = pd.read_csv(DATA_DIR / "players.csv")
     teams = pd.read_csv(DATA_DIR / "teams.csv")
@@ -47,6 +48,11 @@ def load_defaults():
     if not keepers.empty:
         keepers["team_id"] = pd.to_numeric(keepers["team_id"], errors="coerce").fillna(0).astype(int)
         keepers["keeper_round"] = pd.to_numeric(keepers["keeper_round"], errors="coerce").fillna(0).astype(int)
+
+    # Live-data enrichment (ADP, bye weeks, and - once a FantasyPros API key
+    # is configured - projections) refreshes on its own cache TTL; a fetch
+    # failure or missing key just leaves the static CSV values in place.
+    players = enrich_players_with_live_data(players, num_teams=len(teams))
 
     return players, teams, keepers
 
@@ -313,6 +319,3 @@ def render_dynamic_dock_css():
         """,
         unsafe_allow_html=True,
     )
-
-
-
