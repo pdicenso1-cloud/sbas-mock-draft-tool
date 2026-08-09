@@ -1535,6 +1535,11 @@ div {
     -webkit-text-fill-color: #F1F5F9 !important;
 }
 
+.empty-pick .snake-pick {
+    color: #AEBBCB !important;
+    -webkit-text-fill-color: #AEBBCB !important;
+}
+
 .empty-pick .tile-owner {
     color: #AEBBCB !important;
     -webkit-text-fill-color: #AEBBCB !important;
@@ -1992,7 +1997,8 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked
 }
 
 .snake-cell.empty-pick {
-    background: #0B1523 !important;
+    background: #454A52 !important;
+    border-color: rgba(255,255,255,.12) !important;
 }
 
 .snake-cell.pos-qb {
@@ -4721,12 +4727,12 @@ section[data-testid="stSidebar"],
 }
 
 /* ============================================================
-   Team selector: matte purple, fully filled, team name only.
+   Team selector: matte emerald green, fully filled, team name only.
    ============================================================ */
 
 .st-key-v670_team_selector button {
-    background: #6D28D9 !important;
-    border: 1px solid #6D28D9 !important;
+    background: #059669 !important;
+    border: 1px solid #059669 !important;
     color: #FFFFFF !important;
     -webkit-text-fill-color: #FFFFFF !important;
     font-weight: 800 !important;
@@ -4789,16 +4795,16 @@ section[data-testid="stSidebar"],
 }
 
 .st-key-v670_team_selector button:hover:not(:disabled) {
-    background: #7C3AED !important;
-    border-color: #7C3AED !important;
+    background: #10B981 !important;
+    border-color: #10B981 !important;
 }
 
 .st-key-v670_team_selector button:disabled {
     /* The active/selected team button is rendered disabled; keep it filled
        and readable instead of Streamlit's default greyed-out disabled look. */
-    background: #4C1D95 !important;
-    border: 1px solid #C4B5FD !important;
-    color: #F5F3FF !important;
-    -webkit-text-fill-color: #F5F3FF !important;
+    background: #065F46 !important;
+    border: 1px solid #6EE7B7 !important;
+    color: #ECFDF5 !important;
+    -webkit-text-fill-color: #ECFDF5 !important;
     opacity: 1 !important;
 }
