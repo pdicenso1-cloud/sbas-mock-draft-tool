@@ -43,6 +43,7 @@ from fantasysync.draft_engine import (
 )
 from fantasysync.navigation import render_top_navigation
 from fantasysync.player_pool import apply_team_query_selection
+from fantasysync.rankings_sources import get_stats_season_label
 
 # Milliseconds between each revealed CPU pick, for the ticker effect.
 _CPU_TICKER_INTERVAL_MS = 900
@@ -133,9 +134,18 @@ def _render_rankings_page() -> None:
     the Draft Room's player tray reads from, so the two pages can never show
     inconsistent data within a session."""
     st.header("Rankings & ADP")
+    stats_season = get_stats_season_label()
+    stats_note = (
+        f" Rush/Rec/Pass Yds and Proj Pts are {stats_season} season stats via "
+        "[nflverse](https://github.com/nflverse/nflverse-data) until a FantasyPros "
+        "key is configured, then switch to forward projections automatically."
+        if stats_season
+        else ""
+    )
     st.caption(
         "ADP and bye weeks refresh automatically every few hours. "
         "Live ADP via [Fantasy Football Calculator](https://fantasyfootballcalculator.com/adp)."
+        + stats_note
     )
 
     players = st.session_state.players.copy()
