@@ -540,11 +540,10 @@ def snake_board_html() -> str:
             pick_label = f"{rnd}.{pick_in_round}"
 
             html.append(
-                f'<div class="{" ".join(classes)}">'
+                f'<div class="{" ".join(classes)}" title="{owner}">'
                 f'<div class="snake-pick">{pick_label}{keeper_star}</div>'
                 f'<div class="snake-player" title="{player}">{waiting}</div>'
-                f'<div>{badge}</div>'
-                f'<div class="tile-owner" title="{owner}">{owner}</div>'
+                f'<div class="tile-badge-row">{badge}</div>'
                 f'</div>'
             )
 
@@ -668,6 +667,3 @@ def auto_pick_user_if_expired():
     reset_pick_clock()
     st.session_state.clock_running = True
     return True
-
-
-
