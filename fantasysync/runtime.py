@@ -198,11 +198,70 @@ def _render_rankings_page() -> None:
     st.dataframe(display, width="stretch", hide_index=True, height=600)
 
 
+def _swap_draft_slot(team_id: int, direction: int) -> None:
+    """Moves one team's draft position by one slot and rebuilds the board.
+
+    Draft order determines the whole snake sequence, so there's no way to
+    reorder it without invalidating any picks already made - rebuild_draft()
+    regenerates the full picks table from the (now-reordered) teams and the
+    existing keepers, same as the top nav's own Reset button does.
+    """
+    teams = st.session_state.teams
+    current_row = teams.loc[teams["team_id"] == team_id].iloc[0]
+    current_slot = int(current_row["draft_slot"])
+    target_slot = current_slot + direction
+
+    target_mask = teams["draft_slot"] == target_slot
+    if not target_mask.any():
+        return
+
+    teams.loc[teams["team_id"] == team_id, "draft_slot"] = target_slot
+    teams.loc[target_mask, "draft_slot"] = current_slot
+    st.session_state.teams = teams
+    rebuild_draft()
+
+
+def _render_league_setup_page() -> None:
+    st.header("League Setup")
+
+    if st.session_state.draft_active:
+        st.warning(
+            "A draft is currently in progress. Changing draft order below "
+            "will reset it and rebuild the board from scratch."
+        )
+    else:
+        st.caption(
+            "Team names and draft order for this league. Changing draft "
+            "order rebuilds the mock draft board from scratch."
+        )
+
+    teams = st.session_state.teams.sort_values("draft_slot").reset_index(drop=True)
+    slot_count = len(teams)
+
+    header_cols = st.columns([0.7, 3, 2, 0.6, 0.6])
+    for col, label in zip(header_cols, ["SLOT", "TEAM", "OWNER", "", ""]):
+        col.markdown(f"**{label}**")
+
+    for i, row in teams.iterrows():
+        team_id = int(row["team_id"])
+        slot = int(row["draft_slot"])
+        cols = st.columns([0.7, 3, 2, 0.6, 0.6])
+        cols[0].markdown(str(slot))
+        cols[1].markdown(clean(row["team_name"]))
+        cols[2].markdown(clean(row.get("owner", "")))
+        if cols[3].button("↑", key=f"league_order_up_{team_id}", disabled=(slot == 1)):
+            _swap_draft_slot(team_id, -1)
+            st.rerun()
+        if cols[4].button("↓", key=f"league_order_down_{team_id}", disabled=(slot == slot_count)):
+            _swap_draft_slot(team_id, 1)
+            st.rerun()
+
+
 def _render_placeholder_page(route: str) -> None:
     st.header(route)
     st.info(
         f"The “{route}” page has not been built yet. "
-        "Only Draft Room is implemented today."
+        "Only Draft Room, Rankings & ADP, and League Setup are implemented today."
     )
 
 
@@ -219,5 +278,7 @@ def render_app() -> None:
         _render_draft_room_page()
     elif route == "Rankings & ADP":
         _render_rankings_page()
+    elif route == "League Setup":
+        _render_league_setup_page()
     else:
         _render_placeholder_page(route)
