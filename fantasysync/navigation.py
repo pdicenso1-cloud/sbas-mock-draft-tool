@@ -14,7 +14,7 @@ PAGE_OPTIONS = [
     "League History",
     "Settings",
     "Import / Export",
-    "Help & Docs",
+    "League Setup",
 ]
 
 PAGE_ROUTE_MAP = {
@@ -27,7 +27,9 @@ PAGE_ROUTE_MAP = {
     "League History": "League History",
     "Settings": "Settings",
     "Import / Export": "Keepers & Picks",
-    "Help & Docs": "League Setup",
+    # This tab's label used to say "Help & Docs" while already routing to
+    # "League Setup" - relabeled to match what it actually is/will be.
+    "League Setup": "League Setup",
 }
 
 
