@@ -25,6 +25,7 @@ from fantasysync.app_state import (
     clean,
     init_state,
     move_player_tray,
+    numeric,
     player_tray_settings,
     render_dynamic_dock_css,
     render_player_tray_css,
@@ -257,11 +258,130 @@ def _render_league_setup_page() -> None:
             st.rerun()
 
 
+_NO_KEEPER = "— None (no keeper) —"
+
+
+def _render_keepers_page() -> None:
+    st.header("Keepers")
+    st.caption(
+        "Set each team's keepers - player and the round the keeper costs. "
+        "Edits below are staged; nothing changes on the draft board until "
+        "you click Save."
+    )
+    # st.rerun() below cuts the script off immediately, so a success message
+    # shown right before it would never actually paint - stash it in session
+    # state and show it on the render that follows the rerun instead.
+    if st.session_state.pop("_keepers_just_saved", False):
+        st.success("Keepers saved. Draft board updated.")
+
+    keepers = st.session_state.keepers.copy()
+    teams = st.session_state.teams.sort_values("draft_slot")
+    all_player_names = sorted(
+        st.session_state.players["player"].dropna().map(clean).unique().tolist()
+    )
+    max_round = int(st.session_state.rounds)
+
+    header_cols = st.columns([2.2, 3.4, 1.1])
+    for col, label in zip(header_cols, ["TEAM", "PLAYER", "ROUND"]):
+        col.markdown(f"**{label}**")
+
+    # Widget values are staged here as (orig_idx, player, round, team_name)
+    # rather than written to st.session_state.keepers immediately - nothing
+    # is applied to the draft board until Save Changes is clicked below.
+    pending = []
+
+    for _, team_row in teams.iterrows():
+        team_id = int(team_row["team_id"])
+        team_name = clean(team_row["team_name"])
+        team_keeper_rows = keepers[keepers["team_id"] == team_id]
+
+        for slot_index, (orig_idx, keeper_row) in enumerate(team_keeper_rows.iterrows()):
+            current_player = clean(keeper_row["player"])
+            current_round = int(numeric(keeper_row["keeper_round"], 1))
+
+            # Excludes players already claimed by another keeper slot (in the
+            # saved data) so the same player can't end up placed in two
+            # draft cells at once - except this row's own current pick,
+            # which must stay selectable. A duplicate introduced across
+            # *unsaved* edits (e.g. picking the same free agent in two
+            # rows before saving) is still possible here and is instead
+            # caught at save time below, since each row can't see what's
+            # selected in other not-yet-saved rows while rendering.
+            used_elsewhere = {
+                clean(p) for i, p in keepers["player"].items() if i != orig_idx
+            } - {""}
+            options = [_NO_KEEPER] + [
+                p for p in all_player_names if p not in used_elsewhere
+            ]
+            current_value = current_player if current_player else _NO_KEEPER
+            if current_value not in options:
+                options.insert(1, current_value)
+
+            cols = st.columns([2.2, 3.4, 1.1])
+            cols[0].markdown(team_name)
+            with cols[1]:
+                selected_value = st.selectbox(
+                    "Player",
+                    options,
+                    index=options.index(current_value),
+                    key=f"keeper_player_{team_id}_{slot_index}",
+                    label_visibility="collapsed",
+                )
+            with cols[2]:
+                selected_round = st.number_input(
+                    "Round",
+                    min_value=1,
+                    max_value=max_round,
+                    value=min(current_round, max_round),
+                    step=1,
+                    key=f"keeper_round_{team_id}_{slot_index}",
+                    label_visibility="collapsed",
+                )
+
+            selected_player = "" if selected_value == _NO_KEEPER else selected_value
+            if selected_player != current_player or int(selected_round) != current_round:
+                pending.append((orig_idx, selected_player, int(selected_round), team_name))
+
+    if not pending:
+        return
+
+    st.divider()
+
+    dupes = {p for p in (row[1] for row in pending if row[1]) if [r[1] for r in pending].count(p) > 1}
+    if dupes:
+        st.error(
+            "Can't save - the same player is set as a keeper in more than "
+            "one row: " + ", ".join(sorted(dupes))
+        )
+        return
+
+    reset_note = (
+        " A draft is currently in progress, so this will also reset it and "
+        "rebuild the board from scratch."
+        if st.session_state.draft_active
+        else ""
+    )
+    st.warning(
+        f"{len(pending)} unsaved keeper change(s).{reset_note} "
+        "Nothing on the draft board has changed yet."
+    )
+
+    if st.button("💾 Save Changes", type="primary", key="keepers_save_changes"):
+        for orig_idx, player, round_, _ in pending:
+            keepers.loc[orig_idx, "player"] = player
+            keepers.loc[orig_idx, "keeper_round"] = round_
+        st.session_state.keepers = keepers
+        rebuild_draft()
+        st.session_state["_keepers_just_saved"] = True
+        st.rerun()
+
+
 def _render_placeholder_page(route: str) -> None:
     st.header(route)
     st.info(
         f"The “{route}” page has not been built yet. "
-        "Only Draft Room, Rankings & ADP, and League Setup are implemented today."
+        "Only Draft Room, Rankings & ADP, League Setup, and Keepers are "
+        "implemented today."
     )
 
 
@@ -280,5 +400,7 @@ def render_app() -> None:
         _render_rankings_page()
     elif route == "League Setup":
         _render_league_setup_page()
+    elif route == "Keepers & Picks":
+        _render_keepers_page()
     else:
         _render_placeholder_page(route)
