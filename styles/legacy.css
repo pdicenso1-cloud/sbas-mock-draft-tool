@@ -2746,8 +2746,16 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked
 }
 
 .snake-cell {
+    /* Locked to a single fixed height regardless of draft progress - this
+       used to be min-height only, so a round with at least one drafted
+       pick (whose fuller content needs more room) stretched every cell in
+       that row, including still-empty ones, to a visibly taller size than
+       rows with no picks yet. The content below is sized to fit this. */
+    height: 50px !important;
     min-height: 50px !important;
+    max-height: 50px !important;
     padding: 3px 5px !important;
+    overflow: hidden !important;
 }
 
 .snake-round-label {
@@ -2762,6 +2770,20 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked
 
 .snake-pick {
     font-size: .44rem !important;
+    line-height: 1.2 !important;
+}
+
+/* Wraps the position/team badge on drafted cells. Unstyled, this inline
+   content sat inside a line-box sized off the page's base 16px font
+   rather than its own ~7.5px badge text, taking up far more vertical
+   space (measured ~25.6px) than the badge itself needs - the single
+   biggest reason drafted cells were taller than empty ones. */
+.tile-badge-row {
+    display: flex !important;
+    align-items: center !important;
+    line-height: 1 !important;
+    margin-top: 1px !important;
+    min-height: 0 !important;
 }
 
 /* Compact roster rows to align with the larger five-round board. */
