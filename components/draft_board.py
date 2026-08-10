@@ -24,8 +24,24 @@ def render_draft_board(
             <style>
             .v643-board-scroll {{
                 width: 100%;
-                height: calc(100vh - 104px);
-                min-height: 520px;
+                /* This 238px is everything rendered above the board (top
+                   nav, "Mock Draft" header, team selector) - measured
+                   directly rather than the stale 104px this used to be,
+                   which was already short of the real offset even before
+                   accounting for the tray below.
+                   --fs-live-sheet-height (set in components/bottom_sheet.py
+                   alongside the tray's own height) is subtracted too, so
+                   the board's scrollable area actually ends where the
+                   fixed-position tray begins instead of continuing
+                   underneath it. Without this, the board's own coordinate
+                   system had "room" for all 16 rounds, but the tray - a
+                   separate, later-painted, opaque, fixed-position element -
+                   physically covered the last several rounds regardless of
+                   how far you scrolled, since scrolling only moves content
+                   within the board's box, it can't move content out from
+                   behind something outside that box. */
+                height: calc(100vh - 238px - var(--fs-live-sheet-height, 0px));
+                min-height: 200px;
                 overflow-y: auto;
                 overflow-x: hidden;
                 overscroll-behavior: contain;
