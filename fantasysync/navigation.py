@@ -13,7 +13,7 @@ PAGE_OPTIONS = [
     "Data Status",
     "League History",
     "Settings",
-    "Import / Export",
+    "Keepers",
     "League Setup",
 ]
 
@@ -26,7 +26,9 @@ PAGE_ROUTE_MAP = {
     "Data Status": "Available Players",
     "League History": "League History",
     "Settings": "Settings",
-    "Import / Export": "Keepers & Picks",
+    # This tab's label used to say "Import / Export" while already routing
+    # to "Keepers & Picks" - relabeled to match what it actually is/will be.
+    "Keepers": "Keepers & Picks",
     # This tab's label used to say "Help & Docs" while already routing to
     # "League Setup" - relabeled to match what it actually is/will be.
     "League Setup": "League Setup",
