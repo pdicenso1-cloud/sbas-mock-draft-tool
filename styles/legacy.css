@@ -4749,12 +4749,16 @@ section[data-testid="stSidebar"],
 }
 
 /* ============================================================
-   Team selector: matte emerald green, fully filled, team name only.
+   Team selector: the app's own navy-blue panel color, white outline,
+   team name only.
    ============================================================ */
 
 .st-key-v670_team_selector button {
-    background: #059669 !important;
-    border: 1px solid #059669 !important;
+    /* The app's own secondary-panel navy blue (same tone used for panels
+       throughout the rest of the UI), not the page's near-black body bg -
+       that read as too dark rather than "blue." */
+    background: #101B2B !important;
+    border: 1px solid #FFFFFF !important;
     color: #FFFFFF !important;
     -webkit-text-fill-color: #FFFFFF !important;
     font-weight: 800 !important;
@@ -4821,19 +4825,23 @@ section[data-testid="stSidebar"],
     line-height: 1.15 !important;
     margin: 0 !important;
     white-space: normal !important;
+    font-size: 12px !important;
 }
 
 .st-key-v670_team_selector button:hover:not(:disabled) {
-    background: #10B981 !important;
-    border-color: #10B981 !important;
+    /* A subtle lift off the background rather than a color fill. */
+    background: #1A2740 !important;
+    border-color: #FFFFFF !important;
 }
 
 .st-key-v670_team_selector button:disabled {
-    /* The active/selected team button is rendered disabled; keep it filled
-       and readable instead of Streamlit's default greyed-out disabled look. */
-    background: #065F46 !important;
-    border: 1px solid #6EE7B7 !important;
-    color: #ECFDF5 !important;
-    -webkit-text-fill-color: #ECFDF5 !important;
+    /* The active/selected team button is rendered disabled. Same navy fill
+       and white text as every other team button - selection is shown with
+       a green outline instead of inverting the whole button's color. */
+    background: #101B2B !important;
+    border: 2px solid #10B981 !important;
+    box-shadow: 0 0 0 1px rgba(16,185,129,.35) !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
     opacity: 1 !important;
 }
