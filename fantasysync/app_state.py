@@ -132,7 +132,25 @@ def assign_keepers(picks: pd.DataFrame, keepers_df: pd.DataFrame, teams_df: pd.D
 
 
 def init_state(force=False):
-    players, teams, keepers = load_defaults()
+    # The per-key loop below is a cheap safety net that must run every
+    # rerun - Streamlit can drop a widget-bound session_state key (e.g. the
+    # auto-draft toggle) between reruns if its widget isn't re-registered,
+    # and this restores it to its default. load_defaults() itself, though,
+    # is the expensive part (CSV read + live-data network fetch/merge), and
+    # its result only ever gets used on the very first call in a session -
+    # every later rerun used to call it anyway just to throw the result
+    # away. Reusing the already-loaded copies from session_state skips that
+    # repeated work, and wrapping the one real call in a spinner shows
+    # feedback instead of a blank screen while it fetches live data on a
+    # cache miss.
+    if force or "players" not in st.session_state:
+        with st.spinner("Loading current rankings and player data..."):
+            players, teams, keepers = load_defaults()
+    else:
+        players = st.session_state.players
+        teams = st.session_state.teams
+        keepers = st.session_state.keepers
+
     defaults = {
         "players": players.copy(),
         "teams": teams.copy(),
