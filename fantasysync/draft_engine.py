@@ -52,55 +52,81 @@ def current_open_index() -> Optional[int]:
 
 
 
-def initialize_cpu_variance():
-    """
-    Choose one CPU behavior mode for the entire mock draft.
-
-    Roughly 25% of drafts use mild top-five variance.
-    The remaining drafts use strict best available.
-    """
-    if st.session_state.cpu_variance_enabled is None:
-        seed = random.SystemRandom().randint(1, 2_147_483_647)
-        st.session_state.cpu_variance_seed = seed
-        rng = random.Random(seed)
-        st.session_state.cpu_variance_enabled = rng.random() < 0.25
+_CPU_CANDIDATE_POOL_SIZE = 10
+# Fallback jitter for players with no real ADP-stdev data (players outside
+# Fantasy Football Calculator's top ~257 - typically deep/speculative
+# picks where real drafters would disagree a lot anyway).
+_CPU_DEFAULT_ADP_STDEV = 3.5
 
 
-def reset_cpu_variance():
-    """Choose a fresh CPU behavior mode for a newly reset draft."""
-    st.session_state.cpu_variance_enabled = None
+def ensure_cpu_seed():
+    """One random seed per draft, so a given draft's CPU picks stay
+    reproducible if the app reruns without draft state itself changing,
+    but a new draft gets fresh randomness."""
+    if st.session_state.cpu_variance_seed is None:
+        st.session_state.cpu_variance_seed = random.SystemRandom().randint(
+            1, 2_147_483_647
+        )
+
+
+def reset_cpu_seed():
+    """Choose a fresh seed for a newly (re)built draft."""
     st.session_state.cpu_variance_seed = None
-    initialize_cpu_variance()
+    ensure_cpu_seed()
 
 
-def cpu_best_available() -> Optional[str]:
+def cpu_best_available(team_name: Optional[str] = None) -> Optional[str]:
     """
-    Select the CPU player.
+    Select the CPU's pick the way real mock-draft platforms do: weight a
+    fairly wide candidate pool toward the top by rank, then adjust each
+    candidate's odds by two things instead of a single app-wide on/off
+    variance switch -
 
-    Normal drafts take the best available player.
-    Variance drafts choose among the top five with a strong top-heavy bias.
+    - random jitter scaled to that specific player's real draft-community
+      ADP variance (consensus_adp_stdev, from Fantasy Football Calculator).
+      A player real drafters agree on (low stdev) stays close to predictable;
+      a player real drafters disagree on (high stdev) gets picked far less
+      predictably, same as it would in an actual draft.
+    - a roster-need multiplier (team_need_score) so a CPU team missing a
+      starter at a position leans toward addressing it, not just taking
+      the next name on the list regardless of their own roster.
+
+    team_name is optional so this still works if the caller doesn't know
+    which team is picking; without it, need-weighting is simply skipped.
     """
     df = available_players()
     if df.empty:
         return None
 
-    initialize_cpu_variance()
+    ensure_cpu_seed()
 
-    if not st.session_state.cpu_variance_enabled:
-        return clean(df.iloc[0]["player"])
-
-    candidates = df.head(5).reset_index(drop=True)
-    weights = [45, 25, 15, 10, 5][: len(candidates)]
+    candidates = df.head(_CPU_CANDIDATE_POOL_SIZE).reset_index(drop=True)
 
     idx = current_open_index()
     overall_pick = 0
     if idx is not None:
-        overall_pick = int(
-            st.session_state.picks.loc[idx, "overall"]
-        )
+        overall_pick = int(st.session_state.picks.loc[idx, "overall"])
 
     seed = int(st.session_state.cpu_variance_seed or 0)
     rng = random.Random(seed + overall_pick * 10_007)
+
+    counts = roster_position_counts(team_name) if team_name else {}
+
+    weights = []
+    for rank_pos, row in enumerate(candidates.itertuples()):
+        # Rank-proximity: 1st candidate weighted heaviest, decaying from there.
+        base_weight = 100.0 / (rank_pos + 1)
+
+        stdev = numeric(getattr(row, "consensus_adp_stdev", None), None)
+        if stdev is None or stdev <= 0:
+            stdev = _CPU_DEFAULT_ADP_STDEV
+        jitter = rng.gauss(0, stdev)
+        jitter_factor = max(0.2, 1.0 + jitter / 8.0)
+
+        need = team_need_score(clean(row.position), counts) if counts else 0.0
+        need_factor = 1.0 + (need / 20.0)
+
+        weights.append(base_weight * jitter_factor * need_factor)
 
     selected_index = rng.choices(
         range(len(candidates)),
@@ -282,7 +308,7 @@ def run_one_cpu_pick() -> bool:
     if owner == clean(st.session_state.user_team):
         return False
 
-    player = cpu_best_available()
+    player = cpu_best_available(owner)
     if not player:
         st.session_state.draft_message = "No available players remain."
         return False
@@ -439,7 +465,7 @@ def rebuild_draft():
         st.session_state.keepers,
         st.session_state.teams,
     )
-    reset_cpu_variance()
+    reset_cpu_seed()
     st.session_state.draft_message = (
         "Draft reset with current teams, keepers, and draft order."
     )
