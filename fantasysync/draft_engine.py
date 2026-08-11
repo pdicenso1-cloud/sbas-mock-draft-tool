@@ -66,8 +66,13 @@ _CPU_JITTER_CAP_STDEVS = 2.5
 # entirely, no matter how favorable their jitter/need happens to land.
 # This is what actually stops something like a TE with a mid-20s/30s ADP
 # from ever landing in round 1 - the first version of this only made that
-# less *likely*, and over a full draft "unlikely" still happened.
-_CPU_MAX_REACH_PICKS = 20
+# less *likely*, and over a full draft "unlikely" still happened. First
+# tuned to 20, which was still way too loose - it let a real-ADP-20.4
+# player (Chris Olave) get selected as early as pick 1, and a real-ADP-26.4
+# player (Zay Flowers) as early as pick 6. 5 picks of reach is the actual
+# ask: meaningful variance without a round-2/3 player ever passing for a
+# round-1 one.
+_CPU_MAX_REACH_PICKS = 5
 
 
 def ensure_cpu_seed():
