@@ -148,6 +148,7 @@ def init_state(force=False):
         "draft_active": False,
         "clock_paused_remaining": 60,
         "dock_level": 1,
+        "cpu_variance_enabled": None,
         "cpu_variance_seed": None,
         "player_queue": [],
         "queue_auto_draft": False,
