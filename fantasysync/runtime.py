@@ -47,7 +47,14 @@ from fantasysync.player_pool import apply_team_query_selection
 from fantasysync.rankings_sources import get_stats_season_label
 
 # Milliseconds between each revealed CPU pick, for the ticker effect.
-_CPU_TICKER_INTERVAL_MS = 900
+#
+# This page's full rerun (a ~90-row player table plus the board) measured
+# 1.3-3.5s in practice, well over the previous 900ms interval - the browser
+# fired the next autorefresh before the server finished the last one, so
+# ticks piled up and the visible pick counter randomly skipped numbers
+# instead of advancing one at a time. 1800ms gives the server room to
+# finish before the next tick fires, so reveals land in order.
+_CPU_TICKER_INTERVAL_MS = 1800
 
 
 def _tick_cpu_draft() -> None:
