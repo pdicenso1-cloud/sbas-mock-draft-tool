@@ -57,6 +57,17 @@ _CPU_CANDIDATE_POOL_SIZE = 10
 # Fantasy Football Calculator's top ~257 - typically deep/speculative
 # picks where real drafters would disagree a lot anyway).
 _CPU_DEFAULT_ADP_STDEV = 3.5
+# A player's real ADP jitter is capped to this many of their own real
+# standard deviations, so one rare extreme Gaussian draw can't send them
+# far outside how real drafts would ever actually move them.
+_CPU_JITTER_CAP_STDEVS = 2.5
+# Hard reach limit: a player whose (jitter-free) real ADP is more than
+# this many picks past the current one is excluded from consideration
+# entirely, no matter how favorable their jitter/need happens to land.
+# This is what actually stops something like a TE with a mid-20s/30s ADP
+# from ever landing in round 1 - the first version of this only made that
+# less *likely*, and over a full draft "unlikely" still happened.
+_CPU_MAX_REACH_PICKS = 20
 
 
 def ensure_cpu_seed():
@@ -75,18 +86,26 @@ def reset_cpu_seed():
     ensure_cpu_seed()
 
 
+def _player_adp(row, fallback_rank: int) -> float:
+    adp = numeric(getattr(row, "consensus_adp", None), None)
+    return adp if adp is not None else float(fallback_rank)
+
+
 def cpu_best_available(team_name: Optional[str] = None) -> Optional[str]:
     """
-    Select the CPU's pick the way real mock-draft platforms do: weight a
-    fairly wide candidate pool toward the top by rank, then adjust each
-    candidate's odds by two things instead of a single app-wide on/off
-    variance switch -
+    Select the CPU's pick the way real mock-draft platforms do: anchor each
+    available player's odds to how far their *real* ADP is from the current
+    pick, then adjust for two more things instead of a single app-wide
+    on/off variance switch -
 
     - random jitter scaled to that specific player's real draft-community
       ADP variance (consensus_adp_stdev, from Fantasy Football Calculator).
       A player real drafters agree on (low stdev) stays close to predictable;
-      a player real drafters disagree on (high stdev) gets picked far less
-      predictably, same as it would in an actual draft.
+      a player real drafters disagree on (high stdev) moves around more,
+      same as it would in an actual draft - but the jitter is capped (see
+      _CPU_JITTER_CAP_STDEVS) and a hard reach limit (_CPU_MAX_REACH_PICKS)
+      keeps it from ever producing an outright implausible pick, like a
+      TE going in round 1.
     - a roster-need multiplier (team_need_score) so a CPU team missing a
       starter at a position leans toward addressing it, not just taking
       the next name on the list regardless of their own roster.
@@ -100,8 +119,6 @@ def cpu_best_available(team_name: Optional[str] = None) -> Optional[str]:
 
     ensure_cpu_seed()
 
-    candidates = df.head(_CPU_CANDIDATE_POOL_SIZE).reset_index(drop=True)
-
     idx = current_open_index()
     overall_pick = 0
     if idx is not None:
@@ -110,31 +127,49 @@ def cpu_best_available(team_name: Optional[str] = None) -> Optional[str]:
     seed = int(st.session_state.cpu_variance_seed or 0)
     rng = random.Random(seed + overall_pick * 10_007)
 
+    # Filters a generous raw pool down to players whose real ADP is at
+    # least plausible for this pick, so a big reach is never even in
+    # consideration - falls back to top-by-rank if that ever leaves too
+    # few options (e.g. deep picks where remaining players have no live
+    # ADP at all).
+    raw_pool = list(df.head(_CPU_CANDIDATE_POOL_SIZE * 3).itertuples())
+    plausible = [
+        row for row in raw_pool
+        if _player_adp(row, row.custom_rank) <= overall_pick + _CPU_MAX_REACH_PICKS
+    ]
+    candidates = (plausible or raw_pool)[:_CPU_CANDIDATE_POOL_SIZE]
+
     counts = roster_position_counts(team_name) if team_name else {}
 
     weights = []
-    for rank_pos, row in enumerate(candidates.itertuples()):
-        # Rank-proximity: 1st candidate weighted heaviest, decaying from there.
-        base_weight = 100.0 / (rank_pos + 1)
+    for row in candidates:
+        adp = _player_adp(row, row.custom_rank)
 
         stdev = numeric(getattr(row, "consensus_adp_stdev", None), None)
         if stdev is None or stdev <= 0:
             stdev = _CPU_DEFAULT_ADP_STDEV
         jitter = rng.gauss(0, stdev)
-        jitter_factor = max(0.2, 1.0 + jitter / 8.0)
+        cap = _CPU_JITTER_CAP_STDEVS * stdev
+        jitter = max(-cap, min(cap, jitter))
+
+        distance = max(0.0, (adp + jitter) - overall_pick)
+        base_weight = math.exp(-distance / 4.0)
 
         need = team_need_score(clean(row.position), counts) if counts else 0.0
-        need_factor = 1.0 + (need / 20.0)
+        need_factor = 1.0 + (need / 40.0)
 
-        weights.append(base_weight * jitter_factor * need_factor)
+        weights.append(base_weight * need_factor)
 
-    selected_index = rng.choices(
-        range(len(candidates)),
-        weights=weights,
-        k=1,
-    )[0]
+    if sum(weights) <= 0:
+        selected_index = 0
+    else:
+        selected_index = rng.choices(
+            range(len(candidates)),
+            weights=weights,
+            k=1,
+        )[0]
 
-    return clean(candidates.iloc[selected_index]["player"])
+    return clean(candidates[selected_index].player)
 
 
 
