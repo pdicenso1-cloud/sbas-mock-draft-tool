@@ -19,6 +19,7 @@ to "keep showing the last known values," never crash the app.
 from __future__ import annotations
 
 import re
+from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 
 import pandas as pd
@@ -257,7 +258,15 @@ def _merge_live_data(
     players = players.copy()
     players["_match_key"] = players["player"].map(normalize_name) + "|" + players["position"]
 
-    adp_source = fetch_ffcalculator_adp(teams=num_teams)
+    # These two sources are independent network calls - fetching them
+    # concurrently instead of one after the other roughly halves the wait
+    # on a cache miss (the slower of the two, not the sum of both).
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        adp_future = pool.submit(fetch_ffcalculator_adp, teams=num_teams)
+        history_future = pool.submit(fetch_nflverse_season_stats)
+        adp_source = adp_future.result()
+        history = history_future.result()
+
     if adp_source is not None:
         lookup = adp_source.set_index("_match_key")
         matched = players["_match_key"].map(lookup["adp"])
@@ -281,7 +290,6 @@ def _merge_live_data(
     # forward-looking projections once an API key is configured, since
     # projections are more useful for drafting than last year's stats once
     # available. Until then, real history beats an empty column.
-    history = fetch_nflverse_season_stats()
     if history is not None:
         lookup = history.set_index("_match_key")
         for source_col, target_col in [
