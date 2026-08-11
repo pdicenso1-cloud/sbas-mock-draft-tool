@@ -49,12 +49,18 @@ from fantasysync.rankings_sources import get_stats_season_label
 # Milliseconds between each revealed CPU pick, for the ticker effect.
 #
 # This page's full rerun (a ~90-row player table plus the board) measured
-# 1.3-3.5s in practice, well over the previous 900ms interval - the browser
-# fired the next autorefresh before the server finished the last one, so
-# ticks piled up and the visible pick counter randomly skipped numbers
-# instead of advancing one at a time. 1800ms gives the server room to
-# finish before the next tick fires, so reveals land in order.
-_CPU_TICKER_INTERVAL_MS = 1800
+# 1.3-3.5s in practice at the old 900ms interval - the browser fired the
+# next autorefresh before the server finished the last one, so ticks piled
+# up and the visible pick counter randomly skipped numbers instead of
+# advancing one at a time. Direct server-side timing put a single rerun at
+# ~450-600ms typically, occasionally 750-900ms+ under load, so 900-1000ms
+# leaves too little margin (confirmed via live testing: real per-tick cost
+# drifted up to 780-915ms under moderate load, nearly saturating a 1000ms
+# budget). 1200ms tested clean across multiple live runs with real margin
+# over that worst case - fast enough to feel snappy, slow enough that a
+# slower host (e.g. Streamlit Community Cloud's shared CPU) shouldn't fall
+# behind and start skipping picks the way 900ms did.
+_CPU_TICKER_INTERVAL_MS = 1200
 
 
 def _tick_cpu_draft() -> None:
