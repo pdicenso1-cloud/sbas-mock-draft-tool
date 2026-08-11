@@ -47,7 +47,9 @@ def normalize_name(name: str) -> str:
 
 @st.cache_data(ttl=LIVE_DATA_TTL, show_spinner=False)
 def fetch_ffcalculator_adp(teams: int = 10, scoring: str = "ppr") -> Optional[pd.DataFrame]:
-    """Live ADP + bye weeks. Free, no API key. Returns None on any failure."""
+    """Live ADP + bye weeks + real draft-community ADP variance ("stdev" -
+    how much actual drafters disagree on when to take this player). Free,
+    no API key. Returns None on any failure."""
     try:
         resp = requests.get(
             f"{FFCALCULATOR_BASE}/{scoring}",
@@ -60,7 +62,13 @@ def fetch_ffcalculator_adp(teams: int = 10, scoring: str = "ppr") -> Optional[pd
         if not players:
             return None
 
-        df = pd.DataFrame(players)[["name", "position", "team", "adp", "bye"]]
+        df = pd.DataFrame(players)
+        if "stdev" not in df.columns:
+            # Defensive: don't let the whole ADP feed fail if the API ever
+            # omits this field, since it's used for a secondary feature
+            # (CPU pick variance) - just proceed without it.
+            df["stdev"] = pd.NA
+        df = df[["name", "position", "team", "adp", "bye", "stdev"]]
         df["_match_key"] = (df["name"].map(normalize_name) + "|" + df["position"])
         # set_index() below requires a unique index; two players sharing a
         # normalized name+position (rare, but not impossible) would raise.
@@ -258,6 +266,15 @@ def _merge_live_data(
             players["bye"] = pd.NA
         matched_bye = players["_match_key"].map(lookup["bye"])
         players["bye"] = matched_bye.combine_first(players["bye"])
+
+        # Real draft-community disagreement per player, used by the CPU
+        # draft logic (fantasysync/draft_engine.py) to make picks
+        # unpredictable in proportion to how much real drafters actually
+        # disagree on that player, rather than an app-wide flat setting.
+        if "consensus_adp_stdev" not in players.columns:
+            players["consensus_adp_stdev"] = pd.NA
+        matched_stdev = players["_match_key"].map(lookup["stdev"])
+        players["consensus_adp_stdev"] = matched_stdev.combine_first(players["consensus_adp_stdev"])
 
     # Last-completed-season real stats as a baseline for rush/rec/pass yards
     # and points - the FantasyPros block below overwrites these with
