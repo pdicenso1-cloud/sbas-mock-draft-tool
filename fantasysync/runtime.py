@@ -397,6 +397,100 @@ def _render_keepers_page() -> None:
             st.rerun()
 
 
+def _pick_label(round_: int, slot: int) -> str:
+    """Matches the draft board's own "round.pick" notation (snake order
+    reverses the visual pick-in-round on even rounds)."""
+    pick_in_round = slot if round_ % 2 == 1 else 11 - slot
+    return f"{round_}.{pick_in_round}"
+
+
+def _render_trades_page() -> None:
+    # Same edge-inset pattern as the Keepers page - see the comment there.
+    st.markdown(
+        """
+        <style>
+        .st-key-trades_page {
+            padding: 0 32px !important;
+            box-sizing: border-box !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    with st.container(key="trades_page"):
+        st.header("Trades")
+        st.caption(
+            "Reassign an upcoming pick to another team when picks change "
+            "hands mid-season. Only undrafted, non-keeper picks are listed "
+            "- a pick that's already been made or is spoken for by a "
+            "keeper can't be traded. Unlike Keepers/League Setup, saving a "
+            "trade does NOT reset an in-progress draft - it only changes "
+            "who owns picks that haven't happened yet."
+        )
+
+        if st.session_state.pop("_trades_just_saved", False):
+            st.success("Trade(s) saved. Draft board updated.")
+
+        picks = st.session_state.picks
+        teams = st.session_state.teams.sort_values("draft_slot")
+        team_names = teams["team_name"].map(clean).tolist()
+
+        tradeable = picks[picks["selected_player"] == ""].sort_values("overall")
+        if tradeable.empty:
+            st.info("No undrafted picks remain to trade.")
+            return
+
+        header_cols = st.columns([0.8, 0.9, 2.6, 2.6])
+        for col, label in zip(header_cols, ["#", "PICK", "ORIGINAL TEAM", "CURRENT OWNER"]):
+            col.markdown(f"**{label}**")
+
+        # Same staged-edit-then-save pattern as the Keepers page: widget
+        # values are collected here rather than written to
+        # st.session_state.picks immediately, so nothing on the board
+        # changes until Save Trades is clicked.
+        pending = []
+
+        for idx, row in tradeable.iterrows():
+            overall = int(row["overall"])
+            pick_label = _pick_label(int(row["round"]), int(row["slot"]))
+            original_owner = clean(row["original_owner"])
+            current_owner = clean(row["current_owner"])
+
+            cols = st.columns([0.8, 0.9, 2.6, 2.6])
+            cols[0].markdown(str(overall))
+            cols[1].markdown(pick_label)
+            cols[2].markdown(original_owner)
+            with cols[3]:
+                selected_owner = st.selectbox(
+                    "Current owner",
+                    team_names,
+                    index=team_names.index(current_owner) if current_owner in team_names else 0,
+                    key=f"trade_owner_{idx}",
+                    label_visibility="collapsed",
+                )
+
+            if selected_owner != current_owner:
+                pending.append((idx, selected_owner))
+
+        if not pending:
+            return
+
+        st.divider()
+        st.warning(
+            f"{len(pending)} unsaved trade(s). Nothing on the draft board "
+            "has changed yet."
+        )
+
+        if st.button("💾 Save Trades", type="primary", key="trades_save_changes"):
+            new_picks = st.session_state.picks.copy()
+            for idx, new_owner in pending:
+                new_picks.loc[idx, "current_owner"] = new_owner
+            st.session_state.picks = new_picks
+            st.session_state["_trades_just_saved"] = True
+            st.rerun()
+
+
 def _render_placeholder_page(route: str) -> None:
     st.header(route)
     st.info(
@@ -423,5 +517,7 @@ def render_app() -> None:
         _render_league_setup_page()
     elif route == "Keepers & Picks":
         _render_keepers_page()
+    elif route == "Trades":
+        _render_trades_page()
     else:
         _render_placeholder_page(route)
