@@ -79,13 +79,20 @@
 }
 
 /* Position identity moves from a full-cell gradient wash to a small
-   chyron-style tag (below) - the cells themselves stay a flat, calm panel
-   color regardless of position. */
-.snake-cell.pos-qb,
-.snake-cell.pos-rb,
-.snake-cell.pos-wr,
+   chyron-style tag (above), but a filled pick still gets a very light flat
+   tint of its position color so drafted cells read as visually distinct
+   from still-empty "Waiting..." cells at a glance, not just via the tag. */
+.snake-cell.pos-qb {
+    background: rgba(124, 140, 248, .09) !important;
+}
+.snake-cell.pos-rb {
+    background: rgba(51, 178, 122, .09) !important;
+}
+.snake-cell.pos-wr {
+    background: rgba(62, 139, 224, .09) !important;
+}
 .snake-cell.pos-te {
-    background: var(--dn-panel) !important;
+    background: rgba(224, 135, 62, .09) !important;
 }
 
 .snake-cell.current-pick {
