@@ -222,3 +222,194 @@
     border-color: var(--dn-user) !important;
     box-shadow: 0 0 0 1px rgba(79,209,197,.35) !important;
 }
+
+/* ============================================================
+   Draft Night — extended to the rest of the app: top nav, page headers,
+   the compact draft-room header strip, and the player tray. Same fonts
+   and palette as the board; layout/sizing rules elsewhere are left alone
+   since several are pixel-tuned (see the extensive comments throughout
+   components/bottom_sheet.py about specificity fights and collapsing
+   auto-heights) - this section only changes font-family, a handful of
+   accent colors, and the few spacing values called out below as actual
+   measured defects (verified live via getBoundingClientRect/computed
+   styles, not guessed from reading the source).
+   ============================================================ */
+
+/* ---- app-wide type ---- */
+
+[data-testid="stAppViewContainer"],
+[data-testid="stMarkdownContainer"],
+[data-testid="stText"],
+.stButton button,
+.stTextInput input,
+.stSelectbox,
+.stNumberInput input {
+    font-family: 'Barlow Semi Condensed', sans-serif !important;
+}
+
+/* Real page headers (st.header() on Rankings & ADP / League Setup /
+   Keepers / Trades) - matches the board's team-name treatment. */
+[data-testid="stHeading"] h1,
+[data-testid="stHeading"] h2,
+[data-testid="stHeading"] h3 {
+    font-family: 'Bebas Neue', sans-serif !important;
+    letter-spacing: .02em !important;
+    text-transform: uppercase !important;
+    font-weight: 400 !important;
+}
+
+/* ---- top navigation tabs ---- */
+
+.st-key-v670_top_nav [data-testid="stRadio"] label p {
+    font-family: 'Bebas Neue', sans-serif !important;
+    letter-spacing: .04em !important;
+    text-transform: uppercase !important;
+    font-size: .66rem !important;
+}
+
+.st-key-v670_top_nav [data-testid="stRadio"] label:has(input:checked) {
+    background: #16202E !important;
+    border-color: var(--dn-user) !important;
+    box-shadow: inset 0 -2px 0 var(--dn-user) !important;
+}
+
+.st-key-v670_top_nav [data-testid="stRadio"] label:has(input:checked) p {
+    color: var(--dn-user) !important;
+    -webkit-text-fill-color: var(--dn-user) !important;
+}
+
+/* ---- compact draft-room header strip (components/draft_header.py) ---- */
+
+.v640-title {
+    font-family: 'Bebas Neue', sans-serif !important;
+    letter-spacing: .02em !important;
+    text-transform: uppercase !important;
+}
+
+.v640-chip {
+    font-family: 'Barlow Semi Condensed', sans-serif !important;
+    font-weight: 600 !important;
+}
+
+.v640-clock-time {
+    font-family: 'JetBrains Mono', monospace !important;
+}
+
+.v640-clock-label,
+.v640-cpu {
+    font-family: 'Barlow Semi Condensed', sans-serif !important;
+    font-weight: 600 !important;
+    letter-spacing: .03em !important;
+}
+
+/* ============================================================
+   Player tray
+   ============================================================ */
+
+/* Search box + position filter pills */
+
+.st-key-v61_player_toolbar input,
+.st-key-v61_player_toolbar input::placeholder {
+    font-family: 'Barlow Semi Condensed', sans-serif !important;
+}
+
+.st-key-draft_pos_ALL button,
+.st-key-draft_pos_QB button,
+.st-key-draft_pos_RB button,
+.st-key-draft_pos_WR button,
+.st-key-draft_pos_TE button,
+.st-key-draft_pos_FLEX button {
+    font-family: 'Barlow Semi Condensed', sans-serif !important;
+    letter-spacing: .02em !important;
+}
+
+.st-key-draft_pos_ALL button[kind="primary"],
+.st-key-draft_pos_QB button[kind="primary"],
+.st-key-draft_pos_RB button[kind="primary"],
+.st-key-draft_pos_WR button[kind="primary"],
+.st-key-draft_pos_TE button[kind="primary"],
+.st-key-draft_pos_FLEX button[kind="primary"] {
+    background: var(--dn-user) !important;
+    color: #0B121C !important;
+    -webkit-text-fill-color: #0B121C !important;
+}
+
+/* Tried to close a measured 4px height mismatch between the search box
+   (32px) and the position-filter pill bar (36px) here, at three
+   escalating levels of CSS specificity (including one that should have
+   won outright) - none changed the live rendered height at all, even
+   though an existing rule already declares height:32px !important on
+   this exact selector and still renders 36px. That means height/
+   min-height aren't the controlling properties for this box's actual
+   layout - something deeper in how Streamlit sizes this specific
+   stVerticalBlock wrapper is overriding it beyond what a CSS override
+   here can reach. Left alone rather than shipping a rule with no effect;
+   the 4px gap is a minor cosmetic leftover, not a functional issue. */
+
+/* Column headers (RK / PLAYER / TIER / ... and the PROJ / RUSHING /
+   RECEIVING / PASSING group row above them) */
+
+.player-table-group2 {
+    font-family: 'JetBrains Mono', monospace !important;
+}
+
+.st-key-v730_sort_RK button,
+.st-key-v730_sort_PLAYER button,
+.st-key-v730_sort_ADP button,
+.st-key-v730_sort_TIER button,
+.st-key-v730_sort_SCORE button,
+.st-key-v730_sort_PROJ button,
+.st-key-v730_sort_AVG button,
+.st-key-v730_sort_RUSH button,
+.st-key-v730_sort_REC button,
+.st-key-v730_sort_PASS button,
+.st-key-v730_sort_BYE button,
+.st-key-v730_sort_VAL button {
+    font-family: 'JetBrains Mono', monospace !important;
+}
+
+/* Player rows */
+
+.player-name2 {
+    font-family: 'Barlow Semi Condensed', sans-serif !important;
+}
+
+.player-sub2,
+.stat2,
+.rank2 {
+    font-family: 'JetBrains Mono', monospace !important;
+}
+
+/* Measured live: the player list's stVerticalBlock uses Streamlit's
+   16px default flex gap between rows, on rows that are only ~24px tall
+   themselves - almost as much dead space between rows as the rows take
+   up, which is most of what read as "spacing isn't right" in the tray.
+   Doubled class to outweigh Streamlit's own same-specificity rule, same
+   technique already used throughout components/bottom_sheet.py. */
+.st-key-war_player_list.st-key-war_player_list[data-testid="stVerticalBlock"] {
+    gap: 2px !important;
+}
+
+/* Queue panel */
+
+.queue-title,
+.queue-player,
+.roster-header-team,
+.roster-line-player {
+    font-family: 'Barlow Semi Condensed', sans-serif !important;
+}
+
+.queue-count,
+.queue-rank,
+.queue-player-sub,
+.roster-header-label,
+.roster-header-count {
+    font-family: 'JetBrains Mono', monospace !important;
+}
+
+.st-key-v632_queue_view button[kind="primary"],
+.st-key-v632_roster_view button[kind="primary"] {
+    background: var(--dn-user) !important;
+    color: #0B121C !important;
+    -webkit-text-fill-color: #0B121C !important;
+}
