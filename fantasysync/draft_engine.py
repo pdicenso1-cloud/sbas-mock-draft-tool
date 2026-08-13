@@ -539,7 +539,7 @@ def snake_board_html() -> str:
                         f'<span class="tile-nfl">{nfl}</span>'
                     )
 
-            keeper_star = " ⭐" if source == "Keeper" else ""
+            keeper_flag = '<div class="snake-keeper-flag">KEEP</div>' if source == "Keeper" else ""
             waiting = "Waiting…" if player == "—" else player
 
             # Sleeper-style snake notation keeps team columns fixed while
@@ -549,9 +549,10 @@ def snake_board_html() -> str:
 
             html.append(
                 f'<div class="{" ".join(classes)}" title="{owner}">'
-                f'<div class="snake-pick">{pick_label}{keeper_star}</div>'
+                f'<div class="snake-pick">{pick_label}</div>'
                 f'<div class="snake-player" title="{player}">{waiting}</div>'
                 f'<div class="tile-badge-row">{badge}</div>'
+                f'{keeper_flag}'
                 f'</div>'
             )
 
