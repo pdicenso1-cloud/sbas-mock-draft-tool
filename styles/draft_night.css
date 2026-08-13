@@ -313,6 +313,13 @@
     font-family: 'Barlow Semi Condensed', sans-serif !important;
 }
 
+/* Tried to trim this row's fixed 44px height (its own content is only
+   32-36px tall) toward the RK/PLAYER header - same doubled-class
+   technique that worked on the group-header row below, but this
+   specific element ignored it exactly like the position-filter bar's
+   height did in the section above: no change at any specificity level.
+   Left alone rather than ship a rule with no effect. */
+
 .st-key-draft_pos_ALL button,
 .st-key-draft_pos_QB button,
 .st-key-draft_pos_RB button,
@@ -351,6 +358,22 @@
 
 .player-table-group2 {
     font-family: 'JetBrains Mono', monospace !important;
+}
+
+/* Measured live: this row is mostly blank (its PROJ/RUSHING/RECEIVING/
+   PASSING labels only sit over 4 of 14 columns) and its own box was 26px
+   tall for ~13px of actual label content - most of what read as a "gap"
+   between the position filters and the RK/PLAYER header row below.
+   Doubled class + type selector to win over the existing rule, same
+   technique already used throughout components/bottom_sheet.py. Unlike
+   the position-filter bar above, this element's height does respond
+   normally to an override (confirmed live), so this one actually takes
+   effect. */
+.st-key-v731_group_header.st-key-v731_group_header[data-testid="stVerticalBlock"] {
+    flex: 0 0 16px !important;
+    height: 16px !important;
+    max-height: 16px !important;
+    margin-top: 0 !important;
 }
 
 .st-key-v730_sort_RK button,
