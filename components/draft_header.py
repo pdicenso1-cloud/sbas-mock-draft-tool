@@ -5,6 +5,8 @@ from typing import Any, Callable, Optional
 
 import streamlit as st
 
+from fantasysync.config import SCORING_FORMAT_LABEL
+
 
 @dataclass(frozen=True)
 class DraftHeaderDependencies:
@@ -51,7 +53,7 @@ def render_compact_draft_header(
                 <div class="v640-title-line">
                     <span class="v640-title">Mock Draft</span>
                     <span class="v640-chip">Round {round_number} · Pick {overall_pick}</span>
-                    <span class="v640-chip">10-Team PPR</span>
+                    <span class="v640-chip">{len(st.session_state.teams)}-Team {SCORING_FORMAT_LABEL}</span>
                     <span class="v640-chip">Snake Draft</span>
                 </div>
                 """,
