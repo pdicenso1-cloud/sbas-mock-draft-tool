@@ -26,6 +26,12 @@ import pandas as pd
 import requests
 import streamlit as st
 
+from fantasysync.config import (
+    PPR_RECEPTION_VALUE,
+    SCORING_FORMAT_FANTASYPROS,
+    SCORING_FORMAT_FFCALCULATOR,
+)
+
 FANTASYPROS_BASE = "https://api.fantasypros.com/public/v2/json"
 FFCALCULATOR_BASE = "https://fantasyfootballcalculator.com/api/v1/adp"
 NFLVERSE_SEASON_STATS_URL = (
@@ -47,7 +53,10 @@ def normalize_name(name: str) -> str:
 
 
 @st.cache_data(ttl=LIVE_DATA_TTL, show_spinner=False)
-def fetch_ffcalculator_adp(teams: int = 10, scoring: str = "ppr") -> Optional[pd.DataFrame]:
+def fetch_ffcalculator_adp(
+    teams: int = 10,
+    scoring: str = SCORING_FORMAT_FFCALCULATOR,
+) -> Optional[pd.DataFrame]:
     """Live ADP + bye weeks + real draft-community ADP variance ("stdev" -
     how much actual drafters disagree on when to take this player). Free,
     no API key. Returns None on any failure."""
@@ -107,9 +116,17 @@ def fetch_nflverse_season_stats() -> Optional[pd.DataFrame]:
             "rushing_yards": "rush_yds",
             "receiving_yards": "rec_yds",
             "passing_yards": "pass_yds",
-            "fantasy_points_ppr": "fantasy_pts",
         }
         df = df.rename(columns=rename_map)
+
+        # nflverse only publishes standard and full-PPR point totals, not
+        # this league's half-PPR - computed here from the standard total
+        # plus half a point per reception rather than using the full-PPR
+        # column directly, since the two diverge meaningfully for
+        # pass-catching backs/WRs.
+        if "fantasy_points" in df.columns and "receptions" in df.columns:
+            df["fantasy_pts"] = df["fantasy_points"] + PPR_RECEPTION_VALUE * df["receptions"].fillna(0)
+
         keep = [c for c in ["name", "position", "team", "rush_yds", "rec_yds", "pass_yds", "receptions", "fantasy_pts"] if c in df.columns]
         df = df[keep]
         df["_match_key"] = (df["name"].map(normalize_name) + "|" + df["position"])
@@ -124,7 +141,7 @@ def fetch_nflverse_season_stats() -> Optional[pd.DataFrame]:
 def fetch_fantasypros_consensus(
     api_key: str,
     season: int,
-    scoring: str = "PPR",
+    scoring: str = SCORING_FORMAT_FANTASYPROS,
 ) -> Optional[pd.DataFrame]:
     """Consensus expert rankings/ADP/tier from FantasyPros. Needs an API key."""
     if not api_key:
@@ -167,7 +184,7 @@ def fetch_fantasypros_consensus(
 def fetch_fantasypros_projections(
     api_key: str,
     season: int,
-    scoring: str = "PPR",
+    scoring: str = SCORING_FORMAT_FANTASYPROS,
 ) -> Optional[pd.DataFrame]:
     """Full-season stat projections from FantasyPros. Needs an API key.
 
