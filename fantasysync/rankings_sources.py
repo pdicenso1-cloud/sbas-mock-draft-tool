@@ -1,7 +1,13 @@
 """Live ADP/stats/projections enrichment from public fantasy-data APIs.
 
-Three sources today:
+Four sources today:
 - Fantasy Football Calculator: free, no API key, real ADP + bye weeks.
+- ESPN: free, no API key or private-league credentials needed - a public
+  "league defaults" endpoint gives platform-wide ADP across all ESPN
+  leagues, separate from this app's connected private league
+  (fantasysync/espn_sync.py). Confirmed no half-PPR-specific breakout
+  exists here (checked ~10 endpoint variants and every scoring-type
+  option) - it's one blended ADP number per player regardless of format.
 - nflverse: free, no API key, real final stats from the most recently
   completed season (rush/rec/pass yards, receptions, fantasy points).
   Populates rush_yds/rec_yds/pass_yds as a baseline.
@@ -12,12 +18,21 @@ Three sources today:
   last season's real stats today, this season's projections automatically
   once a key is added, rather than two parallel sets of similar columns.
 
+Every available ADP source (FFCalculator, ESPN, and FantasyPros once
+configured) is blended into consensus_adp itself - a row-wise average
+across whichever sources have a value for a given player - rather than
+kept as separate unused columns, so every consumer of consensus_adp (the
+Draft Room's ADP sort/VAL badge, the Rankings tab) gets the blend for
+free. FantasyPros' free API tier caps results at ~10 players per position,
+so most players' blend is just FFCalculator + ESPN.
+
 Every fetch function returns None on any failure (network error, bad
 response, timeout) instead of raising - a live-data outage should degrade
 to "keep showing the last known values," never crash the app.
 """
 from __future__ import annotations
 
+import json
 import re
 from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
@@ -39,6 +54,18 @@ FANTASYPROS_BASE = "https://api.fantasypros.com/public/v2/json"
 # valid values). Limited to the four positions this app actually ranks.
 FANTASYPROS_POSITIONS = ["QB", "RB", "WR", "TE"]
 FFCALCULATOR_BASE = "https://fantasyfootballcalculator.com/api/v1/adp"
+# ESPN's public "league defaults" player-info endpoint - platform-wide
+# average draft position across all ESPN leagues, not tied to any specific
+# private league (confirmed live 2026-08-14: no espn_s2/SWID needed at
+# all). Tried ~10 different `leaguedefaults/{id}` values and every scoring
+# type in `sortDraftRanks` looking for a half-PPR-specific number - none
+# exist, this view returns one blended ADP per player regardless of
+# scoring format (draftRanksByRankType only has STANDARD/PPR/ELIMINATION/
+# SUPERFLEX, no half-PPR option either). Still real, large-sample,
+# platform-wide data worth blending in, just not format-precise the way
+# FFCalculator's and FantasyPros' numbers are.
+ESPN_LEAGUEDEFAULTS_BASE = "https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons"
+ESPN_POSITION_SLOT_IDS = {"QB": 0, "RB": 2, "WR": 4, "TE": 6}
 NFLVERSE_SEASON_STATS_URL = (
     "https://github.com/nflverse/nflverse-data/releases/download/"
     "player_stats/player_stats_season.csv"
@@ -87,6 +114,54 @@ def fetch_ffcalculator_adp(
         df["_match_key"] = (df["name"].map(normalize_name) + "|" + df["position"])
         # set_index() below requires a unique index; two players sharing a
         # normalized name+position (rare, but not impossible) would raise.
+        df = df.drop_duplicates(subset="_match_key", keep="first")
+        return df
+    except (requests.RequestException, ValueError, KeyError):
+        return None
+
+
+@st.cache_data(ttl=LIVE_DATA_TTL, show_spinner=False)
+def fetch_espn_platform_adp(season: int = 2026, per_position_limit: int = 60) -> Optional[pd.DataFrame]:
+    """Platform-wide ADP across all ESPN leagues. Free, no API key or
+    espn_s2/SWID needed - this is separate from this app's connected
+    private league (fantasysync/espn_sync.py), which wouldn't be a useful
+    ADP source even once it drafts (one 10-team draft is one data point
+    per player, not an average). Returns None on any failure."""
+    try:
+        rows = []
+        for position, slot_id in ESPN_POSITION_SLOT_IDS.items():
+            resp = requests.get(
+                f"{ESPN_LEAGUEDEFAULTS_BASE}/{season}/segments/0/leaguedefaults/3",
+                params={"view": "kona_player_info"},
+                headers={
+                    "x-fantasy-filter": json.dumps({
+                        "players": {
+                            "filterSlotIds": {"value": [slot_id]},
+                            "limit": per_position_limit,
+                            "sortDraftRanks": {
+                                "sortPriority": 1,
+                                "sortAsc": True,
+                                "value": "STANDARD",
+                            },
+                        }
+                    })
+                },
+                timeout=REQUEST_TIMEOUT,
+            )
+            resp.raise_for_status()
+            for entry in resp.json().get("players", []):
+                player = entry.get("player", {})
+                adp = player.get("ownership", {}).get("averageDraftPosition")
+                name = player.get("fullName")
+                if adp is None or not name:
+                    continue
+                rows.append({"name": name, "position": position, "espn_adp": adp})
+
+        if not rows:
+            return None
+
+        df = pd.DataFrame(rows)
+        df["_match_key"] = df["name"].map(normalize_name) + "|" + df["position"]
         df = df.drop_duplicates(subset="_match_key", keep="first")
         return df
     except (requests.RequestException, ValueError, KeyError):
@@ -299,14 +374,21 @@ def _merge_live_data(
     players = players.copy()
     players["_match_key"] = players["player"].map(normalize_name) + "|" + players["position"]
 
-    # These two sources are independent network calls - fetching them
-    # concurrently instead of one after the other roughly halves the wait
-    # on a cache miss (the slower of the two, not the sum of both).
-    with ThreadPoolExecutor(max_workers=2) as pool:
+    # These three sources are independent network calls - fetching them
+    # concurrently instead of one after the other keeps the wait to
+    # whichever one is slowest on a cache miss, not the sum of all three.
+    with ThreadPoolExecutor(max_workers=3) as pool:
         adp_future = pool.submit(fetch_ffcalculator_adp, teams=num_teams)
         history_future = pool.submit(fetch_nflverse_season_stats)
+        espn_adp_future = pool.submit(fetch_espn_platform_adp, season=season)
         adp_source = adp_future.result()
         history = history_future.result()
+        espn_adp_source = espn_adp_future.result()
+
+    if espn_adp_source is not None:
+        lookup = espn_adp_source.set_index("_match_key")
+        matched = players["_match_key"].map(lookup["espn_adp"])
+        players["espn_adp"] = matched.combine_first(players.get("espn_adp", pd.Series(dtype=float)))
 
     if adp_source is not None:
         lookup = adp_source.set_index("_match_key")
@@ -370,5 +452,24 @@ def _merge_live_data(
                     players[col] = pd.NA
                 matched = players["_match_key"].map(lookup[col])
                 players[col] = matched.combine_first(players[col])
+
+    # Blend every available ADP source into consensus_adp itself, rather
+    # than leaving fantasypros_adp/espn_adp as separate unused columns -
+    # every consumer (Draft Room sort/VAL badge, Rankings tab) already
+    # reads consensus_adp, so blending in place means the "average ADP
+    # across sites" the site is going for reaches everywhere at once.
+    # Row-wise mean skipping NaNs: a true average across whichever sources
+    # have a value for a given player, down to just FFCalculator's number
+    # alone for players outside FantasyPros' free-tier top-10-per-position
+    # cap. Runs unconditionally - FFCalculator and ESPN are both always
+    # fetched above with no key needed, FantasyPros only adds a third
+    # column when configured.
+    adp_sources = [pd.to_numeric(players.get("consensus_adp"), errors="coerce")]
+    if "fantasypros_adp" in players.columns:
+        adp_sources.append(pd.to_numeric(players["fantasypros_adp"], errors="coerce"))
+    if "espn_adp" in players.columns:
+        adp_sources.append(pd.to_numeric(players["espn_adp"], errors="coerce"))
+    if len(adp_sources) > 1:
+        players["consensus_adp"] = pd.concat(adp_sources, axis=1).mean(axis=1, skipna=True)
 
     return players.drop(columns=["_match_key"])
