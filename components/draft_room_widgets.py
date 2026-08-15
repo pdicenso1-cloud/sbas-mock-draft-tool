@@ -71,7 +71,9 @@ def render_live_roster_rows():
         slot = clean(row.Slot)
         pos = clean(row.Pos)
 
-        if slot.startswith("RB"):
+        if slot == "FLEX":
+            slot_group = "FLEX"
+        elif slot.startswith("RB"):
             slot_group = "RB"
         elif slot.startswith("WR"):
             slot_group = "WR"
