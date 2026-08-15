@@ -300,6 +300,7 @@ def _render_data_status_page() -> None:
     st.subheader("Rankings Data Pipeline")
     stats_season = get_stats_season_label()
     st.write(f"- Fantasy Football Calculator ADP: live, refreshes every 6 hours")
+    st.write(f"- ESPN platform-wide ADP: live, refreshes every 6 hours (no key needed, blended into the same ADP column)")
     st.write(f"- nflverse season stats baseline: {stats_season if stats_season else 'unavailable'}")
     try:
         fp_key = bool(st.secrets.get("FANTASYPROS_API_KEY", ""))
