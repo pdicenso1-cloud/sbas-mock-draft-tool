@@ -436,3 +436,12 @@
     color: #0B121C !important;
     -webkit-text-fill-color: #0B121C !important;
 }
+
+/* New FLEX roster slot (RB/WR/TE) - matches the real ESPN league's roster
+   settings. Reuses the keeper gold rather than inventing a 5th position
+   color, since it's a flexible/special slot, not a distinct position. */
+.roster-slot-FLEX {
+    background: var(--dn-keeper) !important;
+    color: #241B02 !important;
+    -webkit-text-fill-color: #241B02 !important;
+}
