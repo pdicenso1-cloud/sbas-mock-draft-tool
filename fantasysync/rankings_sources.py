@@ -33,6 +33,11 @@ from fantasysync.config import (
 )
 
 FANTASYPROS_BASE = "https://api.fantasypros.com/public/v2/json"
+# FantasyPros' consensus-rankings/projections endpoints require one call
+# per position - there is no "all positions" option (confirmed against a
+# live response: requesting without `position` returns a 400 listing the
+# valid values). Limited to the four positions this app actually ranks.
+FANTASYPROS_POSITIONS = ["QB", "RB", "WR", "TE"]
 FFCALCULATOR_BASE = "https://fantasyfootballcalculator.com/api/v1/adp"
 NFLVERSE_SEASON_STATS_URL = (
     "https://github.com/nflverse/nflverse-data/releases/download/"
@@ -143,32 +148,47 @@ def fetch_fantasypros_consensus(
     season: int,
     scoring: str = SCORING_FORMAT_FANTASYPROS,
 ) -> Optional[pd.DataFrame]:
-    """Consensus expert rankings/ADP/tier from FantasyPros. Needs an API key."""
+    """Consensus expert rankings/ADP/tier from FantasyPros. Needs an API key.
+
+    Verified against a live response (2026-08-14): the endpoint requires one
+    call per position - there is no "all positions" option, requesting
+    without `position` returns a 400 error. `rank_ave` (used here as ADP)
+    comes back as a string, not a number. The free/base API tier also caps
+    each position at ~10 players regardless of how many actually exist
+    (`public_api_limited: true` in the response) - this only enriches the
+    top of each position, everything past that keeps whatever ADP/rank it
+    already had from the other sources.
+    """
     if not api_key:
         return None
     try:
-        resp = requests.get(
-            f"{FANTASYPROS_BASE}/nfl/{season}/consensus-rankings",
-            params={"scoring": scoring},
-            headers={"x-api-key": api_key},
-            timeout=REQUEST_TIMEOUT,
-        )
-        resp.raise_for_status()
-        payload = resp.json()
-        players = payload.get("players", payload if isinstance(payload, list) else [])
-        if not players:
+        frames = []
+        for position in FANTASYPROS_POSITIONS:
+            resp = requests.get(
+                f"{FANTASYPROS_BASE}/nfl/{season}/consensus-rankings",
+                params={"scoring": scoring, "position": position},
+                headers={"x-api-key": api_key},
+                timeout=REQUEST_TIMEOUT,
+            )
+            resp.raise_for_status()
+            players = resp.json().get("players", [])
+            if players:
+                frames.append(pd.DataFrame(players))
+
+        if not frames:
             return None
 
-        df = pd.DataFrame(players)
+        df = pd.concat(frames, ignore_index=True)
         rename_map = {
             "player_name": "name",
             "player_position_id": "position",
             "player_team_id": "team",
             "rank_ecr": "fantasypros_rank",
-            "rank_ave": "fantasypros_adp",
             "tier": "fantasypros_tier",
         }
         df = df.rename(columns={k: v for k, v in rename_map.items() if k in df.columns})
+        if "rank_ave" in df.columns:
+            df["fantasypros_adp"] = pd.to_numeric(df["rank_ave"], errors="coerce")
         keep = [c for c in ["name", "position", "team", "fantasypros_rank", "fantasypros_adp", "fantasypros_tier"] if c in df.columns]
         if "name" not in keep or "position" not in keep:
             return None
@@ -188,42 +208,46 @@ def fetch_fantasypros_projections(
 ) -> Optional[pd.DataFrame]:
     """Full-season stat projections from FantasyPros. Needs an API key.
 
-    NOTE: built from FantasyPros' published field-naming conventions, not
-    yet verified against a live response (no API key was available while
-    writing this). The rename map below may need adjusting once real
-    response data is seen - if projections don't populate after adding a
-    key, log the raw payload's column names and fix rename_map to match.
+    Verified against a live response (2026-08-14): same one-call-per-position
+    requirement and ~10-player-per-position free-tier cap as the consensus
+    endpoint above. Per-player fields are flat (`name`, `position_id`,
+    `team_id`) but every stat lives nested under a `stats` object, and the
+    scoring-format-aware point total is `stats.points_half` (not a top-level
+    `fpts` field, and not `points_ppr` - the previous version of this
+    function assumed a flat, unverified shape from FantasyPros' docs alone
+    that didn't match what the API actually returns).
     """
     if not api_key:
         return None
     try:
-        resp = requests.get(
-            f"{FANTASYPROS_BASE}/nfl/{season}/projections",
-            params={"scoring": scoring},
-            headers={"x-api-key": api_key},
-            timeout=REQUEST_TIMEOUT,
-        )
-        resp.raise_for_status()
-        payload = resp.json()
-        players = payload.get("players", payload if isinstance(payload, list) else [])
-        if not players:
+        rows = []
+        for position in FANTASYPROS_POSITIONS:
+            resp = requests.get(
+                f"{FANTASYPROS_BASE}/nfl/{season}/projections",
+                params={"scoring": scoring, "position": position},
+                headers={"x-api-key": api_key},
+                timeout=REQUEST_TIMEOUT,
+            )
+            resp.raise_for_status()
+            for player in resp.json().get("players", []):
+                stats = player.get("stats", {})
+                rows.append({
+                    "name": player.get("name"),
+                    "position": player.get("position_id"),
+                    "team": player.get("team_id"),
+                    "proj_pts": stats.get("points_half"),
+                    "rush_yds": stats.get("rush_yds"),
+                    "rec_yds": stats.get("rec_yds"),
+                    "receptions": stats.get("rec_rec"),
+                    "pass_yds": stats.get("pass_yds"),
+                })
+
+        if not rows:
             return None
 
-        df = pd.DataFrame(players)
-        rename_map = {
-            "player_name": "name",
-            "player_position_id": "position",
-            "fpts": "proj_pts",
-            "rush_yds": "rush_yds",
-            "rec_yds": "rec_yds",
-            "rec_receptions": "receptions",
-            "pass_yds": "pass_yds",
-        }
-        df = df.rename(columns={k: v for k, v in rename_map.items() if k in df.columns})
-        keep = [c for c in ["name", "position", "proj_pts", "rush_yds", "rec_yds", "receptions", "pass_yds"] if c in df.columns]
-        if "name" not in keep or "position" not in keep:
+        df = pd.DataFrame(rows)
+        if "name" not in df.columns or "position" not in df.columns:
             return None
-        df = df[keep]
         df["_match_key"] = (df["name"].map(normalize_name) + "|" + df["position"])
         df = df.drop_duplicates(subset="_match_key", keep="first")
         return df
