@@ -8,6 +8,7 @@ never invoked on their own.
 """
 from __future__ import annotations
 
+import pandas as pd
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 
@@ -30,6 +31,11 @@ from fantasysync.app_state import (
     render_dynamic_dock_css,
     render_player_tray_css,
 )
+from fantasysync.config import (
+    PPR_RECEPTION_VALUE,
+    ROSTER_SLOTS,
+    SCORING_FORMAT_LABEL,
+)
 from fantasysync.draft_engine import (
     auto_pick_user_if_expired,
     current_open_index,
@@ -42,6 +48,7 @@ from fantasysync.draft_engine import (
     snake_board_html,
     start_pick_clock,
 )
+from fantasysync.espn_sync import fetch_espn_league_summary
 from fantasysync.navigation import render_top_navigation
 from fantasysync.player_pool import apply_team_query_selection
 from fantasysync.rankings_sources import get_stats_season_label
@@ -210,6 +217,95 @@ def _render_rankings_page() -> None:
             display[label] = players[col]
 
     st.dataframe(display, width="stretch", hide_index=True, height=600)
+
+
+def _render_data_status_page() -> None:
+    """ESPN league sync status - what's actually connected and pulling in,
+    compared against what the site itself is configured for. Read-only:
+    this page never writes back to data/teams.csv or data/keepers.csv,
+    since ESPN doesn't expose draft order or keepers until the real draft
+    happens and the site's manually-maintained versions are already
+    correct for the upcoming draft (see fantasysync/espn_sync.py)."""
+    st.header("Data Status")
+    st.caption("What's connected, what's live, and how it compares to the site's own settings.")
+
+    espn = fetch_espn_league_summary()
+
+    st.subheader("ESPN League Sync")
+    if espn is None:
+        st.warning(
+            "Not connected. Add `ESPN_LEAGUE_ID`, `ESPN_S2`, and `ESPN_SWID` "
+            "to this app's Streamlit secrets to enable live sync."
+        )
+    else:
+        site_team_count = len(st.session_state.teams)
+        site_keeper_count = int((st.session_state.keepers["player"].astype(str).str.strip() != "").sum())
+        site_reception_pts = PPR_RECEPTION_VALUE
+
+        st.success(f"Connected to **{espn['league_name']}**")
+
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            match = "✅" if espn["team_count"] == site_team_count else "⚠️"
+            st.metric("Teams", f"{espn['team_count']}", help=f"Site: {site_team_count} {match}")
+        with col2:
+            match = "✅" if espn["reception_points"] == site_reception_pts else "⚠️"
+            st.metric(
+                "Points / Reception",
+                f"{espn['reception_points']}",
+                help=f"Site: {site_reception_pts} ({SCORING_FORMAT_LABEL}) {match}",
+            )
+        with col3:
+            st.metric(
+                "Keeper Slots (ESPN, per team)",
+                f"{espn['keeper_count']}",
+                help=f"Site currently has {site_keeper_count} keeper(s) assigned across all teams (manually maintained in data/keepers.csv, not synced from ESPN).",
+            )
+
+        draft_note = (
+            "ESPN shows this league's draft as **completed**."
+            if espn["draft_completed"]
+            else "ESPN shows this league's draft as **not yet completed** - draft order and keeper "
+            "designations aren't exposed by ESPN's API until then, so the site's manually-set draft "
+            "order and keepers (League Setup / Keepers pages) remain the source of truth and are not "
+            "overwritten by this sync."
+        )
+        st.caption(draft_note)
+
+        st.markdown("**Roster slots**")
+        slot_col, espn_col = st.columns(2)
+        with slot_col:
+            st.caption("Site (fantasysync/config.py)")
+            st.code("\n".join(ROSTER_SLOTS), language=None)
+        with espn_col:
+            st.caption("ESPN (live)")
+            st.code(
+                "\n".join(f"{slot}: {count}" for slot, count in espn["position_slot_counts"].items()),
+                language=None,
+            )
+
+        st.markdown("**Full scoring rules (ESPN, live)**")
+        rules_df = pd.DataFrame(espn["scoring_rules"])
+        st.dataframe(rules_df, width="stretch", hide_index=True, height=280)
+
+        st.markdown("**Teams (ESPN, live)**")
+        teams_df = pd.DataFrame(espn["teams"])
+        st.dataframe(teams_df, width="stretch", hide_index=True)
+        st.caption(
+            "ESPN's own team IDs don't correspond to this site's draft order - matching is by "
+            "name/owner only, nothing here is written back into the site's team list."
+        )
+
+    st.divider()
+    st.subheader("Rankings Data Pipeline")
+    stats_season = get_stats_season_label()
+    st.write(f"- Fantasy Football Calculator ADP: live, refreshes every 6 hours")
+    st.write(f"- nflverse season stats baseline: {stats_season if stats_season else 'unavailable'}")
+    try:
+        fp_key = bool(st.secrets.get("FANTASYPROS_API_KEY", ""))
+    except Exception:
+        fp_key = False
+    st.write(f"- FantasyPros consensus/projections: {'connected' if fp_key else 'not configured (no API key in secrets)'}")
 
 
 def _swap_draft_slot(team_id: int, direction: int) -> None:
@@ -532,5 +628,7 @@ def render_app() -> None:
         _render_keepers_page()
     elif route == "Trades":
         _render_trades_page()
+    elif route == "Available Players":
+        _render_data_status_page()
     else:
         _render_placeholder_page(route)
