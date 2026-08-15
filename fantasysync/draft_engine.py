@@ -329,7 +329,11 @@ def build_team_roster(team_name: str) -> pd.DataFrame:
         meta = pmap.get(player, {})
         drafted.append({"player": player, "position": meta.get("position", ""), "overall": int(row.overall)})
 
-    starters = {"QB": None, "RB1": None, "RB2": None, "WR1": None, "WR2": None, "TE": None}
+    # Matches the real league's ESPN roster settings (confirmed live
+    # 2026-08-14): QB/RB/RB/WR/WR/TE dedicated starters plus one RB/WR/TE
+    # flex slot, 9 bench spots - the flex used to be a plain 10th bench
+    # slot before this.
+    starters = {"QB": None, "RB1": None, "RB2": None, "WR1": None, "WR2": None, "TE": None, "FLEX": None}
     bench = []
     for item in drafted:
         pos = item["position"]
@@ -345,14 +349,16 @@ def build_team_roster(team_name: str) -> pd.DataFrame:
             starters["WR2"] = item
         elif pos == "TE" and starters["TE"] is None:
             starters["TE"] = item
+        elif pos in {"RB", "WR", "TE"} and starters["FLEX"] is None:
+            starters["FLEX"] = item
         else:
             bench.append(item)
 
     rows = []
-    for slot in ["QB", "RB1", "RB2", "WR1", "WR2", "TE"]:
+    for slot in ["QB", "RB1", "RB2", "WR1", "WR2", "TE", "FLEX"]:
         item = starters[slot]
         rows.append({"Slot": slot, "Player": item["player"] if item else "", "Pos": item["position"] if item else ""})
-    for i in range(10):
+    for i in range(9):
         item = bench[i] if i < len(bench) else None
         rows.append({"Slot": f"BN{i+1}", "Player": item["player"] if item else "", "Pos": item["position"] if item else ""})
     return pd.DataFrame(rows)
