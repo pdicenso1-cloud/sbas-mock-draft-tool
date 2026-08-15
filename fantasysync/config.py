@@ -4,8 +4,8 @@ Keep league-independent constants here so UI edits do not require touching the
 Streamlit entrypoint or application runtime.
 """
 
-ROSTER_SLOTS = ["QB", "RB1", "RB2", "WR1", "WR2", "TE"] + [
-    f"BN{i}" for i in range(1, 11)
+ROSTER_SLOTS = ["QB", "RB1", "RB2", "WR1", "WR2", "TE", "FLEX"] + [
+    f"BN{i}" for i in range(1, 10)
 ]
 
 STARTER_TARGETS = {"QB": 1, "RB": 2, "WR": 2, "TE": 1}
