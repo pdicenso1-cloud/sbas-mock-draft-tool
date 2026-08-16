@@ -70,14 +70,17 @@ from fantasysync.rankings_sources import get_stats_season_label
 #
 # With that much more headroom, bisected live in-browser again: 400ms and
 # 250ms both held a clean, stable cadence with zero pileup or skipped
-# picks across many consecutive ticks. 150ms didn't actually tick any
-# faster than 250ms in practice (real gaps landed in the same ~200-300ms
-# range either way) - that's a round-trip/scheduling floor, not something
-# a smaller requested interval can push past, so there's no benefit to
-# going lower. Settled on 250ms: a real ~5x speedup over the old 1200ms,
-# with margin left for Streamlit Community Cloud's shared CPU and real
-# network latency (this was bisected on localhost, which has neither).
-_CPU_TICKER_INTERVAL_MS = 250
+# picks across many consecutive ticks on localhost. 150ms didn't actually
+# tick any faster than 250ms in practice (real gaps landed in the same
+# ~200-300ms range either way) - that's a round-trip/scheduling floor, not
+# something a smaller requested interval can push past.
+#
+# Shipped at 250ms first, then scaled back to 400ms - still a real 3x
+# speedup over the old 1200ms, with more margin for Streamlit Community
+# Cloud's shared CPU and real network latency than 250ms had (localhost
+# has neither, so anything bisected there needs some margin held back for
+# the deployed environment regardless of how clean it tested locally).
+_CPU_TICKER_INTERVAL_MS = 400
 
 
 def _tick_cpu_draft() -> None:
