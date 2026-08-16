@@ -55,19 +55,29 @@ from fantasysync.rankings_sources import get_stats_season_label
 
 # Milliseconds between each revealed CPU pick, for the ticker effect.
 #
-# This page's full rerun (a ~90-row player table plus the board) measured
-# 1.3-3.5s in practice at the old 900ms interval - the browser fired the
-# next autorefresh before the server finished the last one, so ticks piled
-# up and the visible pick counter randomly skipped numbers instead of
-# advancing one at a time. Direct server-side timing put a single rerun at
-# ~450-600ms typically, occasionally 750-900ms+ under load, so 900-1000ms
-# leaves too little margin (confirmed via live testing: real per-tick cost
-# drifted up to 780-915ms under moderate load, nearly saturating a 1000ms
-# budget). 1200ms tested clean across multiple live runs with real margin
-# over that worst case - fast enough to feel snappy, slow enough that a
-# slower host (e.g. Streamlit Community Cloud's shared CPU) shouldn't fall
-# behind and start skipping picks the way 900ms did.
-_CPU_TICKER_INTERVAL_MS = 1200
+# History: this used to gate a full-page rerun (a ~90-row player table plus
+# the board), which measured 1.3-3.5s at 900ms and needed 1200ms of margin
+# just to stay stable. Two things changed since: (1) the CPU ticker now
+# lives inside _live_board_fragment (a @st.fragment), so a tick only
+# re-renders the header/board, not the whole page - direct timing showed a
+# flat ~35-45ms per tick regardless of how far into the draft (confirmed
+# with 50+ consecutive samples). (2) current_open_index() was rewritten
+# from a row-by-row `.iterrows()` scan to a vectorized pandas op - it used
+# to be called once per *filled* board cell inside snake_board_html(),
+# which made per-tick cost grow the further into a draft you got (~60ms
+# early, 400ms+ by pick 50) - it's now computed once per render and stays
+# flat.
+#
+# With that much more headroom, bisected live in-browser again: 400ms and
+# 250ms both held a clean, stable cadence with zero pileup or skipped
+# picks across many consecutive ticks. 150ms didn't actually tick any
+# faster than 250ms in practice (real gaps landed in the same ~200-300ms
+# range either way) - that's a round-trip/scheduling floor, not something
+# a smaller requested interval can push past, so there's no benefit to
+# going lower. Settled on 250ms: a real ~5x speedup over the old 1200ms,
+# with margin left for Streamlit Community Cloud's shared CPU and real
+# network latency (this was bisected on localhost, which has neither).
+_CPU_TICKER_INTERVAL_MS = 250
 
 
 def _tick_cpu_draft() -> None:
