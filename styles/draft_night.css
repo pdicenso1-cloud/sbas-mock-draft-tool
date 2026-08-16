@@ -164,6 +164,33 @@
     .snake-cell.current-pick .snake-player::before { animation: none !important; }
 }
 
+/* Player photo, bottom-right corner of a drafted cell - only present when
+   draft_engine.py found a real headshot URL for that player, so there's
+   never a broken-image icon to guard against here. Small and semi-
+   transparent enough to sit under the player name's own text without
+   fighting it for legibility inside this cell's ~50px height budget; the
+   name gets right-padding below so its ellipsis-truncation kicks in
+   before running under the photo rather than hiding behind it. */
+.snake-headshot {
+    position: absolute !important;
+    right: 2px !important;
+    bottom: 2px !important;
+    width: 22px !important;
+    height: 22px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    object-position: top center !important;
+    opacity: .82 !important;
+    border: 1px solid rgba(255,255,255,.14) !important;
+    background: var(--dn-panel) !important;
+    pointer-events: none !important;
+    z-index: 1 !important;
+}
+
+.snake-cell:has(.snake-headshot) .snake-player {
+    padding-right: 20px !important;
+}
+
 /* Position badge reskinned as a broadcast chyron tag, moved to the top of
    the cell (order, not DOM order - draft_engine.py emits it last so it
    doesn't visually depend on a markup change). */
