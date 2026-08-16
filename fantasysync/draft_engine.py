@@ -30,6 +30,7 @@ def player_map() -> Dict[str, dict]:
             "tier": clean(row.tier),
             "consensus_adp": numeric(getattr(row, "consensus_adp", None)),
             "peter_score": numeric(getattr(row, "peter_score", None)),
+            "headshot_url": clean(getattr(row, "headshot_url", "")),
         }
     return result
 
@@ -548,6 +549,17 @@ def snake_board_html() -> str:
             keeper_flag = '<div class="snake-keeper-flag">KEEP</div>' if source == "Keeper" else ""
             waiting = "Waiting…" if player == "—" else player
 
+            # Only emitted when a real photo URL was matched - never a
+            # broken-image icon for an unmatched player, same "degrade
+            # quietly" rule the live-data fetchers follow.
+            headshot_url = pmap.get(player, {}).get("headshot_url", "") if player != "—" else ""
+            headshot = (
+                f'<img class="snake-headshot" src="{headshot_url}" '
+                f'loading="lazy" alt="" aria-hidden="true" '
+                f'onerror="this.remove()">'
+                if headshot_url else ""
+            )
+
             # Sleeper-style snake notation keeps team columns fixed while
             # showing the actual pick sequence within each round.
             pick_in_round = slot if rnd % 2 == 1 else 11 - slot
@@ -555,6 +567,7 @@ def snake_board_html() -> str:
 
             html.append(
                 f'<div class="{" ".join(classes)}" title="{owner}">'
+                f'{headshot}'
                 f'<div class="snake-pick">{pick_label}</div>'
                 f'<div class="snake-player" title="{player}">{waiting}</div>'
                 f'<div class="tile-badge-row">{badge}</div>'
