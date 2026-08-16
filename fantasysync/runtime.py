@@ -12,7 +12,7 @@ import pandas as pd
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 
-from components import DraftRoomDependencies, render_draft_room
+from components import DraftRoomDependencies, render_header_and_board, render_tray
 from components.draft_room_widgets import (
     current_user_roster,
     render_live_roster_header,
@@ -75,9 +75,30 @@ def _tick_cpu_draft() -> None:
 
     A 10-team snake draft spends most picks on CPU teams. Resolving all of
     them in a single instant batch felt jarring, so this reveals exactly one
-    CPU pick per rerun and, if more CPU picks remain before the user's next
-    turn, schedules a quick autorefresh to reveal the next one. Once the open
-    pick belongs to the user, it starts their pick clock and stops ticking.
+    CPU pick per rerun. Once the open pick belongs to the user, it starts
+    their pick clock; while it doesn't, _live_board_fragment's own
+    run_every keeps calling this on a fixed schedule to reveal the next one.
+
+    Called from inside _live_board_fragment (a @st.fragment(run_every=...)),
+    so each tick reruns only that fragment - the search/filter toolbar and
+    Queue/Roster tray rendered outside it are untouched and stay clickable
+    while the CPU picks, instead of the whole page (including a ~90-row
+    player table) re-running on every tick like before.
+
+    An earlier version of this used the third-party streamlit_autorefresh
+    component (conditionally mounted only while more CPU picks were due)
+    instead of the fragment's own native run_every. That combination is
+    unreliable: confirmed live, with zero user interaction, ticks would
+    stop firing entirely after 4-5 fragment-only cycles and never resume on
+    their own. run_every is Streamlit's own first-party mechanism for
+    exactly this (a fragment rerunning itself on a schedule) and doesn't
+    have that failure mode - tested clean across many consecutive ticks.
+    The tradeoff is run_every can't be conditionally unmounted, so the
+    fragment now reruns itself on schedule for the whole session once the
+    draft starts, including while it's the user's own turn - each of those
+    ticks is a quick no-op (the two early-return branches below), and a
+    fragment rerun is cheap by design, so this is a small, constant cost
+    rather than the large, spiky one the old approach had.
     """
     if not st.session_state.draft_active:
         return
@@ -102,52 +123,63 @@ def _tick_cpu_draft() -> None:
     next_owner = clean(st.session_state.picks.loc[next_idx, "current_owner"])
     if next_owner == clean(st.session_state.user_team):
         start_pick_clock()
-    else:
-        with st.container(key="cpu_autorefresh_mount"):
-            st_autorefresh(interval=_CPU_TICKER_INTERVAL_MS, limit=None, key="cpu_ticker")
+        # run_every keeps rerunning this fragment regardless, but a
+        # fragment-scoped rerun never touches code outside the fragment -
+        # without this, the tray (rendered outside it) would stay frozen in
+        # its "CPU is picking, drafting disabled" state even though it's
+        # now genuinely the user's turn. One full-page rerun right at this
+        # transition wakes it back up; every tick before this one stays
+        # fragment-only and cheap.
+        st.rerun()
+
+
+@st.fragment(run_every=_CPU_TICKER_INTERVAL_MS / 1000)
+def _live_board_fragment(deps: DraftRoomDependencies) -> tuple:
+    """Everything that needs to redraw on every CPU-ticker tick: the pick
+    clock/header, team selector, and board grid. Wrapped in a fragment so
+    those ticks rerun only this part of the page - see _tick_cpu_draft's
+    docstring."""
+    _tick_cpu_draft()
+    return render_header_and_board(deps)
 
 
 def _render_draft_room_page() -> None:
     apply_team_query_selection()
-    _tick_cpu_draft()
 
-    idx = current_open_index()
-    user_is_up = idx is not None and clean(
-        st.session_state.picks.loc[idx, "current_owner"]
-    ) == clean(st.session_state.user_team)
+    deps = DraftRoomDependencies(
+        current_open_index=current_open_index,
+        render_player_tray_css=render_player_tray_css,
+        render_header=render_v53_header,
+        clean=clean,
+        remaining_pick_time=remaining_pick_time,
+        pause_pick_clock=pause_pick_clock,
+        start_pick_clock=start_pick_clock,
+        reset_pick_clock=reset_pick_clock,
+        current_user_roster=current_user_roster,
+        player_tray_settings=player_tray_settings,
+        snake_board_html=snake_board_html,
+        move_player_tray=move_player_tray,
+        render_player_toolbar=render_v61_player_toolbar,
+        render_player_picker=render_player_picker_table,
+        render_queue=render_queue_panel,
+        render_roster_header=render_live_roster_header,
+        render_roster_rows=render_live_roster_rows,
+    )
 
-    if st.session_state.draft_active and user_is_up and st.session_state.clock_running:
+    current_index, user_turn = _live_board_fragment(deps)
+
+    if st.session_state.draft_active and user_turn and st.session_state.clock_running:
         # Ticks the pick clock and re-checks for an expired timer even if the
-        # user never interacts with a widget during their turn. This page is
-        # widget-heavy (a ~100-row player table), so a full rerender is not
-        # cheap - refresh every few seconds rather than every second to keep
-        # the tab responsive.
+        # user never interacts with a widget during their turn. This stays
+        # a full-page rerun (not fragment-scoped) since it's the user's own
+        # turn - if their time actually expires and a pick gets auto-drafted,
+        # the tray legitimately needs to update too.
         with st.container(key="cpu_autorefresh_mount"):
             st_autorefresh(interval=3000, limit=None, key="pick_clock_tick")
         if auto_pick_user_if_expired():
             st.rerun()
 
-    render_draft_room(
-        DraftRoomDependencies(
-            current_open_index=current_open_index,
-            render_player_tray_css=render_player_tray_css,
-            render_header=render_v53_header,
-            clean=clean,
-            remaining_pick_time=remaining_pick_time,
-            pause_pick_clock=pause_pick_clock,
-            start_pick_clock=start_pick_clock,
-            reset_pick_clock=reset_pick_clock,
-            current_user_roster=current_user_roster,
-            player_tray_settings=player_tray_settings,
-            snake_board_html=snake_board_html,
-            move_player_tray=move_player_tray,
-            render_player_toolbar=render_v61_player_toolbar,
-            render_player_picker=render_player_picker_table,
-            render_queue=render_queue_panel,
-            render_roster_header=render_live_roster_header,
-            render_roster_rows=render_live_roster_rows,
-        )
-    )
+    render_tray(deps, current_index, user_turn)
 
 
 def _render_rankings_page() -> None:
