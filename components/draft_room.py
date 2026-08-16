@@ -90,15 +90,16 @@ def _render_team_selector(deps: DraftRoomDependencies) -> None:
                     st.rerun()
 
 
-def render_draft_room(
-    deps: DraftRoomDependencies,
-) -> None:
+def render_header_and_board(deps: DraftRoomDependencies) -> tuple[Optional[int], bool]:
     """
-    Render Draft Room 2.0.
-
-    Phase 2 separates the board and tray into independent layers:
-    - board: fixed-height R1-R16 internal scroll viewport
-    - tray: fixed Sleeper-style bottom sheet with three snap positions
+    Render the parts of the Draft Room that legitimately need to update on
+    every CPU-ticker tick: the pick/round header, the team selector, and
+    the board grid itself. Called from inside a fragment (see
+    fantasysync.runtime._live_board_fragment) so that CPU ticks only
+    re-render this part of the page - the tray (search/filters/queue/
+    roster) below is rendered separately, outside that fragment, and stays
+    fully interactive while the CPU is picking instead of getting reset by
+    every tick.
     """
 
     current_index = deps.current_open_index()
@@ -122,6 +123,18 @@ def render_draft_room(
 
     render_draft_board(deps.snake_board_html)
 
+    return current_index, user_turn
+
+
+def render_tray(
+    deps: DraftRoomDependencies,
+    current_index: Optional[int],
+    user_turn: bool,
+) -> None:
+    """The search/filter toolbar, player picker, and queue/roster panel -
+    rendered outside the CPU-ticker fragment so it is unaffected by ticks
+    and stays clickable while the CPU is picking."""
+
     render_bottom_sheet(
         BottomSheetDependencies(
             render_player_toolbar=deps.render_player_toolbar,
@@ -135,3 +148,18 @@ def render_draft_room(
         current_index=current_index,
         user_turn=user_turn,
     )
+
+
+def render_draft_room(
+    deps: DraftRoomDependencies,
+) -> None:
+    """
+    Render Draft Room 2.0 in one shot (no fragment split).
+
+    Kept for callers/tests that want the whole room rendered synchronously.
+    fantasysync.runtime uses render_header_and_board()/render_tray()
+    separately instead, so the header+board can live inside a fragment
+    while the tray stays outside it.
+    """
+    current_index, user_turn = render_header_and_board(deps)
+    render_tray(deps, current_index, user_turn)
