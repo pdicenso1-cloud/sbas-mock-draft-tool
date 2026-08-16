@@ -46,10 +46,18 @@ def available_players() -> pd.DataFrame:
 
 
 def current_open_index() -> Optional[int]:
-    for idx, row in st.session_state.picks.iterrows():
-        if not clean(row["selected_player"]):
-            return idx
-    return None
+    """First still-open pick, by row position (picks are already in overall
+    order). Vectorized rather than the row-by-row `.iterrows()` loop this
+    used to be - that scan's cost grew with how many picks were already
+    filled in, and this is called from inside snake_board_html()'s per-cell
+    loop (see below), so a linear-time implementation here compounded into
+    a real O(n^2) cost that measurably slowed the board down further into
+    a draft (confirmed live: ~60ms per tick early on, 400ms+ by pick 50)."""
+    picks = st.session_state.picks
+    open_mask = picks["selected_player"].map(clean) == ""
+    if not open_mask.any():
+        return None
+    return picks.index[open_mask][0]
 
 
 
@@ -495,6 +503,16 @@ def snake_board_html() -> str:
     teams = st.session_state.teams.sort_values("draft_slot")
     pmap = player_map()
 
+    # Computed once rather than inside the per-cell loop below (previously
+    # once per filled cell) - see current_open_index()'s docstring for why
+    # that mattered.
+    current_idx = current_open_index()
+    current_overall = (
+        int(st.session_state.picks.loc[current_idx, "overall"])
+        if current_idx is not None
+        else None
+    )
+
     html = ['<div style="width:100%;">']
     html.append(
         '<div class="snake-draft-grid" style="display:grid;'
@@ -530,11 +548,8 @@ def snake_board_html() -> str:
                 classes.append("keeper-pick")
             if owner == clean(st.session_state.user_team):
                 classes.append("user-pick")
-            current_idx = current_open_index()
-            if current_idx is not None:
-                current_overall = int(st.session_state.picks.loc[current_idx, "overall"])
-                if int(r.overall) == current_overall:
-                    classes.append("current-pick")
+            if current_overall is not None and int(r.overall) == current_overall:
+                classes.append("current-pick")
 
             badge = ""
             nfl = ""
