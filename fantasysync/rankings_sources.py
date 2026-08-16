@@ -1,6 +1,10 @@
-"""Live ADP/stats/projections enrichment from public fantasy-data APIs.
+"""Live ADP/stats/projections/headshots enrichment from public fantasy-data
+APIs.
 
-Four sources today:
+Five sources today:
+- Sleeper: free, no API key, player headshot photo URLs for the draft
+  board's drafted-cell photo (fantasysync/draft_engine.py's
+  snake_board_html). Not used for any ranking/ADP data.
 - Fantasy Football Calculator: free, no API key, real ADP + bye weeks.
 - ESPN: free, no API key or private-league credentials needed - a public
   "league defaults" endpoint gives platform-wide ADP across all ESPN
@@ -66,6 +70,15 @@ FFCALCULATOR_BASE = "https://fantasyfootballcalculator.com/api/v1/adp"
 # FFCalculator's and FantasyPros' numbers are.
 ESPN_LEAGUEDEFAULTS_BASE = "https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons"
 ESPN_POSITION_SLOT_IDS = {"QB": 0, "RB": 2, "WR": 4, "TE": 6}
+# Sleeper's full player list (free, no key) doubles as a public headshot
+# CDN: https://sleepercdn.com/content/nfl/players/{sleeper_id}.jpg -
+# confirmed live 2026-08-15, no smaller/thumbnail variant exists at this
+# URL (a /thumb/ and /60x60/ path were both tried - same full-size image
+# or a 403). One-time ~4MB fetch of Sleeper's full player list, cached
+# 6h same as everything else here; only a compact id/name/position slice
+# of it is kept afterward, not the raw payload.
+SLEEPER_PLAYERS_URL = "https://api.sleeper.app/players/nfl"
+SLEEPER_HEADSHOT_BASE = "https://sleepercdn.com/content/nfl/players"
 NFLVERSE_SEASON_STATS_URL = (
     "https://github.com/nflverse/nflverse-data/releases/download/"
     "player_stats/player_stats_season.csv"
@@ -156,6 +169,47 @@ def fetch_espn_platform_adp(season: int = 2026, per_position_limit: int = 60) ->
                 if adp is None or not name:
                     continue
                 rows.append({"name": name, "position": position, "espn_adp": adp})
+
+        if not rows:
+            return None
+
+        df = pd.DataFrame(rows)
+        df["_match_key"] = df["name"].map(normalize_name) + "|" + df["position"]
+        df = df.drop_duplicates(subset="_match_key", keep="first")
+        return df
+    except (requests.RequestException, ValueError, KeyError):
+        return None
+
+
+@st.cache_data(ttl=LIVE_DATA_TTL, show_spinner=False)
+def fetch_sleeper_headshots() -> Optional[pd.DataFrame]:
+    """Player headshot URLs, for the draft board's drafted-cell photo. Free,
+    no API key. The raw payload is every player Sleeper has ever tracked
+    (~12k, most inactive/practice-squad/irrelevant) - trimmed down to just
+    the four fantasy positions this app ranks before returning, so what
+    actually gets cached is small even though the fetch itself isn't."""
+    try:
+        resp = requests.get(SLEEPER_PLAYERS_URL, timeout=REQUEST_TIMEOUT)
+        resp.raise_for_status()
+        payload = resp.json()
+        if not isinstance(payload, dict) or not payload:
+            return None
+
+        rows = []
+        for sleeper_id, player in payload.items():
+            position = player.get("position")
+            if position not in {"QB", "RB", "WR", "TE"}:
+                continue
+            first = str(player.get("first_name") or "").strip()
+            last = str(player.get("last_name") or "").strip()
+            full_name = f"{first} {last}".strip()
+            if not full_name:
+                continue
+            rows.append({
+                "name": full_name,
+                "position": position,
+                "headshot_url": f"{SLEEPER_HEADSHOT_BASE}/{sleeper_id}.jpg",
+            })
 
         if not rows:
             return None
@@ -374,21 +428,28 @@ def _merge_live_data(
     players = players.copy()
     players["_match_key"] = players["player"].map(normalize_name) + "|" + players["position"]
 
-    # These three sources are independent network calls - fetching them
+    # These four sources are independent network calls - fetching them
     # concurrently instead of one after the other keeps the wait to
-    # whichever one is slowest on a cache miss, not the sum of all three.
-    with ThreadPoolExecutor(max_workers=3) as pool:
+    # whichever one is slowest on a cache miss, not the sum of all four.
+    with ThreadPoolExecutor(max_workers=4) as pool:
         adp_future = pool.submit(fetch_ffcalculator_adp, teams=num_teams)
         history_future = pool.submit(fetch_nflverse_season_stats)
         espn_adp_future = pool.submit(fetch_espn_platform_adp, season=season)
+        headshots_future = pool.submit(fetch_sleeper_headshots)
         adp_source = adp_future.result()
         history = history_future.result()
         espn_adp_source = espn_adp_future.result()
+        headshots = headshots_future.result()
 
     if espn_adp_source is not None:
         lookup = espn_adp_source.set_index("_match_key")
         matched = players["_match_key"].map(lookup["espn_adp"])
         players["espn_adp"] = matched.combine_first(players.get("espn_adp", pd.Series(dtype=float)))
+
+    if headshots is not None:
+        lookup = headshots.set_index("_match_key")
+        matched = players["_match_key"].map(lookup["headshot_url"])
+        players["headshot_url"] = matched.combine_first(players.get("headshot_url", pd.Series(dtype=object)))
 
     if adp_source is not None:
         lookup = adp_source.set_index("_match_key")
