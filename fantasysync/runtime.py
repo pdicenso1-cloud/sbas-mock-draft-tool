@@ -403,6 +403,127 @@ def _render_league_setup_page() -> None:
 _NO_KEEPER = "— None (no keeper) —"
 
 
+def _render_keeper_board_grid() -> None:
+    """Click-to-assign keeper editor: a grid shaped like the draft board
+    itself (one row per round, one column per team, same round.pick
+    labels), rather than the flat team-by-team list below it. Click any
+    cell - empty or already a keeper - to assign, change, or clear it
+    right there, matching the click-a-cell UX Peter asked for instead of
+    picking a team from a dropdown list first.
+
+    Each cell is a real st.popover rather than part of the read-only HTML
+    string the live Draft Room board renders (fantasysync.draft_engine.
+    snake_board_html) - that board is one big markdown string specifically
+    so it stays cheap to redraw on every CPU-ticker fragment tick (see
+    runtime._live_board_fragment). This page has no ticker running at all,
+    so real per-cell widgets here don't carry that same cost concern.
+    """
+    teams = st.session_state.teams.sort_values("draft_slot")
+    team_by_slot = {int(row.draft_slot): row for row in teams.itertuples()}
+    max_round = int(st.session_state.rounds)
+    all_player_names = sorted(
+        st.session_state.players["player"].dropna().map(clean).unique().tolist()
+    )
+
+    # A pick counts as "the draft has started" only once something other
+    # than a keeper has been selected there - keeper pre-fills happen
+    # automatically at rebuild time regardless of draft progress, so they
+    # don't count.
+    picks = st.session_state.picks
+    draft_started = bool((
+        (picks["selected_player"] != "") & (picks["source"] != "Keeper")
+    ).any())
+    if draft_started:
+        st.info(
+            "A draft is in progress. Assigning or changing a keeper here "
+            "will reset it and rebuild the board, same as saving the list "
+            "editor below."
+        )
+
+    st.markdown('<div class="keeper-grid-header-row">', unsafe_allow_html=True)
+    header_cols = st.columns(10, gap="small")
+    for col, slot in zip(header_cols, range(1, 11)):
+        team_row = team_by_slot.get(slot)
+        col.markdown(
+            f"<div class='keeper-grid-team'>{clean(team_row.team_name) if team_row else ''}</div>",
+            unsafe_allow_html=True,
+        )
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    for rnd in range(1, max_round + 1):
+        row_cols = st.columns(10, gap="small")
+        for slot in range(1, 11):
+            team_row = team_by_slot.get(slot)
+            if team_row is None:
+                continue
+            team_id = int(team_row.team_id)
+            pick_label = _pick_label(rnd, slot)
+
+            keepers = st.session_state.keepers
+            existing = keepers[
+                (keepers["team_id"] == team_id) & (keepers["keeper_round"] == rnd)
+            ]
+            existing_idx = existing.index[0] if not existing.empty else None
+            existing_player = (
+                clean(existing.iloc[0]["player"]) if existing_idx is not None else ""
+            )
+
+            with row_cols[slot - 1]:
+                with st.popover(
+                    existing_player if existing_player else pick_label,
+                    use_container_width=True,
+                    key=f"keeper_cell_{rnd}_{slot}",
+                ):
+                    st.caption(f"{pick_label} · {clean(team_row.team_name)}")
+
+                    used_elsewhere = {
+                        clean(p) for i, p in keepers["player"].items()
+                        if i != existing_idx and clean(p)
+                    }
+                    options = [_NO_KEEPER] + [
+                        p for p in all_player_names if p not in used_elsewhere
+                    ]
+                    current_value = existing_player if existing_player else _NO_KEEPER
+                    if current_value not in options:
+                        options.insert(1, current_value)
+
+                    chosen = st.selectbox(
+                        "Player",
+                        options,
+                        index=options.index(current_value),
+                        key=f"keeper_cell_select_{rnd}_{slot}",
+                        label_visibility="collapsed",
+                    )
+
+                    if st.button(
+                        "Save",
+                        key=f"keeper_cell_save_{rnd}_{slot}",
+                        type="primary",
+                        use_container_width=True,
+                    ):
+                        chosen_player = "" if chosen == _NO_KEEPER else chosen
+                        new_keepers = st.session_state.keepers.copy()
+                        if existing_idx is not None:
+                            if chosen_player:
+                                new_keepers.loc[existing_idx, "player"] = chosen_player
+                            else:
+                                new_keepers = new_keepers.drop(index=existing_idx)
+                        elif chosen_player:
+                            new_row = pd.DataFrame([{
+                                "team_id": team_id,
+                                "player": chosen_player,
+                                "keeper_round": rnd,
+                                "exact_pick_override": "",
+                            }])
+                            new_keepers = pd.concat(
+                                [new_keepers, new_row], ignore_index=True
+                            )
+                        st.session_state.keepers = new_keepers
+                        rebuild_draft()
+                        st.session_state["_keepers_just_saved"] = True
+                        st.rerun()
+
+
 def _render_keepers_page() -> None:
     # The app's global CSS forces the page's block-container to full
     # viewport width (needed for the wide draft board on other pages), which
@@ -423,17 +544,26 @@ def _render_keepers_page() -> None:
 
     with st.container(key="keepers_page"):
         st.header("Keepers")
-        st.caption(
-            "Set each team's keepers - player and the round the keeper costs. "
-            "Edits below are staged; nothing changes on the draft board until "
-            "you click Save."
-        )
         # st.rerun() below cuts the script off immediately, so a success
         # message shown right before it would never actually paint - stash
         # it in session state and show it on the render that follows the
-        # rerun instead.
+        # rerun instead. Shared by both editors below.
         if st.session_state.pop("_keepers_just_saved", False):
             st.success("Keepers saved. Draft board updated.")
+
+        st.caption(
+            "Click any cell to assign, change, or clear that team's keeper "
+            "for that round - shaped like the draft board itself."
+        )
+        _render_keeper_board_grid()
+
+        st.divider()
+        st.subheader("Or edit as a list")
+        st.caption(
+            "Same data, team-by-team instead of cell-by-cell. Edits below "
+            "are staged; nothing changes on the draft board until you "
+            "click Save."
+        )
 
         keepers = st.session_state.keepers.copy()
         teams = st.session_state.teams.sort_values("draft_slot")
