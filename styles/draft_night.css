@@ -60,6 +60,7 @@
     --dn-rb: #33B27A;
     --dn-wr: #3E8BE0;
     --dn-te: #E0873E;
+    --dn-trade: #D962C4;
 }
 
 /* ---- board cells ---- */
@@ -236,6 +237,33 @@
     z-index: 2 !important;
 }
 
+/* A pick whose current owner differs from who it was originally assigned
+   to (via the Trades page) - a thin border tint so it reads at a glance
+   even on an empty "Waiting..." cell, plus a bottom-left corner flag
+   (mirrored from the keeper flag's top-right) since the two states can
+   never overlap on the same cell - the Trades page excludes keeper picks
+   from being tradeable. */
+.snake-cell.traded-pick {
+    border-color: var(--dn-trade) !important;
+}
+
+.snake-traded-flag {
+    position: absolute !important;
+    bottom: -1px !important;
+    left: -1px !important;
+    background: var(--dn-trade) !important;
+    color: #2B0E27 !important;
+    -webkit-text-fill-color: #2B0E27 !important;
+    font-family: 'Barlow Semi Condensed', sans-serif !important;
+    font-weight: 600 !important;
+    font-size: .4rem !important;
+    letter-spacing: .04em !important;
+    line-height: 1.3 !important;
+    padding: 1px 5px 1px 4px !important;
+    clip-path: polygon(0 0, 100% 0, calc(100% - 6px) 100%, 0 100%) !important;
+    z-index: 2 !important;
+}
+
 /* ---- team selector row ---- */
 
 .st-key-v670_team_selector button p {
@@ -272,6 +300,20 @@
 .stSelectbox,
 .stNumberInput input {
     font-family: 'Barlow Semi Condensed', sans-serif !important;
+}
+
+/* Baseline readable text for any plain secondary button that doesn't have
+   its own more-specific color rule elsewhere in this file. Found on the
+   new Home page: Streamlit's own default secondary-button text color is a
+   near-black (#111827) meant for a light background - invisible against
+   this app's dark button fill (#131720), text and background were only
+   ~2 RGB values apart. Every secondary button that already looked fine
+   elsewhere in the app has its own narrower override further down this
+   file (position filters, sort headers, Queue/Roster tabs) that wins over
+   this on specificity - this only fills the gap for buttons that don't. */
+.stButton button[kind="secondary"] {
+    color: #E7ECF3 !important;
+    -webkit-text-fill-color: #E7ECF3 !important;
 }
 
 /* Real page headers (st.header() on Rankings & ADP / League Setup /
@@ -471,4 +513,48 @@
     background: var(--dn-keeper) !important;
     color: #241B02 !important;
     -webkit-text-fill-color: #241B02 !important;
+}
+
+/* ============================================================
+   Home page - the site's front door. Same broadcast-title
+   treatment as the board's team names, scaled up; chips reuse the
+   .v640-chip look from the draft-room header for visual continuity.
+   ============================================================ */
+
+.st-key-home_hero {
+    padding: 18px 20px 16px !important;
+    border-radius: 6px !important;
+    background: linear-gradient(145deg, #121B28, #0D1522) !important;
+    border: 1px solid var(--dn-line) !important;
+}
+
+.home-hero-title {
+    font-family: 'Bebas Neue', sans-serif !important;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    font-size: 2.1rem;
+    line-height: 1.1;
+    color: #F8FAFC;
+}
+
+.home-hero-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 10px;
+}
+
+.home-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 7px;
+    border: 1px solid #334158;
+    background: #111C2D;
+    color: var(--dn-user);
+    font-family: 'Barlow Semi Condensed', sans-serif;
+    font-weight: 600;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    font-size: .68rem;
 }
