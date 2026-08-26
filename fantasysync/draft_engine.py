@@ -537,7 +537,15 @@ def snake_board_html() -> str:
             pos = pmap.get(player, {}).get("position", "")
             source = clean(r.source)
             owner = clean(r.current_owner)
+            original_owner = clean(getattr(r, "original_owner", ""))
             tag = " K" if source == "Keeper" else ""
+
+            # A pick shows as traded once its owner differs from who it
+            # originally belonged to (set by the Trades page). Keeper picks
+            # are excluded there already - can't trade a pick that's spoken
+            # for by a keeper - but source != "Keeper" here too, just so a
+            # keeper cell can never show both flags if that ever changes.
+            traded = bool(original_owner) and owner != original_owner and source != "Keeper"
 
             classes = ["snake-cell"]
             if player == "—":
@@ -546,6 +554,8 @@ def snake_board_html() -> str:
                 classes.append(f"pos-{pos.lower()}")
             if source == "Keeper":
                 classes.append("keeper-pick")
+            if traded:
+                classes.append("traded-pick")
             if owner == clean(st.session_state.user_team):
                 classes.append("user-pick")
             if current_overall is not None and int(r.overall) == current_overall:
@@ -562,7 +572,10 @@ def snake_board_html() -> str:
                     )
 
             keeper_flag = '<div class="snake-keeper-flag">KEEP</div>' if source == "Keeper" else ""
+            traded_flag = '<div class="snake-traded-flag">TRADED</div>' if traded else ""
             waiting = "Waiting…" if player == "—" else player
+
+            cell_title = f"{owner} (via trade from {original_owner})" if traded else owner
 
             # Only emitted when a real photo URL was matched - never a
             # broken-image icon for an unmatched player, same "degrade
@@ -581,12 +594,13 @@ def snake_board_html() -> str:
             pick_label = f"{rnd}.{pick_in_round}"
 
             html.append(
-                f'<div class="{" ".join(classes)}" title="{owner}">'
+                f'<div class="{" ".join(classes)}" title="{cell_title}">'
                 f'{headshot}'
                 f'<div class="snake-pick">{pick_label}</div>'
                 f'<div class="snake-player" title="{player}">{waiting}</div>'
                 f'<div class="tile-badge-row">{badge}</div>'
                 f'{keeper_flag}'
+                f'{traded_flag}'
                 f'</div>'
             )
 
