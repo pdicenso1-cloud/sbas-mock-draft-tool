@@ -35,6 +35,7 @@ from fantasysync.config import (
     PPR_RECEPTION_VALUE,
     ROSTER_SLOTS,
     SCORING_FORMAT_LABEL,
+    STARTER_TARGETS,
 )
 from fantasysync.draft_engine import (
     auto_pick_user_if_expired,
@@ -49,7 +50,8 @@ from fantasysync.draft_engine import (
     start_pick_clock,
 )
 from fantasysync.espn_sync import fetch_espn_league_summary
-from fantasysync.navigation import render_top_navigation
+from fantasysync.navigation import go_to_page, render_top_navigation
+from fantasysync.persistence import save_shared_picks
 from fantasysync.player_pool import apply_team_query_selection
 from fantasysync.rankings_sources import get_stats_season_label
 
@@ -130,12 +132,18 @@ def _tick_cpu_draft() -> None:
 
     next_idx = current_open_index()
     if next_idx is None:
+        # The draft just finished - a real checkpoint (see
+        # fantasysync/persistence.py), and the tray needs to wake up out
+        # of its "drafting disabled" state same as the user's-turn
+        # transition below, so this gets its own st.rerun() too.
         st.session_state.draft_active = False
-        return
+        save_shared_picks(st.session_state.picks)
+        st.rerun()
 
     next_owner = clean(st.session_state.picks.loc[next_idx, "current_owner"])
     if next_owner == clean(st.session_state.user_team):
         start_pick_clock()
+        save_shared_picks(st.session_state.picks)
         # run_every keeps rerunning this fragment regardless, but a
         # fragment-scoped rerun never touches code outside the fragment -
         # without this, the tray (rendered outside it) would stay frozen in
@@ -193,6 +201,84 @@ def _render_draft_room_page() -> None:
             st.rerun()
 
     render_tray(deps, current_index, user_turn)
+
+
+def _render_home_page() -> None:
+    """Landing page: league snapshot, quick links, and a compact fantasy
+    football quick-reference - the site's front door instead of dropping
+    straight into the Draft Room. Every number here is real (this league's
+    own settings/teams/keepers), not placeholder copy."""
+    espn = fetch_espn_league_summary()
+    league_name = espn["league_name"] if espn else "FantasySync Mock Draft"
+    team_count = len(st.session_state.teams)
+    keeper_count = int((st.session_state.keepers["player"].astype(str).str.strip() != "").sum())
+    rounds = int(st.session_state.rounds)
+
+    with st.container(key="home_hero"):
+        st.markdown(
+            f"""
+            <div class="home-hero-title">{league_name}</div>
+            <div class="home-hero-chips">
+                <span class="home-chip">{team_count}-Team {SCORING_FORMAT_LABEL}</span>
+                <span class="home-chip">Snake Draft</span>
+                <span class="home-chip">{rounds} Rounds</span>
+                <span class="home-chip">{keeper_count} Keeper{"s" if keeper_count != 1 else ""} Set</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.write("")
+    link_cols = st.columns(4, gap="small")
+    with link_cols[0]:
+        if st.button("Enter Draft Room", key="home_go_draft", use_container_width=True, type="primary"):
+            go_to_page("Draft Room")
+    with link_cols[1]:
+        if st.button("Rankings & ADP", key="home_go_rankings", use_container_width=True):
+            go_to_page("Rankings")
+    with link_cols[2]:
+        if st.button("Keepers", key="home_go_keepers", use_container_width=True):
+            go_to_page("Keepers")
+    with link_cols[3]:
+        if st.button("League Setup", key="home_go_setup", use_container_width=True):
+            go_to_page("League Setup")
+
+    st.write("")
+    snapshot_col, reference_col = st.columns([1.1, 1], gap="large")
+
+    with snapshot_col:
+        st.subheader("League Snapshot")
+        teams = st.session_state.teams.sort_values("draft_slot")
+        for row in teams.itertuples():
+            owner = clean(getattr(row, "owner", ""))
+            st.markdown(
+                f"**{int(row.draft_slot)}.** {clean(row.team_name)}"
+                + (f" — {owner}" if owner else "")
+            )
+        if espn is None:
+            st.caption(
+                "Not connected to ESPN. Add `ESPN_LEAGUE_ID`/`ESPN_S2`/`ESPN_SWID` "
+                "in Streamlit secrets, or check the Data Status page."
+            )
+
+    with reference_col:
+        st.subheader("Quick Reference")
+        starters = ", ".join(f"{n}× {pos}" for pos, n in STARTER_TARGETS.items())
+        st.markdown(
+            f"""
+- **Snake draft:** pick order reverses each round, so the team picking last in Round 1 picks first in Round 2.
+- **{SCORING_FORMAT_LABEL} scoring:** {PPR_RECEPTION_VALUE} points per reception, on top of standard yardage/TD scoring.
+- **Starting lineup:** {starters}, plus 1× FLEX (RB/WR/TE).
+- **Keepers** lock in before the draft and are marked on the board automatically - see the Keepers page to add or edit one.
+            """
+        )
+
+    st.write("")
+    stats_season = get_stats_season_label()
+    st.caption(
+        (f"Rankings pulling live ADP + {stats_season} season stats. " if stats_season else "")
+        + "Full data source status on the Data Status page."
+    )
 
 
 def _render_rankings_page() -> None:
@@ -772,6 +858,7 @@ def _render_trades_page() -> None:
             for idx, new_owner in pending:
                 new_picks.loc[idx, "current_owner"] = new_owner
             st.session_state.picks = new_picks
+            save_shared_picks(st.session_state.picks)
             st.session_state["_trades_just_saved"] = True
             st.rerun()
 
@@ -794,7 +881,9 @@ def render_app() -> None:
         serializable_state=serializable_state,
     )
 
-    if route == "Draft Room":
+    if route == "Home":
+        _render_home_page()
+    elif route == "Draft Room":
         _render_draft_room_page()
     elif route == "Rankings & ADP":
         _render_rankings_page()
