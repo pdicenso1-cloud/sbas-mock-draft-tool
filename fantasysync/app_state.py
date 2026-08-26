@@ -10,6 +10,7 @@ import pandas as pd
 import streamlit as st
 
 from fantasysync.paths import DATA_DIR
+from fantasysync.persistence import load_shared_picks
 from fantasysync.rankings_sources import enrich_players_with_live_data
 
 
@@ -151,13 +152,35 @@ def init_state(force=False):
         teams = st.session_state.teams
         keepers = st.session_state.keepers
 
+    # The draft board is shared across every visitor (not private per
+    # session) - try the persisted, league-wide board first so a new
+    # session (or a reboot) picks up wherever the league actually left
+    # off, rather than resetting everyone back to an empty board. Falls
+    # back to a fresh one, same as before this existed, if persistence
+    # isn't configured, nothing has been saved yet, or the fetch fails.
+    #
+    # Only computed when actually needed (a genuinely new session, or a
+    # forced reset) - unlike the rest of this function's defaults dict,
+    # this one call is a real network request, so it must not run on
+    # every ordinary rerun the way the cheap, pure-local pre-existing
+    # defaults below do.
+    if force or "picks" not in st.session_state:
+        shared_picks = load_shared_picks()
+        picks = (
+            shared_picks
+            if shared_picks is not None
+            else assign_keepers(snake_order(teams, 16), keepers, teams)
+        )
+    else:
+        picks = st.session_state.picks
+
     defaults = {
         "players": players.copy(),
         "teams": teams.copy(),
         "keepers": keepers.copy(),
         "rounds": 16,
         "user_team": clean(teams.iloc[0]["team_name"]),
-        "picks": assign_keepers(snake_order(teams, 16), keepers, teams),
+        "picks": picks,
         "draft_message": "",
         "turn_started_at": None,
         "turn_pick_overall": None,
