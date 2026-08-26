@@ -6,6 +6,7 @@ from typing import Any
 import streamlit as st
 
 PAGE_OPTIONS = [
+    "Home",
     "Draft Room",
     "Rankings",
     "Recommendations",
@@ -19,6 +20,7 @@ PAGE_OPTIONS = [
 ]
 
 PAGE_ROUTE_MAP = {
+    "Home": "Home",
     "Draft Room": "Draft Room",
     "Rankings": "Rankings & ADP",
     "Recommendations": "Recommendations",
@@ -37,6 +39,25 @@ PAGE_ROUTE_MAP = {
 }
 
 
+def go_to_page(page: str) -> None:
+    """Programmatically switch the active tab from anywhere else on the
+    page (e.g. a "Home" quick-link button), then call st.rerun().
+
+    Can't just assign st.session_state.top_navigation directly for this -
+    that key already belongs to the st.radio widget below, and Streamlit
+    raises StreamlitAPIException the moment you write to a widget's own key
+    after that widget has been instantiated in the current script run
+    (confirmed live: this app's page-render order puts the nav radio
+    before every page's own content, so by the time a page's button click
+    runs, the radio already claimed the key for this run). Queuing the
+    request here instead and applying it at the top of this function - the
+    first thing that happens, on the next run, before the radio widget
+    exists yet - sidesteps that restriction entirely.
+    """
+    st.session_state["_pending_nav"] = page
+    st.rerun()
+
+
 def render_top_navigation(
     *,
     rebuild_draft: Callable[[], None],
@@ -44,7 +65,11 @@ def render_top_navigation(
 ) -> str:
     """Render the global top navigation and return the legacy page route."""
     if "top_navigation" not in st.session_state:
-        st.session_state.top_navigation = "Draft Room"
+        st.session_state.top_navigation = "Home"
+
+    pending = st.session_state.pop("_pending_nav", None)
+    if pending is not None:
+        st.session_state.top_navigation = pending
 
     with st.container(key="v670_top_nav"):
         nav_col, reset_col, download_col = st.columns(
