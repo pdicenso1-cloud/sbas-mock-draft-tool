@@ -41,6 +41,20 @@ REQUEST_TIMEOUT = 10
 _TABLE = "draft_state"
 _ROW_ID = 1
 
+# Every column snake_order()/assign_keepers() (fantasysync/app_state.py)
+# put on a real picks DataFrame. A loaded row missing any of these isn't
+# usable - it would parse into a DataFrame "successfully" here but blow up
+# much later, deep in unrelated code (current_open_index(), the board
+# HTML), the first time something reaches for a column that isn't there -
+# far from this function's own error handling, so failures like that are
+# hard to trace back to a bad row in the database. Checked explicitly
+# instead so a malformed row degrades exactly like "nothing saved yet."
+_REQUIRED_PICKS_COLUMNS = {
+    "overall", "round", "slot", "original_team_id",
+    "original_owner", "current_owner", "keeper_player",
+    "selected_player", "source",
+}
+
 
 def _config() -> Optional[tuple[str, str]]:
     try:
@@ -74,7 +88,10 @@ def load_shared_picks() -> Optional[pd.DataFrame]:
         rows = resp.json()
         if not rows or not rows[0].get("picks_json"):
             return None
-        return pd.DataFrame(rows[0]["picks_json"])
+        picks = pd.DataFrame(rows[0]["picks_json"])
+        if not _REQUIRED_PICKS_COLUMNS.issubset(picks.columns):
+            return None
+        return picks
     except (requests.RequestException, ValueError, KeyError, IndexError):
         return None
 
