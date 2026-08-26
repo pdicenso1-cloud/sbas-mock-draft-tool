@@ -17,6 +17,7 @@ import streamlit as st
 
 from fantasysync.app_state import assign_keepers, clean, numeric, snake_order
 from fantasysync.config import STARTER_TARGETS
+from fantasysync.persistence import save_shared_picks
 
 
 def player_map() -> Dict[str, dict]:
@@ -283,6 +284,7 @@ def handle_user_draft_click(player: str):
     reset_pick_clock()
     st.session_state.draft_active = True
     st.session_state.clock_running = True
+    save_shared_picks(st.session_state.picks)
 
 
 
@@ -467,6 +469,9 @@ def rebuild_draft():
         "Draft reset with current teams, keepers, and draft order."
     )
     reset_pick_clock()
+    # The board is shared - a reset needs to propagate to every visitor,
+    # not just reset this one browser's local view of it.
+    save_shared_picks(st.session_state.picks)
 
 
 def serializable_state():
@@ -723,4 +728,5 @@ def auto_pick_user_if_expired():
     )
     reset_pick_clock()
     st.session_state.clock_running = True
+    save_shared_picks(st.session_state.picks)
     return True
