@@ -558,3 +558,205 @@
     text-transform: uppercase;
     font-size: .68rem;
 }
+
+/* ============================================================
+   Draft Room mobile fixes (<=768px)
+   ============================================================
+
+   Confirmed live on a 375x812 phone viewport before writing any of this:
+   - The team selector and position filter pills are both st.columns()
+     rows. Streamlit's own default behavior stacks st.columns() into a
+     vertical list below a width breakpoint, rather than staying in a
+     row - the team selector alone was measured at 518px tall stacked
+     (10 full-width buttons) instead of a compact row, and the filter
+     pills at 191px instead of one ~36px row.
+   - The board grid's 10 columns divided a 359px-wide screen into ~32px
+     cells - each cell's pick label/player name/badges illegible at
+     that width.
+   - The board's scroll region height is a fixed desktop formula
+     (components/draft_board.py: 100vh minus a hardcoded "everything
+     above the board" pixel count). With the team selector stacked to
+     518px instead of ~50px, that formula was wrong by hundreds of
+     pixels, and document.scrollHeight was reported as exactly the
+     viewport height even though real content extended well past it -
+     meaning content below the fold was likely unreachable by scrolling
+     at all on a phone.
+
+   Fix: force the team selector and filter pills into the same
+   horizontal-scroll-strip pattern already proven working for the top
+   nav bar above (see .st-key-v670_top_nav rules in styles/legacy.css) -
+   flex row, no wrap, overflow-x auto - instead of letting them stack.
+   That alone returns both rows to something close to their desktop
+   height, which is what the board's height formula already assumes.
+   The board grid itself gets a minimum per-column width and horizontal
+   scroll instead of cramming 10 columns into the screen width - you
+   scroll sideways to see other teams' columns, same as scrolling down
+   sees other rounds. */
+
+@media (max-width: 768px) {
+    /* Team selector: horizontal scroll strip instead of stacking. */
+    .st-key-v670_team_selector.st-key-v670_team_selector [data-testid="stHorizontalBlock"] {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+    }
+
+    .st-key-v670_team_selector [data-testid="stHorizontalBlock"]::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .st-key-v670_team_selector [data-testid="stColumn"] {
+        flex: 0 0 auto !important;
+        width: 132px !important;
+        min-width: 132px !important;
+    }
+
+    /* Position filter pills: same treatment, narrower cards. */
+    .st-key-v612_position_filter_bar.st-key-v612_position_filter_bar [data-testid="stHorizontalBlock"] {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+    }
+
+    .st-key-v612_position_filter_bar [data-testid="stHorizontalBlock"]::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .st-key-v612_position_filter_bar [data-testid="stColumn"] {
+        flex: 0 0 auto !important;
+        width: 74px !important;
+        min-width: 74px !important;
+    }
+
+    /* Board grid: minimum legible column width, horizontal scroll to see
+       other teams instead of cramming all 10 into the screen width. */
+    .st-key-v63_board_region .snake-draft-grid {
+        grid-template-columns: repeat(10, minmax(96px, 1fr)) !important;
+        min-width: calc(96px * 10 + 2px * 9) !important;
+    }
+
+    .v643-board-scroll.v643-board-scroll {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    /* Compact header (Mock Draft title/chips, CPU badge, clock, Start
+       Draft button): measured live at a fixed 60px with overflow:visible
+       while its own st.columns() row stacked taller than that - the
+       overflow spilled the Start Draft button down into the board region
+       below, visibly overlapping it. Letting the columns wrap and the
+       container grow to fit them removes the overlap; the title's own
+       three chips (Round/Pick, format, Snake Draft) also wrap onto their
+       own line instead of forcing extra width. */
+    .st-key-v640_header {
+        height: auto !important;
+        min-height: 0 !important;
+    }
+
+    .st-key-v640_header [data-testid="stHorizontalBlock"] {
+        flex-wrap: wrap !important;
+        row-gap: 6px !important;
+    }
+
+    /* Each column still carried its desktop proportional flex-basis
+       (title very wide, CPU badge/clock/button all narrow slivers) even
+       once wrapped - confirmed live that squeezed the Start Draft
+       button's own column so tight its text wrapped one character per
+       line. flex: 0 0 auto sizes each to its actual content instead, so
+       wrapping only kicks in once the row genuinely runs out of room. */
+    .st-key-v640_header [data-testid="stColumn"] {
+        flex: 0 0 auto !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    .v640-title-line {
+        flex-wrap: wrap !important;
+        row-gap: 4px !important;
+    }
+
+    /* Bottom tray (player list + Queue/Roster panel): the desktop layout
+       puts these two side by side via st.columns([6.65, 2.35]) sharing the
+       tray's fixed height. Below the column breakpoint Streamlit stacks
+       them full-width instead, so their combined natural height runs well
+       past the tray's fixed height - and since every level of the tray
+       (the tray itself, its wrapping divs, the columns row, each column)
+       was hard-set to height:100%/overflow:hidden for the desktop
+       side-by-side case, the Queue/Roster half was silently clipped off
+       below the visible tray, unreachable even by scrolling the page
+       (confirmed live: document.documentElement.scrollHeight stayed
+       exactly equal to window.innerHeight, and the utility-side panel's
+       own rect started at y=822 while the fixed tray's box ends at
+       y=812). Fix: let every inner level grow to its natural stacked
+       height, and make only the outermost fixed tray box scrollable so
+       a user can swipe up within it to reach the Queue/Roster panel. */
+    .st-key-v660_tray.st-key-v660_tray {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    .st-key-v660_tray.st-key-v660_tray > div,
+    .st-key-v660_tray.st-key-v660_tray > div > div,
+    .st-key-v660_tray.st-key-v660_tray
+        > div
+        > div
+        > [data-testid="stVerticalBlock"] {
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+
+    .st-key-v660_tray.st-key-v660_tray
+        > div
+        > div
+        > [data-testid="stVerticalBlock"]
+        > [data-testid="stHorizontalBlock"] {
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+
+    .st-key-v660_tray.st-key-v660_tray [data-testid="stColumn"] {
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+
+    .st-key-v63_player_side.st-key-v63_player_side,
+    .st-key-v63_utility_side.st-key-v63_utility_side {
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+
+    .st-key-v63_player_side.st-key-v63_player_side > div,
+    .st-key-v63_player_side.st-key-v63_player_side > div > div:not(.st-key-v61_player_toolbar):not(.st-key-v731_group_header):not(.st-key-v732_column_header):not(.st-key-war_player_list),
+    .st-key-v63_utility_side.st-key-v63_utility_side > div,
+    .st-key-v63_utility_side.st-key-v63_utility_side > div > div {
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+
+    .st-key-v63_player_side.st-key-v63_player_side
+        > div
+        > div
+        > [data-testid="stVerticalBlock"],
+    .st-key-v63_utility_side.st-key-v63_utility_side
+        > div
+        > div
+        > [data-testid="stVerticalBlock"] {
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+}
