@@ -759,4 +759,212 @@
         max-height: none !important;
         overflow: visible !important;
     }
+
+    /* Player list rows (components/draft_room_widgets.py) - 14 columns
+       (+/star buttons, RK, PLAYER, TIER, SCORE, ADP, BYE, PROJ, AVG, RUSH,
+       REC, PASS, VAL) sized by ratio (st.columns(widths)) for a wide
+       desktop tray. Below Streamlit's own column breakpoint each of those
+       14 columns was wrapping onto its own full-width line instead of
+       staying in one row - confirmed live: a single player's row measured
+       14 stacked 348px-wide/24px-tall lines (~336px tall) instead of one
+       compact ~24px row, repeated for all 100 rows in the pool. This is
+       what actually broke drafting on a phone: the tiny "+" button ended
+       up as one line buried among 14 per player instead of sitting in a
+       normal compact row, and every stray data cell (a single tier
+       letter, a rank number) rendered as an oversized full-width block -
+       which is also what read as "team names are bigger than the player
+       slots", since those blown-up cells were roughly the same visual
+       scale as the team-selector buttons above. The group/column header
+       rows (v731/v732) share the same widths list and had the identical
+       problem. Fixed by forcing nowrap and giving each column a fixed,
+       tap-friendly pixel width instead of a relative ratio - the first
+       four (draft button, queue button, rank, player name) fit inside the
+       visible ~350px tray width with no scrolling needed, so drafting
+       needs no horizontal scroll; the stat columns past that are reachable
+       by swiping the list sideways. Header rows use the same widths but
+       stay clipped (no scroll) rather than scroll-synced with the list,
+       to keep this fix simple - a minor rough edge, not a functional one. */
+    .st-key-war_player_list.st-key-war_player_list [data-testid="stHorizontalBlock"],
+    .st-key-v731_group_header.st-key-v731_group_header [data-testid="stHorizontalBlock"],
+    .st-key-v732_column_header.st-key-v732_column_header [data-testid="stHorizontalBlock"] {
+        flex-wrap: nowrap !important;
+        width: max-content !important;
+        min-width: 100% !important;
+    }
+
+    .st-key-war_player_list.st-key-war_player_list {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    .st-key-v731_group_header.st-key-v731_group_header,
+    .st-key-v732_column_header.st-key-v732_column_header {
+        overflow-x: hidden !important;
+    }
+
+    .st-key-war_player_list.st-key-war_player_list [data-testid="stColumn"]:nth-child(1),
+    .st-key-v731_group_header.st-key-v731_group_header [data-testid="stColumn"]:nth-child(1),
+    .st-key-v732_column_header.st-key-v732_column_header [data-testid="stColumn"]:nth-child(1) {
+        flex: 0 0 34px !important;
+        width: 34px !important;
+        min-width: 34px !important;
+        max-width: 34px !important;
+    }
+
+    .st-key-war_player_list.st-key-war_player_list [data-testid="stColumn"]:nth-child(2),
+    .st-key-v731_group_header.st-key-v731_group_header [data-testid="stColumn"]:nth-child(2),
+    .st-key-v732_column_header.st-key-v732_column_header [data-testid="stColumn"]:nth-child(2) {
+        flex: 0 0 34px !important;
+        width: 34px !important;
+        min-width: 34px !important;
+        max-width: 34px !important;
+    }
+
+    .st-key-war_player_list.st-key-war_player_list [data-testid="stColumn"]:nth-child(3),
+    .st-key-v731_group_header.st-key-v731_group_header [data-testid="stColumn"]:nth-child(3),
+    .st-key-v732_column_header.st-key-v732_column_header [data-testid="stColumn"]:nth-child(3) {
+        flex: 0 0 28px !important;
+        width: 28px !important;
+        min-width: 28px !important;
+        max-width: 28px !important;
+    }
+
+    .st-key-war_player_list.st-key-war_player_list [data-testid="stColumn"]:nth-child(4),
+    .st-key-v731_group_header.st-key-v731_group_header [data-testid="stColumn"]:nth-child(4),
+    .st-key-v732_column_header.st-key-v732_column_header [data-testid="stColumn"]:nth-child(4) {
+        flex: 0 0 132px !important;
+        width: 132px !important;
+        min-width: 132px !important;
+        max-width: 132px !important;
+    }
+
+    .st-key-war_player_list.st-key-war_player_list [data-testid="stColumn"]:nth-child(5),
+    .st-key-v731_group_header.st-key-v731_group_header [data-testid="stColumn"]:nth-child(5),
+    .st-key-v732_column_header.st-key-v732_column_header [data-testid="stColumn"]:nth-child(5) {
+        flex: 0 0 32px !important;
+        width: 32px !important;
+        min-width: 32px !important;
+        max-width: 32px !important;
+    }
+
+    .st-key-war_player_list.st-key-war_player_list [data-testid="stColumn"]:nth-child(6),
+    .st-key-v731_group_header.st-key-v731_group_header [data-testid="stColumn"]:nth-child(6),
+    .st-key-v732_column_header.st-key-v732_column_header [data-testid="stColumn"]:nth-child(6) {
+        flex: 0 0 36px !important;
+        width: 36px !important;
+        min-width: 36px !important;
+        max-width: 36px !important;
+    }
+
+    .st-key-war_player_list.st-key-war_player_list [data-testid="stColumn"]:nth-child(7),
+    .st-key-v731_group_header.st-key-v731_group_header [data-testid="stColumn"]:nth-child(7),
+    .st-key-v732_column_header.st-key-v732_column_header [data-testid="stColumn"]:nth-child(7) {
+        flex: 0 0 36px !important;
+        width: 36px !important;
+        min-width: 36px !important;
+        max-width: 36px !important;
+    }
+
+    .st-key-war_player_list.st-key-war_player_list [data-testid="stColumn"]:nth-child(8),
+    .st-key-v731_group_header.st-key-v731_group_header [data-testid="stColumn"]:nth-child(8),
+    .st-key-v732_column_header.st-key-v732_column_header [data-testid="stColumn"]:nth-child(8) {
+        flex: 0 0 32px !important;
+        width: 32px !important;
+        min-width: 32px !important;
+        max-width: 32px !important;
+    }
+
+    .st-key-war_player_list.st-key-war_player_list [data-testid="stColumn"]:nth-child(9),
+    .st-key-v731_group_header.st-key-v731_group_header [data-testid="stColumn"]:nth-child(9),
+    .st-key-v732_column_header.st-key-v732_column_header [data-testid="stColumn"]:nth-child(9) {
+        flex: 0 0 40px !important;
+        width: 40px !important;
+        min-width: 40px !important;
+        max-width: 40px !important;
+    }
+
+    .st-key-war_player_list.st-key-war_player_list [data-testid="stColumn"]:nth-child(10),
+    .st-key-v731_group_header.st-key-v731_group_header [data-testid="stColumn"]:nth-child(10),
+    .st-key-v732_column_header.st-key-v732_column_header [data-testid="stColumn"]:nth-child(10) {
+        flex: 0 0 36px !important;
+        width: 36px !important;
+        min-width: 36px !important;
+        max-width: 36px !important;
+    }
+
+    .st-key-war_player_list.st-key-war_player_list [data-testid="stColumn"]:nth-child(11),
+    .st-key-v731_group_header.st-key-v731_group_header [data-testid="stColumn"]:nth-child(11),
+    .st-key-v732_column_header.st-key-v732_column_header [data-testid="stColumn"]:nth-child(11) {
+        flex: 0 0 40px !important;
+        width: 40px !important;
+        min-width: 40px !important;
+        max-width: 40px !important;
+    }
+
+    .st-key-war_player_list.st-key-war_player_list [data-testid="stColumn"]:nth-child(12),
+    .st-key-v731_group_header.st-key-v731_group_header [data-testid="stColumn"]:nth-child(12),
+    .st-key-v732_column_header.st-key-v732_column_header [data-testid="stColumn"]:nth-child(12) {
+        flex: 0 0 36px !important;
+        width: 36px !important;
+        min-width: 36px !important;
+        max-width: 36px !important;
+    }
+
+    .st-key-war_player_list.st-key-war_player_list [data-testid="stColumn"]:nth-child(13),
+    .st-key-v731_group_header.st-key-v731_group_header [data-testid="stColumn"]:nth-child(13),
+    .st-key-v732_column_header.st-key-v732_column_header [data-testid="stColumn"]:nth-child(13) {
+        flex: 0 0 36px !important;
+        width: 36px !important;
+        min-width: 36px !important;
+        max-width: 36px !important;
+    }
+
+    .st-key-war_player_list.st-key-war_player_list [data-testid="stColumn"]:nth-child(14),
+    .st-key-v731_group_header.st-key-v731_group_header [data-testid="stColumn"]:nth-child(14),
+    .st-key-v732_column_header.st-key-v732_column_header [data-testid="stColumn"]:nth-child(14) {
+        flex: 0 0 36px !important;
+        width: 36px !important;
+        min-width: 36px !important;
+        max-width: 36px !important;
+    }
+
+    /* Beats components/bottom_sheet.py's own
+       ".st-key-v660_tray .st-key-war_player_list button" rule (19x19px,
+       tuned for a mouse-driven desktop tray) - that rule renders later in
+       the page than this file's own injected <style> and matches at equal
+       specificity, so it wins ties unless this is deliberately stronger. */
+    .st-key-v660_tray.st-key-v660_tray
+        .st-key-war_player_list.st-key-war_player_list
+        button {
+        width: 30px !important;
+        min-width: 30px !important;
+        max-width: 30px !important;
+        height: 30px !important;
+        min-height: 30px !important;
+        max-height: 30px !important;
+    }
+
+    /* Safari-only gaps that Chrome's mobile emulation doesn't reproduce,
+       so these weren't caught by the earlier round of live-browser
+       testing (done in Chrome with a spoofed mobile user agent, not real
+       WebKit). (1) Safari boosts font size on some text automatically for
+       readability inside narrow flex/scroll contexts, independent of the
+       viewport meta tag - text-size-adjust:100% turns that off so
+       carefully-sized text stays the size this CSS actually specifies.
+       (2) Fixed-position elements (the header, the bottom tray) don't
+       automatically avoid the notch/Dynamic Island or home-indicator area
+       on a real iPhone - safe-area padding does. Both are cheap, safe,
+       well-established fixes with no real downside even if they turn out
+       not to be the full story on Peter's device. */
+    html, body {
+        -webkit-text-size-adjust: 100% !important;
+    }
+
+    .st-key-v640_header {
+        padding-top: max(0px, env(safe-area-inset-top)) !important;
+    }
+
+    .st-key-v660_tray {
+        padding-bottom: max(0px, env(safe-area-inset-bottom)) !important;
+    }
 }
