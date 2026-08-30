@@ -728,5 +728,11 @@ def auto_pick_user_if_expired():
     )
     reset_pick_clock()
     st.session_state.clock_running = True
-    save_shared_picks(st.session_state.picks)
+    # Deferred (a flag, not a direct call) - the caller does st.rerun()
+    # right after this returns True, and a save done here would block that
+    # rerun on a real network round trip. See _tick_cpu_draft's comment in
+    # fantasysync/runtime.py for the live-confirmed reasoning; this is the
+    # same fix applied to the other autorefresh-triggered save (this one
+    # fires from the 3-second pick-clock ticker, not a direct user click).
+    st.session_state["_pending_shared_save"] = True
     return True
