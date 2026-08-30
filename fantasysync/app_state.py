@@ -45,6 +45,20 @@ def _load_static_csvs():
 
     players["rank"] = players["rank"].fillna(9999).astype(int)
     players["custom_rank"] = players["custom_rank"].fillna(players["rank"]).astype(int)
+
+    # Letter-grade tiers (S best, then A-O worst) sort wrong as plain
+    # strings - alphabetically "A" comes before "S", which is backwards
+    # from the intended severity order. An ordered Categorical fixes the
+    # TIER column sort everywhere it's used (fantasysync/player_pool.py's
+    # sort_player_pool()) without that code needing to know anything about
+    # the tier scheme itself. Only players.csv's actual tier values are
+    # included - falls back to plain string sort (still correct today,
+    # just not "S first") if a future value isn't in this list, rather
+    # than raising.
+    tier_order = ["S", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O"]
+    if "tier" in players.columns and set(players["tier"].dropna().unique()).issubset(tier_order):
+        players["tier"] = pd.Categorical(players["tier"], categories=tier_order, ordered=True)
+
     teams["team_id"] = teams["team_id"].astype(int)
     teams["draft_slot"] = teams["draft_slot"].astype(int)
 
