@@ -136,14 +136,25 @@ def _tick_cpu_draft() -> None:
         # fantasysync/persistence.py), and the tray needs to wake up out
         # of its "drafting disabled" state same as the user's-turn
         # transition below, so this gets its own st.rerun() too.
+        #
+        # The actual save is deferred to _render_draft_room_page (a flag,
+        # not a direct call here) rather than done inline before
+        # st.rerun() - confirmed live against the real deployed app that a
+        # save done here blocks this fragment on a real network round trip
+        # to Supabase *before* the rerun that's supposed to wake the tray
+        # back up, so the whole page visibly freezes for however long that
+        # request takes. Deferring it to run after the tray has already
+        # rendered on the next full rerun means the user sees their turn
+        # arrive immediately - the save then happens in the background of
+        # that same script run instead of blocking the transition.
         st.session_state.draft_active = False
-        save_shared_picks(st.session_state.picks)
+        st.session_state["_pending_shared_save"] = True
         st.rerun()
 
     next_owner = clean(st.session_state.picks.loc[next_idx, "current_owner"])
     if next_owner == clean(st.session_state.user_team):
         start_pick_clock()
-        save_shared_picks(st.session_state.picks)
+        st.session_state["_pending_shared_save"] = True
         # run_every keeps rerunning this fragment regardless, but a
         # fragment-scoped rerun never touches code outside the fragment -
         # without this, the tray (rendered outside it) would stay frozen in
@@ -201,6 +212,14 @@ def _render_draft_room_page() -> None:
             st.rerun()
 
     render_tray(deps, current_index, user_turn)
+
+    # Deferred shared-board checkpoints (see _tick_cpu_draft and
+    # auto_pick_user_if_expired) land here, after the tray has already
+    # rendered - the real Supabase network round trip happens in the
+    # background of finishing this script run instead of blocking the
+    # st.rerun() that's supposed to make the transition feel instant.
+    if st.session_state.pop("_pending_shared_save", False):
+        save_shared_picks(st.session_state.picks)
 
 
 def _render_home_page() -> None:
