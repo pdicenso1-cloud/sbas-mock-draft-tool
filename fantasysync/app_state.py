@@ -9,6 +9,7 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
+from fantasysync.config import DEFAULT_CPU_POSITION_WEIGHTS
 from fantasysync.paths import DATA_DIR
 from fantasysync.persistence import load_shared_picks
 from fantasysync.rankings_sources import enrich_players_with_live_data
@@ -205,6 +206,10 @@ def init_state(force=False):
         "dock_level": 1,
         "cpu_variance_enabled": None,
         "cpu_variance_seed": None,
+        # Session-local, not shared - each visitor can experiment with
+        # their own "what if CPU drafted more RB-heavy" without affecting
+        # anyone else's view. Adjustable on the Settings page.
+        "cpu_position_weights": dict(DEFAULT_CPU_POSITION_WEIGHTS),
         "player_queue": [],
         "queue_auto_draft": False,
         "player_tray_level": 1,
