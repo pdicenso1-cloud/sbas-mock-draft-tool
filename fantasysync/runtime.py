@@ -32,6 +32,7 @@ from fantasysync.app_state import (
     render_player_tray_css,
 )
 from fantasysync.config import (
+    DEFAULT_CPU_POSITION_WEIGHTS,
     PPR_RECEPTION_VALUE,
     ROSTER_SLOTS,
     SCORING_FORMAT_LABEL,
@@ -882,6 +883,67 @@ def _render_trades_page() -> None:
             st.rerun()
 
 
+def _render_settings_page() -> None:
+    """CPU draft-pick behavior: how much the CPU leans toward each
+    position, on top of pure rank and its own roster need. Session-local -
+    each visitor can experiment with their own weights without changing
+    what anyone else sees, same as the position filter or sort column."""
+    st.header("Settings")
+    st.caption(
+        "Controls how CPU teams draft. CPU picks already account for real "
+        "player rank and each team's own roster need (a team that already "
+        "has 2 starting RBs is less likely to reach for a 3rd) - these "
+        "sliders add a lean toward or away from a position on top of "
+        "that, for the whole rest of the draft."
+    )
+
+    weights = dict(
+        st.session_state.get("cpu_position_weights", DEFAULT_CPU_POSITION_WEIGHTS)
+    )
+
+    st.subheader("CPU Position Weight")
+    st.caption(
+        "1.00 = no lean either way. Above 1.00 leans the CPU toward that "
+        "position; below 1.00 leans away. Defaults to a mild RB/WR bias, "
+        "matching real roster-construction odds in this format (RB/WR "
+        "carry more injury/committee risk and fill more starting slots "
+        "here than QB/TE)."
+    )
+
+    # Every slider's key is suffixed with this generation counter rather
+    # than overwriting st.session_state["cpu_weight_slider_QB"] etc.
+    # directly on reset - confirmed live that direct overwrite doesn't
+    # actually move the displayed slider even across multiple reruns
+    # (a widget's own key-held state appears to keep winning over a value
+    # set from outside it). Bumping the generation instead gives each
+    # slider a brand new key it's never seen before on reset, so it reads
+    # its value= argument fresh - a standard, more reliable way to force a
+    # Streamlit widget back to a specific value than fighting its key.
+    if "cpu_weight_slider_gen" not in st.session_state:
+        st.session_state.cpu_weight_slider_gen = 0
+    gen = st.session_state.cpu_weight_slider_gen
+
+    cols = st.columns(4)
+    labels = {"QB": "Quarterback", "RB": "Running Back", "WR": "Wide Receiver", "TE": "Tight End"}
+    for col, position in zip(cols, ["QB", "RB", "WR", "TE"]):
+        with col:
+            weights[position] = st.slider(
+                labels[position],
+                min_value=0.5,
+                max_value=2.0,
+                value=float(weights.get(position, 1.0)),
+                step=0.05,
+                key=f"cpu_weight_slider_{position}_{gen}",
+            )
+
+    st.session_state.cpu_position_weights = weights
+
+    if st.button("Reset to recommended", key="cpu_weight_reset"):
+        st.session_state.cpu_position_weights = dict(DEFAULT_CPU_POSITION_WEIGHTS)
+        st.session_state.cpu_weight_slider_gen = gen + 1
+        st.rerun()
+
+
 def _render_placeholder_page(route: str) -> None:
     st.header(route)
     st.info(
@@ -914,5 +976,7 @@ def render_app() -> None:
         _render_trades_page()
     elif route == "Available Players":
         _render_data_status_page()
+    elif route == "Settings":
+        _render_settings_page()
     else:
         _render_placeholder_page(route)
