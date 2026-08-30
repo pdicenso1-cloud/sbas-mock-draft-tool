@@ -16,7 +16,7 @@ import pandas as pd
 import streamlit as st
 
 from fantasysync.app_state import assign_keepers, clean, numeric, snake_order
-from fantasysync.config import STARTER_TARGETS
+from fantasysync.config import DEFAULT_CPU_POSITION_WEIGHTS, STARTER_TARGETS
 from fantasysync.persistence import save_shared_picks
 
 
@@ -91,12 +91,32 @@ def reset_cpu_variance():
     initialize_cpu_variance()
 
 
+# How many of the top-by-rank available players are eligible to get
+# reordered by need/position-weight in cpu_best_available() below. A past
+# version of this let need/roster-need override ranking across the *whole*
+# remaining pool, and it measurably produced reaches well past real ADP
+# that didn't feel right in practice (see initialize_cpu_variance's
+# docstring on why the simpler rank-only mechanic replaced it). Bounding
+# the reorder to a small window near the top of the pool means need/bias
+# can pull a slightly-lower-ranked player ahead of a slightly-better one,
+# not pull in someone dramatically worse just because of a big need score.
+_CPU_NEED_WINDOW = 12
+
+
 def cpu_best_available() -> Optional[str]:
     """
     Select the CPU player.
 
-    Normal drafts take the best available player.
-    Variance drafts choose among the top five with a strong top-heavy bias.
+    The top _CPU_NEED_WINDOW available players (by real rank) get
+    re-ordered by a blend of: how good the pick is (their position within
+    that window), how much the picking team's own roster needs that
+    position (team_need_score()), and the position-weight sliders on the
+    Settings page (st.session_state.cpu_position_weights - RB/WR biased
+    above QB/TE by default, see config.DEFAULT_CPU_POSITION_WEIGHTS).
+    Normal drafts then take the top of that re-ordered list; variance
+    drafts choose among its top five with the same top-heavy weighted
+    randomness as before - unchanged from the original rank-only version,
+    just operating on the re-ordered list instead of the raw rank order.
     """
     df = available_players()
     if df.empty:
@@ -104,18 +124,40 @@ def cpu_best_available() -> Optional[str]:
 
     initialize_cpu_variance()
 
-    if not st.session_state.cpu_variance_enabled:
-        return clean(df.iloc[0]["player"])
-
-    candidates = df.head(5).reset_index(drop=True)
-    weights = [45, 25, 15, 10, 5][: len(candidates)]
-
     idx = current_open_index()
     overall_pick = 0
+    owner = ""
     if idx is not None:
-        overall_pick = int(
-            st.session_state.picks.loc[idx, "overall"]
-        )
+        pick_row = st.session_state.picks.loc[idx]
+        overall_pick = int(pick_row["overall"])
+        owner = clean(pick_row["current_owner"])
+
+    window = df.head(_CPU_NEED_WINDOW).reset_index(drop=True)
+    counts = roster_position_counts(owner) if owner else {}
+    position_weights = st.session_state.get(
+        "cpu_position_weights", DEFAULT_CPU_POSITION_WEIGHTS
+    )
+
+    window_size = len(window)
+    scores = []
+    for slice_position, candidate_row in window.iterrows():
+        position = clean(candidate_row.get("position", ""))
+        rank_component = (window_size - slice_position) * 3.0
+        need = team_need_score(position, counts)
+        weight = float(position_weights.get(position, 1.0))
+        scores.append((rank_component + need) * weight)
+
+    ranked = (
+        window.assign(_fs_cpu_score=scores)
+        .sort_values("_fs_cpu_score", ascending=False)
+        .reset_index(drop=True)
+    )
+
+    if not st.session_state.cpu_variance_enabled:
+        return clean(ranked.iloc[0]["player"])
+
+    candidates = ranked.head(5)
+    weights = [45, 25, 15, 10, 5][: len(candidates)]
 
     seed = int(st.session_state.cpu_variance_seed or 0)
     rng = random.Random(seed + overall_pick * 10_007)
