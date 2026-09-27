@@ -155,6 +155,28 @@ body, p, span, div, label, li, a {
     font-family: var(--hub-font) !important;
 }
 
+/* ---- page margins ----
+   Both legacy.css's own zero-padding rules (meant to make the content
+   column edge-to-edge) AND this override were written against a `.main`
+   class that does not exist anywhere in this Streamlit version's DOM
+   (confirmed live: `document.querySelectorAll('.main').length === 0`) -
+   the real wrapper is `[data-testid="stMain"]`, and the real content box
+   is `[data-testid="stMainBlockContainer"]` (which also still carries the
+   old `.block-container` class, which is how this was readable at all).
+   A runtime-injected <style> block (the "draft_drawer" full-width fix)
+   also sets this same attribute's padding to 0 on every rerun, after this
+   file loads - doubling the attribute selector raises specificity enough
+   to beat it regardless of load order. */
+
+[data-testid="stMainBlockContainer"][data-testid="stMainBlockContainer"] {
+    width: 100% !important;
+    max-width: 1280px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left: clamp(20px, 4vw, 48px) !important;
+    padding-right: clamp(20px, 4vw, 48px) !important;
+}
+
 /* ---- headings (st.header / st.subheader everywhere) ---- */
 
 [data-testid="stHeading"] h1,
@@ -310,6 +332,23 @@ button[kind="secondary"]:hover,
     flex-wrap: wrap;
     gap: 10px;
     margin-top: 18px;
+}
+
+.team-snapshot-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 0;
+}
+
+.team-snapshot-logo {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--hub-line);
+    background: var(--hub-white);
+    flex: none;
 }
 
 .home-chip {
