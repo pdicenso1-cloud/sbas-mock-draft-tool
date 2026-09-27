@@ -9,33 +9,12 @@ PAGE_OPTIONS = [
     "Home",
     "Draft Room",
     "Rankings",
-    "Recommendations",
-    "Draft Grades",
-    "Data Status",
-    "League History",
-    "Settings",
-    "Keepers",
-    "Trades",
-    "League Setup",
 ]
 
 PAGE_ROUTE_MAP = {
     "Home": "Home",
     "Draft Room": "Draft Room",
     "Rankings": "Rankings & ADP",
-    "Recommendations": "Recommendations",
-    # Preserve the existing routes while page implementations are modularized.
-    "Draft Grades": "League History",
-    "Data Status": "Available Players",
-    "League History": "League History",
-    "Settings": "Settings",
-    # This tab's label used to say "Import / Export" while already routing
-    # to "Keepers & Picks" - relabeled to match what it actually is/will be.
-    "Keepers": "Keepers & Picks",
-    "Trades": "Trades",
-    # This tab's label used to say "Help & Docs" while already routing to
-    # "League Setup" - relabeled to match what it actually is/will be.
-    "League Setup": "League Setup",
 }
 
 
@@ -58,12 +37,13 @@ def go_to_page(page: str) -> None:
     st.rerun()
 
 
-def render_top_navigation(
-    *,
-    rebuild_draft: Callable[[], None],
-    serializable_state: Callable[[], dict[str, Any]],
-) -> str:
-    """Render the global top navigation and return the legacy page route."""
+def render_top_navigation() -> str:
+    """Render the global top navigation and return the legacy page route.
+
+    Reset/download-state used to live here too, on every page - they now
+    render only on the Draft Room itself (see render_draft_room_actions),
+    the only page they're actually relevant to.
+    """
     if "top_navigation" not in st.session_state:
         st.session_state.top_navigation = "Home"
 
@@ -72,19 +52,29 @@ def render_top_navigation(
         st.session_state.top_navigation = pending
 
     with st.container(key="v670_top_nav"):
-        nav_col, reset_col, download_col = st.columns(
-            [8.9, 0.72, 0.92],
-            gap="small",
+        selected_nav = st.radio(
+            "FantasySync Navigation",
+            PAGE_OPTIONS,
+            key="top_navigation",
+            horizontal=True,
+            label_visibility="collapsed",
         )
 
-        with nav_col:
-            selected_nav = st.radio(
-                "FantasySync Navigation",
-                PAGE_OPTIONS,
-                key="top_navigation",
-                horizontal=True,
-                label_visibility="collapsed",
-            )
+    return PAGE_ROUTE_MAP[selected_nav]
+
+
+def render_draft_room_actions(
+    *,
+    rebuild_draft: Callable[[], None],
+    serializable_state: Callable[[], dict[str, Any]],
+) -> None:
+    """Reset + download-state buttons, Draft Room only (see render_top_navigation).
+    Wrapped in its own keyed container so hub_theme.css can size these two
+    down to match the small round/format pill chips next to them - they
+    lost their old compact sizing (previously scoped to .st-key-v670_top_nav
+    button) when they moved out of that container onto this page."""
+    with st.container(key="draft_room_actions"):
+        reset_col, download_col = st.columns([1, 1], gap="small")
 
         with reset_col:
             if st.button(
@@ -112,5 +102,3 @@ def render_top_navigation(
                 key="top_download_draft_state",
                 help="Download the current draft state",
             )
-
-    return PAGE_ROUTE_MAP[selected_nav]
