@@ -1,0 +1,338 @@
+/* ============================================================
+   Hub Theme — visual alignment with the SBASFFL Hub site
+   (https://sbasffl.vercel.app), which FantasySync is planned to be
+   absorbed into eventually. Tokens below (--hub-*) are copied directly
+   from that site's own styles.css :root block so colors match exactly,
+   not an approximation from screenshots.
+
+   Loaded after draft_night.css and before safety.css (see
+   fantasysync/entrypoint.py) so it can override both legacy.css's dark
+   app-wide background and draft_night.css's broadcast palette without
+   editing either file directly - same additive/override pattern already
+   established by draft_night.css itself.
+
+   Scope: whole app, including the Draft Room board/tray and the Rankings
+   page. The board/tray reskin below works by overriding the *variables*
+   legacy.css and draft_night.css already define at :root (--fs-*, --v53-*,
+   --dn-*) and consume via var(...) throughout hundreds of rules in both
+   files, rather than rewriting each of those rules directly - a later
+   :root declaration of the same custom property wins with no !important
+   needed, since both declarations target :root at equal specificity.
+   Left alone: badge/flag text colors (e.g. #0B121C, #241B02) that were
+   already dark-text-on-saturated-badge and stay correct as-is regardless
+   of overall theme lightness.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+:root {
+    --hub-navy-950: #03101e;
+    --hub-navy-900: #07182c;
+    --hub-navy-800: #0d2948;
+    --hub-navy-700: #153d68;
+    --hub-red: #a51c32;
+    --hub-red-bright: #d12a44;
+    --hub-cream: #f5f0e6;
+    --hub-paper: #f8f9fb;
+    --hub-ink: #101c2b;
+    --hub-muted: #657589;
+    --hub-line: #dbe2e9;
+    --hub-white: #fff;
+    --hub-shadow: 0 18px 45px rgba(3, 16, 30, .13);
+    --hub-font: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+    /* legacy.css tokens (fs-* / v53-*) - reused by the board, tray,
+       roster/queue panels, filter pills, etc. throughout both files. */
+    --fs-bg: var(--hub-paper);
+    --fs-panel: var(--hub-white);
+    --fs-panel-deep: #f2f4f7;
+    --fs-border: var(--hub-line);
+    --fs-text-primary: var(--hub-ink);
+    --fs-text-secondary: #425269;
+    --fs-text-muted: var(--hub-muted);
+    --fs-header: var(--hub-ink);
+    --fs-blue: var(--hub-navy-700);
+    --fs-action: var(--hub-red-bright);
+
+    --v53-bg: var(--hub-paper);
+    --v53-panel: var(--hub-white);
+    --v53-panel-2: #f2f4f7;
+    --v53-border: var(--hub-line);
+    --v53-border-strong: #c7d0da;
+    --v53-text: var(--hub-ink);
+    --v53-muted: var(--hub-muted);
+    --v53-subtle: #425269;
+    --v53-blue: var(--hub-navy-700);
+    --v53-coral: var(--hub-red-bright);
+
+    /* draft_night.css board tokens - panel/border/dim flip to light,
+       clock/keeper/trade/user/position accent colors are kept: they're
+       saturated enough to still read correctly on a light background. */
+    --dn-panel: var(--hub-white);
+    --dn-panel-line: var(--hub-line);
+    --dn-dim: var(--hub-muted);
+}
+
+/* Board cells: empty-pick used a near-transparent white wash meant to sit
+   on a dark panel (barely lighter than --dn-panel); on a light panel that
+   same wash is invisible, so "waiting" cells need their own light-gray
+   fill to still read as visually distinct from a filled white cell. */
+.snake-cell.empty-pick {
+    background: #eef1f5 !important;
+}
+
+.snake-headshot {
+    border-color: rgba(3, 16, 30, .12) !important;
+}
+
+/* ---- player tray (components/bottom_sheet.py) ----
+   Nearly everything inside the tray paints transparent and just shows
+   whatever's behind it - these two explicit dark panel backgrounds (the
+   tray root and the Queue/Roster side panel) are the only two rules that
+   actually need overriding for the whole tray to read as light.
+
+   bottom_sheet.py injects its own <style> block fresh on every render
+   (its comment calls it the "v7.2.0 tray-only state system") - that lands
+   in the DOM after every static stylesheet including this file, so a
+   plain single-class rule here loses on source order no matter where
+   this file is loaded from. Doubling the class name (established
+   convention in this codebase for winning same-selector fights, see
+   project_next_session_todo memory) raises specificity instead so it
+   wins regardless of order. */
+
+.st-key-v660_tray.st-key-v660_tray {
+    background: var(--hub-white) !important;
+    border-top: 1px solid var(--hub-line) !important;
+}
+
+.st-key-v63_utility_side.st-key-v63_utility_side {
+    background: #f6f7f9 !important;
+    border-left: 1px solid var(--hub-line) !important;
+}
+
+/* Player-row text (components/draft_room_widgets.py's own HTML markup,
+   classes named player-name2/player-sub2/stat2/etc, not Streamlit's own
+   elements) - legacy.css redefines these same classes' color repeatedly
+   (10+ times across the file, all meant for the dark theme); doubled-
+   class + !important beats every one of them regardless of which is last,
+   including bottom_sheet.py's own per-render <style> block. */
+
+.st-key-v660_tray .player-name2.player-name2,
+.st-key-v660_tray .rank2.rank2,
+.st-key-v660_tray .player-table-header2.player-table-header2,
+.player-name2.player-name2,
+.rank2.rank2,
+.player-table-header2.player-table-header2 {
+    color: var(--hub-ink) !important;
+    -webkit-text-fill-color: var(--hub-ink) !important;
+}
+
+.st-key-v660_tray .player-sub2.player-sub2,
+.st-key-v660_tray .stat2.stat2,
+.player-sub2.player-sub2,
+.stat2.stat2 {
+    color: var(--hub-muted) !important;
+    -webkit-text-fill-color: var(--hub-muted) !important;
+}
+
+.player-row2.player-row2 {
+    border-bottom-color: var(--hub-line) !important;
+}
+
+/* ---- global background / text / font ---- */
+
+html, body,
+[data-testid="stAppViewContainer"],
+[data-testid="stMain"],
+[data-testid="stHeader"],
+.main {
+    background: var(--hub-paper) !important;
+    color: var(--hub-ink) !important;
+    font-family: var(--hub-font) !important;
+}
+
+body, p, span, div, label, li, a {
+    font-family: var(--hub-font) !important;
+}
+
+/* ---- headings (st.header / st.subheader everywhere) ---- */
+
+[data-testid="stHeading"] h1,
+[data-testid="stHeading"] h2,
+[data-testid="stHeading"] h3,
+[data-testid="stHeading"] p {
+    font-family: var(--hub-font) !important;
+    color: var(--hub-ink) !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    letter-spacing: -0.02em !important;
+}
+
+/* ---- top navigation: match the Hub's sticky white nav bar ---- */
+
+.st-key-v670_top_nav {
+    background: rgba(255, 255, 255, .96) !important;
+    border-bottom: 1px solid var(--hub-line) !important;
+    box-shadow: none !important;
+    backdrop-filter: blur(14px);
+}
+
+/* legacy.css/draft_night.css set -webkit-text-fill-color explicitly on
+   these same "p" elements (a Draft Night dark-nav holdover) - WebKit paints
+   text using that property over plain `color` when both are set, so every
+   override below repeats itself onto -webkit-text-fill-color: currentColor
+   too, or the label text stays invisible-on-white regardless of `color`. */
+
+.st-key-v670_top_nav [data-testid="stRadio"] label {
+    font-family: var(--hub-font) !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    letter-spacing: .05em !important;
+    color: #425269 !important;
+    -webkit-text-fill-color: #425269 !important;
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 3px solid transparent !important;
+    border-radius: 0 !important;
+    transition: border-color .18s, color .18s;
+}
+
+/* The radio's decorative circle indicator div (sibling right before the
+   text's stMarkdownContainer) - previously invisible only because it was
+   pale-on-dark; switching the app to a light theme (.streamlit/config.toml)
+   made it show up as a visible ring nobody wants in front of each tab.
+   Targeted structurally via :has() rather than by its auto-generated
+   class name, which Streamlit does not guarantee across versions. */
+.st-key-v670_top_nav [data-testid="stRadio"] label div:has(+ [data-testid="stMarkdownContainer"]) {
+    display: none !important;
+}
+
+.st-key-v670_top_nav [data-testid="stRadio"] label p {
+    font-family: var(--hub-font) !important;
+    text-transform: uppercase !important;
+    letter-spacing: .05em !important;
+    color: inherit !important;
+    -webkit-text-fill-color: currentColor !important;
+    font-weight: inherit !important;
+}
+
+.st-key-v670_top_nav [data-testid="stRadio"] label:hover {
+    color: var(--hub-ink) !important;
+    -webkit-text-fill-color: var(--hub-ink) !important;
+    border-bottom-color: var(--hub-line) !important;
+}
+
+.st-key-v670_top_nav [data-testid="stRadio"] label:has(input:checked) {
+    color: var(--hub-red) !important;
+    -webkit-text-fill-color: var(--hub-red) !important;
+    background: transparent !important;
+    border-bottom-color: var(--hub-red) !important;
+}
+
+.st-key-v670_top_nav [data-testid="stRadio"] label:has(input:checked) p {
+    color: var(--hub-red) !important;
+    -webkit-text-fill-color: var(--hub-red) !important;
+}
+
+/* ---- buttons: Hub's primary (red-bright) / secondary (white/navy) ---- */
+
+button[kind="primary"],
+[data-testid="stBaseButton-primary"] {
+    background: var(--hub-red-bright) !important;
+    color: var(--hub-white) !important;
+    border: none !important;
+    border-radius: 4px !important;
+    font-family: var(--hub-font) !important;
+    font-weight: 900 !important;
+    text-transform: uppercase !important;
+    letter-spacing: .06em !important;
+    font-size: 12px !important;
+}
+
+button[kind="primary"] p, button[kind="primary"] span,
+[data-testid="stBaseButton-primary"] p, [data-testid="stBaseButton-primary"] span {
+    color: var(--hub-white) !important;
+    -webkit-text-fill-color: var(--hub-white) !important;
+}
+
+button[kind="primary"]:hover,
+[data-testid="stBaseButton-primary"]:hover {
+    background: var(--hub-red) !important;
+}
+
+button[kind="secondary"],
+[data-testid="stBaseButton-secondary"] {
+    background: var(--hub-white) !important;
+    color: var(--hub-navy-950) !important;
+    border: 1px solid var(--hub-line) !important;
+    border-radius: 4px !important;
+    font-family: var(--hub-font) !important;
+    font-weight: 900 !important;
+    text-transform: uppercase !important;
+    letter-spacing: .06em !important;
+    font-size: 12px !important;
+}
+
+button[kind="secondary"] p, button[kind="secondary"] span,
+[data-testid="stBaseButton-secondary"] p, [data-testid="stBaseButton-secondary"] span {
+    color: var(--hub-navy-950) !important;
+    -webkit-text-fill-color: var(--hub-navy-950) !important;
+}
+
+button[kind="secondary"]:hover,
+[data-testid="stBaseButton-secondary"]:hover {
+    background: #f0f3f6 !important;
+    border-color: var(--hub-muted) !important;
+}
+
+/* ---- Home page hero: navy gradient band, like the Hub's page heroes ---- */
+
+.st-key-home_hero {
+    background: linear-gradient(110deg, rgba(3, 16, 30, .99) 0%, rgba(6, 29, 52, .96) 54%, rgba(13, 55, 94, .86) 100%) !important;
+    border-radius: 8px !important;
+    padding: 40px 36px !important;
+    margin-bottom: 4px !important;
+}
+
+.home-hero-title {
+    font-family: var(--hub-font);
+    color: var(--hub-white);
+    font-size: clamp(32px, 4vw, 48px);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: -0.03em;
+    line-height: 1;
+}
+
+.home-hero-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.home-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .1);
+    border: 1px solid rgba(255, 255, 255, .18);
+    color: #c8d4de;
+    font-family: var(--hub-font);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+/* ---- generic cards / containers used across setup-style pages ---- */
+
+[data-testid="stExpander"],
+[data-testid="stForm"] {
+    background: var(--hub-white) !important;
+    border: 1px solid var(--hub-line) !important;
+    border-radius: 9px !important;
+    box-shadow: 0 8px 24px rgba(3, 16, 30, .06) !important;
+}
