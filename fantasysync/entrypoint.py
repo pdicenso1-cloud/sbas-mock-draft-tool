@@ -47,6 +47,7 @@ def run() -> None:
         # ordering.
         inject_css(project_root / "styles" / "legacy.css")
         inject_css(project_root / "styles" / "draft_night.css")
+        inject_css(project_root / "styles" / "hub_theme.css")
         inject_css(project_root / "styles" / "safety.css")
 
         # Important: this MUST execute on every Streamlit rerun.
