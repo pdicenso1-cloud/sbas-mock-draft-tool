@@ -190,20 +190,22 @@ body, p, span, div, label, li, a {
     letter-spacing: -0.02em !important;
 }
 
-/* ---- top navigation: match the Hub's sticky white nav bar ---- */
+/* ---- top navigation: dark-navy pills, same look as the Draft Room's
+   team-selector buttons (.st-key-v670_team_selector button, navy #101B2B
+   fill / white border+text, red fill for the active one) rather than the
+   Hub's own white nav bar - Peter asked for these two to match. ---- */
 
 .st-key-v670_top_nav {
-    background: rgba(255, 255, 255, .96) !important;
+    background: var(--hub-paper) !important;
     border-bottom: 1px solid var(--hub-line) !important;
     box-shadow: none !important;
-    backdrop-filter: blur(14px);
 }
 
 /* legacy.css/draft_night.css set -webkit-text-fill-color explicitly on
    these same "p" elements (a Draft Night dark-nav holdover) - WebKit paints
    text using that property over plain `color` when both are set, so every
    override below repeats itself onto -webkit-text-fill-color: currentColor
-   too, or the label text stays invisible-on-white regardless of `color`. */
+   too, or the label text stays invisible regardless of `color`. */
 
 .st-key-v670_top_nav [data-testid="stRadio"] label {
     font-family: var(--hub-font) !important;
@@ -211,13 +213,13 @@ body, p, span, div, label, li, a {
     font-weight: 800 !important;
     text-transform: uppercase !important;
     letter-spacing: .05em !important;
-    color: #425269 !important;
-    -webkit-text-fill-color: #425269 !important;
-    background: transparent !important;
-    border: none !important;
-    border-bottom: 3px solid transparent !important;
-    border-radius: 0 !important;
-    transition: border-color .18s, color .18s;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    background: #101B2B !important;
+    border: 1px solid #ffffff !important;
+    border-radius: 7px !important;
+    padding: 6px 14px !important;
+    transition: background .18s, border-color .18s;
 }
 
 /* The radio's decorative circle indicator div (sibling right before the
@@ -234,27 +236,104 @@ body, p, span, div, label, li, a {
     font-family: var(--hub-font) !important;
     text-transform: uppercase !important;
     letter-spacing: .05em !important;
-    color: inherit !important;
-    -webkit-text-fill-color: currentColor !important;
+    /* An explicit color, not `inherit` - `inherit` resolves against this
+       p's own immediate parent wrapper div, not the label matched above,
+       and something in between still had a stray dark color rule of its
+       own, so `inherit` silently picked that up instead. */
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
     font-weight: inherit !important;
 }
 
 .st-key-v670_top_nav [data-testid="stRadio"] label:hover {
-    color: var(--hub-ink) !important;
-    -webkit-text-fill-color: var(--hub-ink) !important;
-    border-bottom-color: var(--hub-line) !important;
+    background: #1A2740 !important;
+    border-color: #ffffff !important;
 }
 
 .st-key-v670_top_nav [data-testid="stRadio"] label:has(input:checked) {
-    color: var(--hub-red) !important;
-    -webkit-text-fill-color: var(--hub-red) !important;
-    background: transparent !important;
-    border-bottom-color: var(--hub-red) !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    background: var(--hub-red-bright) !important;
+    border-color: #ffffff !important;
 }
 
 .st-key-v670_top_nav [data-testid="stRadio"] label:has(input:checked) p {
-    color: var(--hub-red) !important;
-    -webkit-text-fill-color: var(--hub-red) !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
+/* Streamlit's Material Symbols icon font isn't loading in this app (every
+   popover's decorative chevron shows the literal ligature text
+   "expand_more"/"expand_less" instead of an arrow glyph) - hiding it
+   outright reads cleaner than a broken word floating next to every
+   popover trigger. Already marked aria-hidden by Streamlit itself
+   (decorative only), so hiding it loses nothing for accessibility. */
+[data-testid="stIconMaterial"] {
+    display: none !important;
+}
+
+/* ---- Edit Board grid (fantasysync.runtime._render_board_edit_grid) -
+   the click-a-cell keeper/trade editor. Its classes (keeper-grid-team,
+   the popover buttons) were never actually styled before - this is what
+   made it look like an unstyled list of raw buttons instead of a grid. */
+
+.st-key-board_edit_grid [data-testid="stVerticalBlock"],
+.st-key-board_edit_grid.st-key-board_edit_grid [data-testid="stVerticalBlock"] {
+    gap: 3px !important;
+}
+
+.st-key-board_edit_grid [data-testid="stHorizontalBlock"] {
+    gap: 3px !important;
+}
+
+.keeper-grid-team {
+    font-family: var(--hub-font);
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    text-align: center;
+    color: var(--hub-white);
+    background: #101B2B;
+    border: 1px solid #ffffff;
+    border-radius: 6px;
+    padding: 6px 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.st-key-board_edit_grid button[data-testid="stPopoverButton"] {
+    min-height: 34px !important;
+    height: 34px !important;
+    padding: 0 4px !important;
+    border-radius: 6px !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+}
+
+.st-key-board_edit_grid button[data-testid="stPopoverButton"] p {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    font-size: 10px !important;
+}
+
+/* ---- Reset / State (Draft Room) + Pause/Start Draft: match the small
+   round/format pill chips (.v640-chip: 23px tall, .5rem font) next to
+   them - both lost their old compact sizing when Reset/State moved out
+   of the top nav onto this page, and Pause/Start was already bigger than
+   the chips by design but Peter wants all three shrunk to match now. ---- */
+
+.st-key-draft_room_actions button,
+.st-key-draft_room_actions [data-testid="stDownloadButton"] button,
+.st-key-v640_header button {
+    min-height: 23px !important;
+    height: 23px !important;
+    padding: 0 9px !important;
+    border-radius: 7px !important;
+    font-size: .5rem !important;
+    font-weight: 780 !important;
 }
 
 /* ---- buttons: Hub's primary (red-bright) / secondary (white/navy) ---- */
