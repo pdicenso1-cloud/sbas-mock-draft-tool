@@ -1,188 +1,544 @@
+"""Draft Room UI widgets: header, player toolbar, player table, and queue
+panel.
+
+Split out of the former monolithic runtime.py. These functions do the
+actual st.markdown/st.button rendering for the Draft Room; draft_room.py
+and bottom_sheet.py handle the surrounding layout/CSS.
+"""
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Any, Callable, Optional
+from typing import Optional
 
+import pandas as pd
 import streamlit as st
 
-from components.bottom_sheet import (
-    BottomSheetDependencies,
-    render_bottom_sheet,
+from fantasysync.app_state import clean, dock_settings, numeric
+from fantasysync.draft_engine import (
+    add_to_queue,
+    build_team_roster,
+    clear_player_queue,
+    clean_player_queue,
+    draft_top_queue_player,
+    handle_user_draft_click,
+    move_queue_player,
+    pause_pick_clock,
+    player_map,
+    player_value_badge,
+    remaining_pick_time,
+    remove_from_queue,
+    start_pick_clock,
 )
-from components.draft_board import render_draft_board
-from components.draft_header import (
-    DraftHeaderDependencies,
-    render_compact_draft_header,
+from fantasysync.player_pool import (
+    ensure_draft_filters,
+    filtered_draft_pool,
+    render_position_filter,
+    set_player_sort,
+    sort_player_pool,
 )
 
 
-@dataclass(frozen=True)
-class DraftRoomDependencies:
-    """Functions supplied by the existing FantasySync draft engine."""
-
-    current_open_index: Callable[[], Optional[int]]
-    render_player_tray_css: Callable[[], None]
-    render_header: Callable[[Optional[int]], None]
-    clean: Callable[[Any], str]
-    remaining_pick_time: Callable[[], int]
-    pause_pick_clock: Callable[[], None]
-    start_pick_clock: Callable[[], None]
-    reset_pick_clock: Callable[[], None]
-    rename_team: Callable[[int, str], None]
-    current_user_roster: Callable[[], Any]
-    player_tray_settings: Callable[[], dict]
-    snake_board_html: Callable[[], str]
-    move_player_tray: Callable[[int], None]
-    render_player_toolbar: Callable[[], None]
-    render_player_picker: Callable[..., None]
-    render_queue: Callable[..., None]
-    render_roster_header: Callable[[], None]
-    render_roster_rows: Callable[[], None]
+def current_user_roster():
+    roster = build_team_roster(st.session_state.user_team)
+    # This league's visible roster excludes kicker and defense.
+    return roster[
+        ~roster["Slot"].astype(str).str.upper().isin(
+            {"K", "DEF", "DST", "D/ST"}
+        )
+    ].reset_index(drop=True)
 
 
-def _is_user_turn(
-    deps: DraftRoomDependencies,
-    current_index: Optional[int],
-) -> bool:
-    if current_index is None:
-        return False
+def render_live_roster_header():
+    roster = current_user_roster()
+    filled = int((roster["Player"] != "").sum())
 
-    current_owner = deps.clean(
-        st.session_state.picks.loc[
-            current_index,
-            "current_owner",
-        ]
+    st.markdown(
+        f"""
+        <div class="roster-header-row">
+            <div class="roster-header-label">ROSTER</div>
+            <div class="roster-header-team">{st.session_state.user_team}</div>
+            <div class="roster-header-count">{filled} / 16 players</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-    return current_owner == deps.clean(st.session_state.user_team)
 
 
-def _render_team_selector(deps: DraftRoomDependencies) -> None:
-    """
-    Render team selection as real Streamlit buttons.
+def render_live_roster_rows():
+    roster = current_user_roster()
 
-    Team selection used to be implemented as raw HTML <a href="?team=..">
-    links embedded in the draft board's HTML. Clicking a real <a href> link
-    is a genuine browser page navigation, not a Streamlit rerun - it
-    reloaded the entire page (every stylesheet and script from scratch) on
-    every single click, which is what caused the "whole page refreshes"
-    flash when selecting a team. Real st.button widgets trigger Streamlit's
-    normal in-place rerun instead, with no page navigation at all.
-    """
-    teams = st.session_state.teams.sort_values("draft_slot")
+    for row in roster.itertuples():
+        player = clean(row.Player)
+        slot = clean(row.Slot)
+        pos = clean(row.Pos)
 
-    with st.container(key="v670_team_selector"):
-        cols = st.columns(10, gap="small")
+        if slot == "FLEX":
+            slot_group = "FLEX"
+        elif slot.startswith("RB"):
+            slot_group = "RB"
+        elif slot.startswith("WR"):
+            slot_group = "WR"
+        elif slot.startswith("QB"):
+            slot_group = "QB"
+        elif slot.startswith("TE"):
+            slot_group = "TE"
+        else:
+            slot_group = "BN"
 
-        for col, row in zip(cols, teams.itertuples()):
-            slot = int(row.draft_slot)
-            team_id = int(row.team_id)
-            team_name = deps.clean(row.team_name)
-            active = team_name == deps.clean(st.session_state.user_team)
+        if player:
+            player_html = (
+                f'<div class="roster-player-wrap">'
+                f'<div class="roster-line-player">'
+                f'<span>{player}</span>'
+                f'<span class="roster-inline-pos">({pos})</span>'
+                f'</div>'
+                f'</div>'
+            )
+        else:
+            player_html = (
+                '<div class="roster-player-wrap">'
+                '<div class="roster-empty">Empty</div>'
+                '</div>'
+            )
 
-            with col:
-                if st.button(
-                    team_name,
-                    key=f"v670_team_select_{slot}",
-                    use_container_width=True,
-                    type="primary" if active else "secondary",
-                    disabled=active,
-                ):
-                    st.session_state.user_team = team_name
-                    deps.reset_pick_clock()
-                    st.rerun()
+        st.markdown(
+            f"""
+            <div class="roster-line">
+                <div class="roster-slot-pill roster-slot-{slot_group}">{slot}</div>
+                {player_html}
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-                # Permanent, shared rename (see runtime._rename_team) - not
-                # just this visitor's own view. Labeled "Team N" (ordinal
-                # slot) rather than a pencil icon - Streamlit's popover
-                # chevron icon font doesn't load reliably in this app, and
-                # an icon-only label went fully blank when it didn't.
-                with st.popover(f"Team {slot}", use_container_width=True):
-                    new_name = st.text_input(
-                        "Team name",
-                        value=team_name,
-                        key=f"v670_team_rename_input_{team_id}",
-                        label_visibility="collapsed",
-                    )
+
+
+def render_v53_header(current_idx: Optional[int]):
+    if current_idx is None:
+        round_number = int(st.session_state.rounds)
+        overall_pick = len(st.session_state.picks)
+        remaining_text = "DONE"
+        clock_label = "COMPLETE"
+    else:
+        current = st.session_state.picks.loc[current_idx]
+        round_number = int(current["round"])
+        overall_pick = int(current["overall"])
+        remaining = remaining_pick_time()
+        remaining_text = f"{remaining // 60}:{remaining % 60:02d}"
+        clock_label = (
+            "YOUR PICK"
+            if clean(current["current_owner"]) == clean(st.session_state.user_team)
+            else "CPU PICK"
+        )
+
+    with st.container(key="v53_header"):
+        title_col, cpu_col, clock_col, action_col = st.columns(
+            [5.5, 1.05, .85, 1.15],
+            gap="small",
+        )
+
+        with title_col:
+            st.markdown(
+                f"""
+                <div class="v53-title">Mock Draft</div>
+                <div class="v53-meta">
+                    <div class="v53-chip">Round {round_number} · Pick {overall_pick}</div>
+                    <div class="v53-chip">10-Team PPR</div>
+                    <div class="v53-chip">Snake Draft</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        with cpu_col:
+            status = "CPU ON" if st.session_state.draft_active else "CPU PAUSED"
+            st.markdown(
+                f'<div class="v53-cpu">● {status}</div>',
+                unsafe_allow_html=True,
+            )
+
+        with clock_col:
+            st.markdown(
+                f"""
+                <div class="v53-clock">
+                    <div class="v53-clock-time">{remaining_text}</div>
+                    <div class="v53-clock-label">{clock_label}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        with action_col:
+            with st.container(key="v53_header_action"):
+                if st.session_state.draft_active:
                     if st.button(
-                        "Save",
-                        key=f"v670_team_rename_save_{team_id}",
-                        type="primary",
+                        "Pause Draft",
                         use_container_width=True,
+                        key="v53_pause",
                     ):
-                        deps.rename_team(team_id, new_name)
+                        st.session_state.draft_active = False
+                        pause_pick_clock()
+                        st.rerun()
+                else:
+                    if st.button(
+                        "Start Draft",
+                        use_container_width=True,
+                        key="v53_start",
+                    ):
+                        st.session_state.draft_active = True
+                        if current_idx is not None:
+                            current_owner = clean(
+                                st.session_state.picks.loc[
+                                    current_idx,
+                                    "current_owner",
+                                ]
+                            )
+                            if current_owner == clean(st.session_state.user_team):
+                                start_pick_clock()
                         st.rerun()
 
 
-def render_header_and_board(deps: DraftRoomDependencies) -> tuple[Optional[int], bool]:
-    """
-    Render the parts of the Draft Room that legitimately need to update on
-    every CPU-ticker tick: the pick/round header, the team selector, and
-    the board grid itself. Called from inside a fragment (see
-    fantasysync.runtime._live_board_fragment) so that CPU ticks only
-    re-render this part of the page - the tray (search/filters/queue/
-    roster) below is rendered separately, outside that fragment, and stays
-    fully interactive while the CPU is picking instead of getting reset by
-    every tick.
-    """
+def render_v61_player_toolbar():
+    """Compact tray toolbar: search + always-visible position filters."""
+    ensure_draft_filters()
 
-    current_index = deps.current_open_index()
-    render_compact_draft_header(
-        DraftHeaderDependencies(
-            clean=deps.clean,
-            remaining_pick_time=deps.remaining_pick_time,
-            pause_pick_clock=deps.pause_pick_clock,
-            start_pick_clock=deps.start_pick_clock,
-        ),
-        current_index,
+    with st.container(key="v61_player_toolbar"):
+        search_col, filter_col = st.columns(
+            [2.65, 7.35],
+            gap="small",
+        )
+
+        with search_col:
+            st.text_input(
+                "Search players",
+                key="draft_search",
+                placeholder="⌕  Search players...",
+                label_visibility="collapsed",
+            )
+
+        with filter_col:
+            render_position_filter()
+
+
+def render_player_picker_table(
+    current_idx: int,
+    allow_draft: bool = True,
+    list_height_override: Optional[int] = None,
+):
+    clean_player_queue()
+    ensure_draft_filters()
+
+    pool = filtered_draft_pool()
+
+    if pool.empty:
+        st.warning("No available players match this filter.")
+        return
+
+    pool = sort_player_pool(pool, current_idx)
+
+    # Sleeper-style two-tier header: a group row (PROJ / RUSHING /
+    # RECEIVING / PASSING) sits above the sortable sub-columns. Both rows
+    # reuse this same `widths` list so their column boundaries line up
+    # exactly. Each stat group only has one populated sub-column today
+    # (e.g. RUSHING -> RUSH yards only, no attempts/TDs yet), but the
+    # structure is ready for more columns per group later.
+    headers = [
+        "",
+        "",
+        "RK",
+        "PLAYER",
+        "TIER",
+        "SCORE",
+        "ADP",
+        "BYE",
+        "PROJ",
+        "AVG",
+        "RUSH",
+        "REC",
+        "PASS",
+        "VAL",
+    ]
+    widths = [
+        0.38,
+        0.36,
+        0.40,
+        1.65,
+        0.48,
+        0.54,
+        0.50,
+        0.46,
+        0.56,
+        0.54,
+        0.54,
+        0.54,
+        0.54,
+        0.48,
+    ]
+    group_labels = {
+        "PROJ": "PROJ",
+        "RUSH": "RUSHING",
+        "REC": "RECEIVING",
+        "PASS": "PASSING",
+    }
+
+    with st.container(key="v731_group_header"):
+        group_cols = st.columns(widths)
+        for col, label in zip(group_cols, headers):
+            group_text = group_labels.get(label, "")
+            css_class = "player-table-group2"
+            if label in group_labels:
+                css_class += " player-table-group2-divider"
+            col.markdown(
+                f"<div class='{css_class}'>{group_text}</div>",
+                unsafe_allow_html=True,
+            )
+
+    active_sort = str(st.session_state.player_sort_column).upper()
+    active_ascending = bool(st.session_state.player_sort_ascending)
+
+    with st.container(key="v732_column_header"):
+        header_cols = st.columns(widths)
+        for index, (col, label) in enumerate(zip(header_cols, headers)):
+            if not label:
+                col.markdown(
+                    "<div class='player-table-header2'></div>",
+                    unsafe_allow_html=True,
+                )
+                continue
+
+            indicator = ""
+            if label == active_sort:
+                indicator = " ▲" if active_ascending else " ▼"
+
+            with col:
+                if st.button(
+                    f"{label}{indicator}",
+                    key=f"v730_sort_{label}",
+                    help=f"Sort by {label}",
+                    use_container_width=True,
+                    type="secondary",
+                ):
+                    set_player_sort(label)
+                    st.rerun()
+
+    shown = pool.head(100).reset_index(drop=True)
+    list_height = (
+        int(list_height_override)
+        if list_height_override is not None
+        else dock_settings()["list_px"]
     )
 
-    if st.session_state.draft_message:
-        with st.container(key="v63_draft_message"):
-            st.caption(st.session_state.draft_message)
+    with st.container(height=list_height, key="war_player_list"):
+        for _, row in shown.iterrows():
+            player = clean(row["player"])
+            pos = clean(row["position"])
+            nfl_team = clean(row["nfl_team"])
+            rank = int(row["custom_rank"])
+            adp = numeric(row.get("consensus_adp"), None)
+            tier = clean(row.get("tier", ""))
+            score = numeric(row.get("peter_score"), None)
+            proj = numeric(row.get("proj_pts"), None)
+            avg = numeric(row.get("proj_avg"), None)
 
-    user_turn = _is_user_turn(deps, current_index)
+            adp_text = "—" if adp is None else f"{adp:.1f}"
+            score_text = "—" if score is None else f"{score:.0f}"
+            proj_text = "—" if proj is None else f"{proj:.1f}"
+            avg_text = "—" if avg is None else f"{avg:.1f}"
+            rush_text = clean(row.get("rush_yds", "")) or "—"
+            rec_text = clean(row.get("rec_yds", "")) or "—"
+            pass_text = clean(row.get("pass_yds", "")) or "—"
+            bye_text = clean(row.get("bye", "")) or "—"
+            value_text, value_class = player_value_badge(
+                row,
+                current_idx,
+            )
+            pos_class = (
+                pos
+                if pos in {"QB", "RB", "WR", "TE"}
+                else "OTHER"
+            )
+            in_queue = player in st.session_state.player_queue
 
-    _render_team_selector(deps)
+            cols = st.columns(widths)
 
-    render_draft_board(deps.snake_board_html)
+            cols[0].button(
+                "+",
+                key=f"draft_plus_{current_idx}_{player}",
+                use_container_width=True,
+                type="secondary",
+                disabled=not allow_draft,
+                help=f"Draft {player}",
+                on_click=handle_user_draft_click,
+                args=(player,),
+            )
 
-    return current_index, user_turn
+            if cols[1].button(
+                "★" if in_queue else "☆",
+                key=f"queue_star_{current_idx}_{player}",
+                use_container_width=True,
+                help=(
+                    f"Remove {player} from queue"
+                    if in_queue
+                    else f"Add {player} to queue"
+                ),
+            ):
+                if in_queue:
+                    remove_from_queue(player)
+                else:
+                    add_to_queue(player)
+                st.rerun()
+
+            cols[2].markdown(
+                f"<div class='rank2'>{rank}</div>",
+                unsafe_allow_html=True,
+            )
+            cols[3].markdown(
+                f"""
+                <div class='player-name2' title='{player}'>{player}</div>
+                <div class='player-sub2'>
+                    <span class='pos-dot dot-{pos_class}'></span>
+                    {pos} · {nfl_team}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            values = [
+                tier or "—",
+                score_text,
+                adp_text,
+                bye_text,
+                proj_text,
+                avg_text,
+                rush_text,
+                rec_text,
+                pass_text,
+            ]
+
+            for col, value in zip(cols[4:13], values):
+                col.markdown(
+                    f"<div class='stat2'>{value}</div>",
+                    unsafe_allow_html=True,
+                )
+
+            cols[13].markdown(
+                f"""
+                <div class="value-badge {value_class}">
+                    {value_text}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
 
-def render_tray(
-    deps: DraftRoomDependencies,
-    current_index: Optional[int],
-    user_turn: bool,
-) -> None:
-    """The search/filter toolbar, player picker, and queue/roster panel -
-    rendered outside the CPU-ticker fragment so it is unaffected by ticks
-    and stays clickable while the CPU is picking."""
 
-    render_bottom_sheet(
-        BottomSheetDependencies(
-            render_player_toolbar=deps.render_player_toolbar,
-            render_player_picker=deps.render_player_picker,
-            render_queue=deps.render_queue,
-            render_roster_header=deps.render_roster_header,
-            render_roster_rows=deps.render_roster_rows,
-            current_user_roster=deps.current_user_roster,
-            clean=deps.clean,
-        ),
-        current_index=current_index,
-        user_turn=user_turn,
+def render_queue_panel(
+    current_idx: int,
+    allow_draft: bool,
+):
+    clean_player_queue()
+    queue = list(st.session_state.player_queue)
+
+    st.markdown(
+        f"""
+        <div class="queue-title-row">
+            <div class="queue-title">MY QUEUE</div>
+            <div class="queue-count">{len(queue)}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
+    if not queue:
+        st.markdown(
+            """
+            <div class="queue-empty">
+                Add players with the ☆ button.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    else:
+        pmap = player_map()
 
-def render_draft_room(
-    deps: DraftRoomDependencies,
-) -> None:
-    """
-    Render Draft Room 2.0 in one shot (no fragment split).
+        for queue_index, player in enumerate(queue):
+            info = pmap.get(player, {})
+            pos = clean(info.get("position", ""))
+            nfl_team = clean(info.get("nfl_team", ""))
 
-    Kept for callers/tests that want the whole room rendered synchronously.
-    fantasysync.runtime uses render_header_and_board()/render_tray()
-    separately instead, so the header+board can live inside a fragment
-    while the tray stays outside it.
-    """
-    current_index, user_turn = render_header_and_board(deps)
-    render_tray(deps, current_index, user_turn)
+            row_cols = st.columns(
+                [0.42, 2.0, 0.34, 0.34, 0.34]
+            )
+
+            row_cols[0].markdown(
+                f'<div class="queue-rank">{queue_index + 1}</div>',
+                unsafe_allow_html=True,
+            )
+            row_cols[1].markdown(
+                f"""
+                <div class="queue-player">{player}</div>
+                <div class="queue-player-sub">
+                    {pos} · {nfl_team}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            if row_cols[2].button(
+                "↑",
+                key=f"queue_up_{queue_index}_{player}",
+                disabled=queue_index == 0,
+                help="Move up",
+            ):
+                move_queue_player(player, -1)
+                st.rerun()
+
+            if row_cols[3].button(
+                "↓",
+                key=f"queue_down_{queue_index}_{player}",
+                disabled=queue_index == len(queue) - 1,
+                help="Move down",
+            ):
+                move_queue_player(player, 1)
+                st.rerun()
+
+            if row_cols[4].button(
+                "×",
+                key=f"queue_remove_{queue_index}_{player}",
+                help="Remove from queue",
+            ):
+                remove_from_queue(player)
+                st.rerun()
+
+    if st.button(
+        "➤ Draft Top Queue Player",
+        use_container_width=True,
+        type="primary",
+        disabled=not allow_draft or not queue,
+        key=f"draft_top_queue_{current_idx}",
+    ):
+        draft_top_queue_player()
+        st.rerun()
+
+    utility_left, utility_right = st.columns(
+        [0.90, 1.25]
+    )
+
+    with utility_left:
+        if st.button(
+            "Clear Queue",
+            use_container_width=True,
+            disabled=not queue,
+            key="clear_queue_button",
+        ):
+            clear_player_queue()
+            st.rerun()
+
+    with utility_right:
+        st.toggle(
+            "Auto-draft from Queue",
+            key="queue_auto_draft",
+            help=(
+                "At 0:00, draft your top queued player. "
+                "If the queue is empty, use best available."
+            ),
+        )
