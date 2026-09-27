@@ -28,6 +28,7 @@ class DraftRoomDependencies:
     pause_pick_clock: Callable[[], None]
     start_pick_clock: Callable[[], None]
     reset_pick_clock: Callable[[], None]
+    rename_team: Callable[[int, str], None]
     current_user_roster: Callable[[], Any]
     player_tray_settings: Callable[[], dict]
     snake_board_html: Callable[[], str]
@@ -74,6 +75,7 @@ def _render_team_selector(deps: DraftRoomDependencies) -> None:
 
         for col, row in zip(cols, teams.itertuples()):
             slot = int(row.draft_slot)
+            team_id = int(row.team_id)
             team_name = deps.clean(row.team_name)
             active = team_name == deps.clean(st.session_state.user_team)
 
@@ -88,6 +90,27 @@ def _render_team_selector(deps: DraftRoomDependencies) -> None:
                     st.session_state.user_team = team_name
                     deps.reset_pick_clock()
                     st.rerun()
+
+                # Permanent, shared rename (see runtime._rename_team) - not
+                # just this visitor's own view. Labeled "Team N" (ordinal
+                # slot) rather than a pencil icon - Streamlit's popover
+                # chevron icon font doesn't load reliably in this app, and
+                # an icon-only label went fully blank when it didn't.
+                with st.popover(f"Team {slot}", use_container_width=True):
+                    new_name = st.text_input(
+                        "Team name",
+                        value=team_name,
+                        key=f"v670_team_rename_input_{team_id}",
+                        label_visibility="collapsed",
+                    )
+                    if st.button(
+                        "Save",
+                        key=f"v670_team_rename_save_{team_id}",
+                        type="primary",
+                        use_container_width=True,
+                    ):
+                        deps.rename_team(team_id, new_name)
+                        st.rerun()
 
 
 def render_header_and_board(deps: DraftRoomDependencies) -> tuple[Optional[int], bool]:
