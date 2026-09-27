@@ -71,6 +71,7 @@ def fetch_espn_league_summary(season: int = 2026) -> Optional[dict]:
             "espn_team_id": team.team_id,
             "team_name": team.team_name,
             "owner": owner_name,
+            "logo_url": team.logo_url,
         })
 
     return {
